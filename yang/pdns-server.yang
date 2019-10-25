@@ -1,0 +1,80 @@
+/*
+ * Copyright 2019 Pieter Lexis <pieter.lexis@powerdns.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.";
+ */
+
+/*
+ * Links:
+ *  https://github.com/CZ-NIC/yang-dns
+ *  https://github.com/YangModels/yang/tree/master/standard/ietf/RFC
+ */
+module pdns-server {
+    yang-version 1.1;
+    namespace urn:ietf:params:xml:ns:yang:pdns-server;
+    prefix pdns-server;
+
+    import ietf-inet-types {
+        prefix inet;
+        revision-date 2013-07-15;
+    }
+
+    organization
+      "PowerDNS.COM BV";
+    contact
+      "Pieter Lexis <mailto:pieter.lexis@powerdns.com>";
+
+    description
+      "This module describes the PowerDNS Authoritative Server";
+
+    revision 2019-10-25 {
+        description
+          "Initial revision, not for public consumption yet";
+    }
+
+    /*
+     * Groupings
+     */
+    grouping endpoint {
+        description
+          "An IP endpoint, including the port";
+        
+        leaf ip-address {
+            type inet:ip-address;
+            mandatory true;
+        }
+        leaf port {
+            type inet:port-number;
+        }
+    }
+
+    /*
+     * Configuration data
+     */
+    container pdns-server {
+        description
+          "Configuration of the PowerDNS Authoritative Server";
+        list listen-addresses {
+            key "name";
+            unique "ip-address port";
+            leaf name {
+                type string;
+            }
+            uses endpoint {
+                refine "port" {
+                    default 53;
+                }
+            }
+        }
+    }
+}
