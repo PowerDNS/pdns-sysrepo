@@ -19,6 +19,7 @@
 #include <spdlog/spdlog.h>
 
 #include "sr_wrapper/session.hh"
+#include "configurator/configurator.hh"
 
 using namespace std;
 
@@ -44,23 +45,27 @@ int main() {
 
     spdlog::info("Starting session");
     auto sess = sr::Session(conn);
-    string xpath = "/pdns-server:pdns-server/listen-addresses/*";
 
-    spdlog::info("getting items at {}", xpath);
+    spdlog::info("Getting current config");
     try {
-      auto values = sess.get_items(xpath);
+      auto values = sess.getConfig();
       for (const auto &v : values) {
         spdlog::info("item xpath={} type={}", v->xpath(), v->type());
       }
+      string fpath = "/home/lieter/src/PowerDNS/pdns-conf/netconf/pdns.conf";
+      spdlog::info("Writing config to {}", fpath);
+      pdns_conf::writeConfig(fpath, values);
     }
-    catch (const std::exception& e) {
+    catch (const sysrepo::sysrepo_exception& e) {
       auto errs = sess.get_error();
       for (size_t i=0; i<errs->error_cnt(); i++) {
         spdlog::error("Had an error from session: {}", errs->message(i));
       }
+      throw;
     }
+    // TODO close session, spawn thread to do updates (makes a session and subs), tell sytemd we're ready!
   } catch( const std::exception& e ) {
-    spdlog::error("Had an error: {}", e.what());
+    spdlog::error("Fatal error: {}", e.what());
     return 1;
   }
   return 0;

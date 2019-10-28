@@ -25,4 +25,9 @@ namespace sr {
     }
     return r;
   }
+
+  vector<sysrepo::S_Val> Session::getConfig(uint32_t timeout_ms) {
+    vector<sysrepo::S_Val> r = get_items("/pdns-server:pdns-server/*", timeout_ms);
+    return r;
+  }
 }

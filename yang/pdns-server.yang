@@ -48,7 +48,6 @@ module pdns-server {
     grouping endpoint {
         description
           "An IP endpoint, including the port";
-        
         leaf ip-address {
             type inet:ip-address;
             mandatory true;
@@ -65,6 +64,8 @@ module pdns-server {
         description
           "Configuration of the PowerDNS Authoritative Server";
         list listen-addresses {
+            description
+              "The addresses this server is listening on for queries";
             key "name";
             unique "ip-address port";
             leaf name {
@@ -75,6 +76,20 @@ module pdns-server {
                     default 53;
                 }
             }
+        }
+        leaf master {
+            description
+              "Whether or not this service should act as a master.
+               This means sending out NOTIFY messages to slave when zones are updated.";
+            type boolean;
+            default false;
+        }
+        leaf slave {
+            description
+              "Whether or not this service should act as a slave.
+               This means checking zone validity and retrieving when out of date.";
+            type boolean;
+            default false;
         }
     }
 }
