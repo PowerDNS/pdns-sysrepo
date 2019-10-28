@@ -5,13 +5,14 @@ project('pdns-sysrepo', 'cpp',
   )
 
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
-pdns_configurator = files('src/configurator/configurator.hh', 'src/configurator/configurator.cc')
+pdns_configurator = files('src/configurator/configurator.cc', 'src/configurator/config.cc')
 
 sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.2.0')
 spdlog_dep = dependency('spdlog')
-boost_fs_dep = dependency('boost', modules : ['filesystem'])
+boost_deps = dependency('boost', modules : ['filesystem', 'program_options'])
 mstch_dep = dependency('mstch')
+yaml_dep = dependency('yaml-cpp')
 
 executable('pdns-sysrepo-configurator', 'src/pdns-configurator.cc',
   sr_wrapper, pdns_configurator,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_fs_dep, mstch_dep])
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep])

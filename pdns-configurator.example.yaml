@@ -1,0 +1,1 @@
+pdns_conf: /etc/powerdns/pdns.conf.d/sysrepo.conf
