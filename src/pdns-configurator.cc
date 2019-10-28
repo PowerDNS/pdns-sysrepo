@@ -89,6 +89,7 @@ spdlog::info("Level set to {}", vm["loglevel"].as<string>());
       auto values = sess.getConfig();
       spdlog::info("Writing config to {}", myConfig.getPdnsConfigFilename());
       pdns_conf::writeConfig(myConfig.getPdnsConfigFilename(), values);
+      spdlog::debug("Writing done");
     }
     catch (const sysrepo::sysrepo_exception& e) {
       auto errs = sess.get_error();
@@ -98,7 +99,6 @@ spdlog::info("Level set to {}", vm["loglevel"].as<string>());
       throw;
     }
     // spawn thread to do updates (makes a session and subs), tell sytemd we're ready!
-    sess.session_stop();
   } catch( const std::exception& e ) {
     spdlog::error("Fatal error: {}", e.what());
     return 1;

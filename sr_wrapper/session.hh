@@ -23,8 +23,16 @@ namespace sr {
   class Session : public sysrepo::Session {
     public:
       Session(sysrepo::S_Connection conn, sr_datastore_t datastore = (sr_datastore_t)sysrepo::DS_RUNNING) : 
-        sysrepo::Session(conn, datastore) {};
+        sysrepo::Session(conn, datastore) {
+          d_started = true;
+        };
+      ~Session();
+      void session_stop();
+
       vector<sysrepo::S_Val> get_items(const string xpath, uint32_t timeout_ms=0);
       vector<sysrepo::S_Val> getConfig(uint32_t timeout_ms=0);
+
+      private:
+      bool d_started{false};
   };
 }

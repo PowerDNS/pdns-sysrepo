@@ -17,6 +17,18 @@
 #include "session.hh"
 
 namespace sr {
+  Session::~Session() {
+    // Somehow the original wrapper does not do this.
+    session_stop();
+  }
+
+  void Session::session_stop() {
+    if (d_started) {
+      sysrepo::Session::session_stop();
+    }
+  }
+
+
   vector<sysrepo::S_Val> Session::get_items(const string xpath, uint32_t timeout_ms) {
     auto vals = sysrepo::Session::get_items(xpath.c_str(), timeout_ms);
     vector<sysrepo::S_Val> r;
