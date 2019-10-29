@@ -51,41 +51,39 @@ static void siginthandler(int signum) {
  * 
  * ## Service configuration changes:
  * When the configuration changes, this program will write a new pdns.conf and tell systemd over dbus to restart the service
- * 
+ *
  * ## Zone changes
  * The API will be used for these changes
  * 
  */
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   po::options_description opts("Options");
   string logLevelHelp = fmt::format("The loglevel of the program, possible values are {}", fmt::join(logLevels, ", "));
 
-  opts.add_options()
-    ("help,h", "Output a help message")
-    ("config,c", po::value<string>()->default_value("/etc/pdns-configurator/pdns-configurator.yaml"), "Configuration file to load.")
-    ("loglevel,l", po::value<string>()->default_value("info"), logLevelHelp.c_str());
+  opts.add_options()("help,h", "Output a help message")("config,c", po::value<string>()->default_value("/etc/pdns-configurator/pdns-configurator.yaml"), "Configuration file to load.")("loglevel,l", po::value<string>()->default_value("info"), logLevelHelp.c_str());
 
-po::variables_map vm;
-try {
-  po::store(po::parse_command_line(argc, argv, opts), vm);
-  po::notify(vm); 
-} catch(const boost::program_options::error &e) {
-  cerr<<fmt::format("Unable to parse commandline arguments: {}", e.what())<<endl;
-  return 1;
-}
+  po::variables_map vm;
+  try {
+    po::store(po::parse_command_line(argc, argv, opts), vm);
+    po::notify(vm);
+  }
+  catch (const boost::program_options::error& e) {
+    cerr << fmt::format("Unable to parse commandline arguments: {}", e.what()) << endl;
+    return 1;
+  }
 
-if (vm.count("help")) {
-  cout<<opts<<endl;
-  return 0;
-}
+  if (vm.count("help")) {
+    cout << opts << endl;
+    return 0;
+  }
 
-if (logLevels.count(vm["loglevel"].as<string>()) == 0) {
-  spdlog::error("Unknown loglevel {}", vm["loglevel"].as<string>());
-  return 1;
-}
-spdlog::set_level(spdlog::level::from_str(vm["loglevel"].as<string>()));
-spdlog::info("Level set to {}", vm["loglevel"].as<string>());
+  if (logLevels.count(vm["loglevel"].as<string>()) == 0) {
+    spdlog::error("Unknown loglevel {}", vm["loglevel"].as<string>());
+    return 1;
+  }
+  spdlog::set_level(spdlog::level::from_str(vm["loglevel"].as<string>()));
+  spdlog::info("Level set to {}", vm["loglevel"].as<string>());
 
   try {
     auto myConfig = pdns_conf::Config(vm["config"].as<string>());
@@ -120,13 +118,14 @@ spdlog::info("Level set to {}", vm["loglevel"].as<string>());
     }
     catch (const sysrepo::sysrepo_exception& e) {
       auto errs = sess.get_error();
-      for (size_t i=0; i<errs->error_cnt(); i++) {
+      for (size_t i = 0; i < errs->error_cnt(); i++) {
         spdlog::error("Had an error from session: {}", errs->message(i));
       }
       throw;
     }
     // spawn thread to do updates (makes a session and subs), tell sytemd we're ready!
-  } catch( const std::exception& e ) {
+  }
+  catch (const std::exception& e) {
     spdlog::error("Fatal error: {}", e.what());
     return 1;
   }
