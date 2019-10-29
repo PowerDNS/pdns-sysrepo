@@ -105,7 +105,7 @@ spdlog::info("Level set to {}", vm["loglevel"].as<string>());
 
       spdlog::info("Registring config change callbacks");
       auto s = sysrepo::Subscribe(make_shared<sysrepo::Session>(sess));
-      auto cb = pdns_conf::getServerConfigCB();
+      auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename());
       s.module_change_subscribe("pdns-server", cb);
       spdlog::debug("registered");
       signal(SIGINT, siginthandler);

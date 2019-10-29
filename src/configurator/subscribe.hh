@@ -3,19 +3,20 @@
 
 using namespace std;
 
-namespace pdns_conf {
-    sysrepo::S_Callback getServerConfigCB();
+namespace pdns_conf
+{
+sysrepo::S_Callback getServerConfigCB(const string &fpath);
 
-    class ServerConfigCB: public sysrepo::Callback {
-        public:
-        int module_change(sysrepo::S_Session session, const char *module_name,
-                          const char *xpath, sr_event_t event,
-                          uint32_t request_id, void *private_data) override {
-            spdlog::debug("Had callback module_name={} xpath={} event={}",
-                (module_name == nullptr)? "": module_name,
-                (xpath == nullptr)? "": xpath,
-                event);
-            return SR_ERR_OK;
-        }
-    };
-}
+class ServerConfigCB : public sysrepo::Callback
+{
+public:
+    ServerConfigCB(const map<string, string> &privData) : sysrepo::Callback(), privData(privData){};
+    ~ServerConfigCB() {};
+    int module_change(sysrepo::S_Session session, const char *module_name,
+                      const char *xpath, sr_event_t event,
+                      uint32_t request_id, void *private_data) override;
+
+private:
+    map<string, string> privData;
+};
+} // namespace pdns_conf
