@@ -13,7 +13,8 @@ spdlog_dep = dependency('spdlog')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options'])
 mstch_dep = dependency('mstch')
 yaml_dep = dependency('yaml-cpp')
+systemd_dep = dependency('libsystemd')
 
 executable('pdns-sysrepo-configurator', 'src/pdns-configurator.cc',
   sr_wrapper, pdns_configurator,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep])
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, systemd_dep])

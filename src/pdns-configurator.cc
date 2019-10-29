@@ -21,6 +21,7 @@
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 #include <fmt/core.h>
+#include <systemd/sd-daemon.h>
 
 #include "sr_wrapper/session.hh"
 #include "configurator/subscribe.hh"
@@ -101,18 +102,21 @@ int main(int argc, char* argv[]) {
       pdns_conf::writeConfig(myConfig.getPdnsConfigFilename(), values);
       spdlog::debug("Writing done");
 
-      spdlog::info("Registring config change callbacks");
+      spdlog::debug("Registring config change callbacks");
       auto s = sysrepo::Subscribe(make_shared<sysrepo::Session>(sess));
       auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename());
       s.module_change_subscribe("pdns-server", cb);
-      spdlog::debug("registered");
+      spdlog::trace("callbacks registered, registring signal handlers");
       signal(SIGINT, siginthandler);
       signal(SIGSTOP, siginthandler);
-      signal(SIGTERM, siginthandler);
+      spdlog::trace("signalhandlers registered, notifying systemd we're ready");
+      sd_notify(0, "READY=1");
+      spdlog::info("Startup complete");
       while (!doExit) {
         sleep(500);
       }
       spdlog::info("Exit requested");
+      sd_notify(0, "STOPPING=1");
       // Session::session_stop() seems to hang
       // sess.session_stop();
     }
@@ -123,7 +127,6 @@ int main(int argc, char* argv[]) {
       }
       throw;
     }
-    // spawn thread to do updates (makes a session and subs), tell sytemd we're ready!
   }
   catch (const std::exception& e) {
     spdlog::error("Fatal error: {}", e.what());
