@@ -16,12 +16,14 @@
 
 #include <iostream>
 #include <set>
+#include <signal.h>
 
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
 #include <fmt/core.h>
 
 #include "sr_wrapper/session.hh"
+#include "configurator/subscribe.hh"
 #include "configurator/configurator.hh"
 #include "configurator/config.hh"
 
@@ -29,6 +31,16 @@ using namespace std;
 namespace po = boost::program_options;
 
 static const set<string> logLevels{"trace", "debug", "info", "warning", "error", "critical", "off"};
+
+static bool doExit = false;
+
+static void siginthandler(int signum) {
+  if (doExit) {
+    spdlog::warn("Forced exit requested");
+    exit(1 + signum);
+  }
+  doExit = true;
+}
 
 /*
  * # The grand plan
@@ -90,6 +102,21 @@ spdlog::info("Level set to {}", vm["loglevel"].as<string>());
       spdlog::info("Writing config to {}", myConfig.getPdnsConfigFilename());
       pdns_conf::writeConfig(myConfig.getPdnsConfigFilename(), values);
       spdlog::debug("Writing done");
+
+      spdlog::info("Registring config change callbacks");
+      auto s = sysrepo::Subscribe(make_shared<sysrepo::Session>(sess));
+      auto cb = pdns_conf::getServerConfigCB();
+      s.module_change_subscribe("pdns-server", cb);
+      spdlog::debug("registered");
+      signal(SIGINT, siginthandler);
+      signal(SIGSTOP, siginthandler);
+      signal(SIGTERM, siginthandler);
+      while (!doExit) {
+        sleep(500);
+      }
+      spdlog::info("Exit requested");
+      // Session::session_stop() seems to hang
+      // sess.session_stop();
     }
     catch (const sysrepo::sysrepo_exception& e) {
       auto errs = sess.get_error();

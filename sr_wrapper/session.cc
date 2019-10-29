@@ -28,7 +28,6 @@ namespace sr {
     }
   }
 
-
   vector<sysrepo::S_Val> Session::get_items(const string xpath, uint32_t timeout_ms) {
     auto vals = sysrepo::Session::get_items(xpath.c_str(), timeout_ms);
     vector<sysrepo::S_Val> r;

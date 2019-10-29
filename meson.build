@@ -5,7 +5,8 @@ project('pdns-sysrepo', 'cpp',
   )
 
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
-pdns_configurator = files('src/configurator/configurator.cc', 'src/configurator/config.cc')
+pdns_configurator = files('src/configurator/configurator.cc', 'src/configurator/config.cc',
+  'src/configurator/subscribe.hh', 'src/configurator/subscribe.cc')
 
 sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.2.0')
 spdlog_dep = dependency('spdlog')
