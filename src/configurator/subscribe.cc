@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
+#include <boost/filesystem.hpp>
+
 #include "subscribe.hh"
 #include "configurator.hh"
+#include "util.hh"
+#include "sr_wrapper/session.hh"
 
 using namespace std;
+namespace fs = boost::filesystem;
 
 namespace pdns_conf
 {
@@ -27,38 +32,56 @@ sysrepo::S_Callback getServerConfigCB(const string& fpath) {
   return cb;
 }
 
+string ServerConfigCB::tmpFile(const uint32_t request_id) {
+  return privData["fpath"] + "-tmp-" + to_string(request_id);
+}
+
 int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module_name,
   const char* xpath, sr_event_t event,
   uint32_t request_id, void* private_data) {
-  spdlog::debug("Had callback module_name={} xpath={} event={}",
+  spdlog::trace("Had callback. module_name={} xpath={} event={} request_id={}",
     (module_name == nullptr) ? "" : module_name,
-    (xpath == nullptr) ? "" : xpath,
-    event);
+    (xpath == nullptr) ? "<none>" : xpath,
+    srEvent2String(event), request_id);
 
   if (event == SR_EV_CHANGE) {
-    // Request to change things, write a tempfile
-    // todo store tempfile name in private_data
-    string fpath = privData["fpath"];
-    spdlog::debug("Writing new config to {}", fpath);
-    writeConfig(fpath, vector<sysrepo::S_Val>());
-    spdlog::debug("config written");
+    auto fpath = tmpFile(request_id);
+    auto sess = static_pointer_cast<sr::Session>(session);
+
+    // The session already has the new datastore values
+    PdnsServerConfig c(sess->getConfigTree());
+
+    c.writeToFile(fpath);
   }
 
   if (event == SR_EV_DONE) {
-    // TODO copy the file and restart powerdns
+    auto fpath = tmpFile(request_id);
+
     try {
-      // Copy the running to the startup config
-      // TODO Are e responsible for this?
+      fs::rename(fpath, privData["fpath"]);
+    } catch (const exception &e) {
+      spdlog::warn("Unable to move {} to {}: {}", fpath, privData["fpath"], e.what());
+      return SR_ERR_OPERATION_FAILED;
+    }
+
+    try {
+      // TODO Are we responsible for this, or should we let the network service controller decide?
       session->copy_config(SR_DS_RUNNING, SR_DS_STARTUP, module_name);
     }
     catch (const sysrepo::sysrepo_exception& se) {
       spdlog::warn("Could not copy running config to startup config");
       return SR_ERR_OPERATION_FAILED;
     }
+    // TODO signal systemd for a pdns restart
   }
 
   if (event == SR_EV_ABORT) {
-    // TODO Rollback changes
+    auto fpath = tmpFile(request_id);
+    try {
+      fs::remove(fpath);
+    } catch (const exception &e) {
+      spdlog::warn("Unable to remove temporary file fpath={}: {}", fpath, e.what());
+    }
   }
   return SR_ERR_OK;
 }

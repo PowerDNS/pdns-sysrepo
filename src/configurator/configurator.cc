@@ -19,10 +19,12 @@
 #include <vector>
 #include <fstream>
 
-#include <sysrepo-cpp/Sysrepo.hpp>
-#include <sysrepo-cpp/Session.hpp>
 #include <boost/filesystem.hpp>
 #include <mstch/mstch.hpp>
+#include <spdlog/spdlog.h>
+
+#include "configurator.hh"
+#include "util.hh"
 
 using namespace std;
 namespace fs = boost::filesystem;
@@ -32,33 +34,79 @@ namespace pdns_conf
 static const string pdns_conf_template = R"(
 local-address =
 {{ #local-address }}
-local-address += {{ address }}
+local-address += {{ address }}:{{ port }} # {{ name }}
 {{ /local-address }}
 master = {{ master }}
 slave = {{ slave }}
 )";
 
-void writeConfig(const string& fpath, const vector<sysrepo::S_Val>& values) {
+PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
+  // spdlog::debug("root node name={} schema_type={} path={}", node->schema()->name(), libyangNodeType2String(node->schema()->nodetype()), node->schema()->path());
+
+  libyang::S_Data_Node_Leaf_List leaf;
+  string nodename(node->schema()->name());
+
+  if (node->schema()->nodetype() == LYS_CONTAINER && nodename == "pdns-server") {
+    auto child = node->child();
+    do {
+      nodename = child->schema()->name();
+      // spdlog::debug("node name={} schema_type={} path={}", child->schema()->name(), libyangNodeType2String(child->schema()->nodetype()), child->schema()->path());
+      if (child->schema()->nodetype() == LYS_LEAF) {
+        leaf = make_shared<libyang::Data_Node_Leaf_List>(child);
+      }
+      if(nodename == "master") {
+        master = leaf->value()->bln();
+      }
+      if (nodename == "slave") {
+        slave = leaf->value()->bln();
+      }
+      if (nodename == "listen-addresses") {
+        listenAddress la;
+        for (const auto &n: child->tree_dfs()) {
+          if(n->schema()->nodetype() == LYS_LEAF) {
+            string leafName(n->schema()->name());
+            leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+            if(leafName == "name") {
+              la.name = leaf->value()->string();
+            }
+            if(leafName == "ip-address") {
+              la.address = leaf->value()->string();
+            }
+            if(leafName == "port") {
+              la.port = leaf->value()->uint16();
+            }
+          }
+        }
+        listenAddresses.push_back(la);
+      }
+    } while(child = child->next());
+  }
+}
+
+void PdnsServerConfig::writeToFile(const string &fpath) {
+  spdlog::debug("Attempting to create configuration file={}", fpath);
   auto p = fs::path(fpath);
   auto d = p.remove_filename();
   if (!fs::is_directory(d)) {
     // TODO find better exception
     throw range_error(d.string() + " is not a directory");
   }
-  mstch::map ctx{
-    {"master", string("no")},
-    {"slave", string("no")},
-    {"local-address", mstch::array{mstch::map{{"address", string("127.0.0.1:53")}}}}};
-  for (auto const& v : values) {
-    if (string(v->xpath()) == "/pdns-server/pdns-server/master") {
-      ctx["master"] = v->val_to_string();
-    }
-    if (string(v->xpath()) == "/pdns-server/pdns-server/slave") {
-      ctx["slave"] = v->val_to_string();
-    }
-    // TODO parse out the list of listen addrs.
+
+  mstch::array laddrs;
+  for (const auto& la : listenAddresses) {
+    laddrs.push_back(mstch::map{
+      {"name", la.name},
+      {"address", la.address},
+      {"port", la.port}});
   }
 
+  mstch::map ctx{
+    {"master", bool2str(master)},
+    {"slave", bool2str(slave)},
+    {"local-address", laddrs}
+  };
+
+  spdlog::trace("Generated config:\n{}", mstch::render(pdns_conf_template, ctx));
   // TODO tmpfile
   std::ofstream outputFile(fpath);
   if (!outputFile) {
@@ -67,5 +115,10 @@ void writeConfig(const string& fpath, const vector<sysrepo::S_Val>& values) {
 
   outputFile << mstch::render(pdns_conf_template, ctx);
   outputFile.close();
+  spdlog::trace("Written config file {}", fpath);
+}
+
+string PdnsServerConfig::bool2str(const bool b) {
+  return b ? "yes" : "no";
 }
 } // namespace pdns_conf

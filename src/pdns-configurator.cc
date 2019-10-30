@@ -89,36 +89,38 @@ int main(int argc, char* argv[]) {
   try {
     auto myConfig = pdns_conf::Config(vm["config"].as<string>());
 
-    spdlog::info("Starting Connection");
+    spdlog::debug("Starting connection to sysrepo");
     sysrepo::S_Connection conn(new sysrepo::Connection());
 
-    spdlog::info("Starting session");
+    spdlog::debug("Starting session");
     auto sess = sr::Session(conn);
 
-    spdlog::info("Getting current config");
     try {
-      auto values = sess.getConfig();
-      spdlog::info("Writing config to {}", myConfig.getPdnsConfigFilename());
-      pdns_conf::writeConfig(myConfig.getPdnsConfigFilename(), values);
-      spdlog::debug("Writing done");
+      spdlog::debug("Getting current config");
+      // Sysrepo will copy the startup config to the running config on the first query
+      auto node = sess.getConfigTree();
+      auto config = make_shared<pdns_conf::PdnsServerConfig>(node);
+      config->writeToFile(myConfig.getPdnsConfigFilename());
 
       spdlog::debug("Registring config change callbacks");
       auto s = sysrepo::Subscribe(make_shared<sysrepo::Session>(sess));
       auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename());
       s.module_change_subscribe("pdns-server", cb);
       spdlog::trace("callbacks registered, registring signal handlers");
+
       signal(SIGINT, siginthandler);
       signal(SIGSTOP, siginthandler);
       spdlog::trace("signalhandlers registered, notifying systemd we're ready");
+
       sd_notify(0, "READY=1");
       spdlog::info("Startup complete");
+
       while (!doExit) {
         sleep(500);
       }
+
       spdlog::info("Exit requested");
       sd_notify(0, "STOPPING=1");
-      // Session::session_stop() seems to hang
-      // sess.session_stop();
     }
     catch (const sysrepo::sysrepo_exception& e) {
       auto errs = sess.get_error();

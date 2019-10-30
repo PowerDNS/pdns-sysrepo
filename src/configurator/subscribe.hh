@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
 #include <sysrepo-cpp/Session.hpp>
 #include <spdlog/spdlog.h>
+
+#include "configurator.hh"
 
 using namespace std;
 
@@ -35,6 +38,11 @@ public:
     uint32_t request_id, void* private_data) override;
 
 private:
+  string tmpFile(const uint32_t request_id);
+
   map<string, string> privData;
+
+  // TODO figure out if we actually need this
+  shared_ptr<PdnsServerConfig> pdnsServerConfig;
 };
 } // namespace pdns_conf

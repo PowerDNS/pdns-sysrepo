@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#pragma once
 #include <vector>
 #include <sysrepo-cpp/Session.hpp>
 
@@ -31,10 +31,9 @@ public:
   ~Session();
   void session_stop();
 
-  vector<sysrepo::S_Val> get_items(const string xpath, uint32_t timeout_ms = 0);
-  vector<sysrepo::S_Val> getConfig(uint32_t timeout_ms = 0);
+  libyang::S_Data_Node getConfigTree(uint32_t timeout_ms = 0);
 
-private:
-  bool d_started{false};
+  private:
+    bool d_started{false};
 };
 } // namespace sr

@@ -1,5 +1,26 @@
 # PDNS Sysrepo Configurator
 
+## Working with the software
+After installing the dependencies and building the PDNS Sysrepo configurator (see below), the configurator can be run and config can be changed.
+
+The tool requires a configuration file in YAML format, there is an annotated example available.
+By default `/etc/pdns-configurator/pdns-configurator.yaml` is used, but the `-c` option can be used to specify a different file.
+
+### Loading the YANG models into sysrepo
+Use the `sysrepoctl` tool to load the YANG models:
+
+```bash
+sysrepoctl -i yang/ietf-inet-types@2013-07-15.yang
+sysrepoctl -i yang/pdns-server.yang
+```
+
+Should the pdns-server.yang be updated, use `sysrepoctl -U yang/pdns-server.yang`.
+
+### Changing PowerDNS configuration
+In lieu of using NETOPEER2 to manage the YANG datastore, the `sysrepocfg` tool can be used to modify configuration at runtime.
+
+`sysrepocfg --edit -v4 -f json -m pdns-server` will spawen an editor allowing changing the configuration in JSON format.
+
 ## How to set up a working development environment
 This project requires sysrepo 1.2.x and its C++ bindings, which in turn require the libyang C++ bindings.
 
@@ -67,6 +88,7 @@ cd ../..
 SYSREPO_INSTALL="${HOME}/.local/opt/sysrepo"
 export PKG_CONFIG_PATH="${SYSREPO_INSTALL}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 export PATH="${SYSREPO_INSTALL}/bin:${PATH}"
+export LD_LIBRARY_PATH="${SYSREPO_INSTALL}/lib:${LD_LIBRARY_PATH}"
 ```
 
 ## Building the software

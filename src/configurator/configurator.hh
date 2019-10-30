@@ -13,15 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
 #include <string>
 #include <vector>
 
 #include <sysrepo-cpp/Sysrepo.hpp>
+#include <libyang/Libyang.hpp>
+#include <libyang/Tree_Data.hpp>
 
 using namespace std;
 
 namespace pdns_conf
 {
-void writeConfig(const string& fpath, const vector<sysrepo::S_Val>& values);
+class PdnsServerConfig
+{
+public:
+  PdnsServerConfig(const libyang::S_Data_Node &node);
+  void writeToFile(const string &fpath);
+  void changeConfigValue(const libyang::S_Data_Node_Leaf_List &node);
+  void deleteConfigValue();
+
+private:
+  string bool2str(const bool b);
+  struct listenAddress {
+      string name;
+      string address;
+      uint16_t port;
+  };
+  vector<listenAddress> listenAddresses;
+  bool master;
+  bool slave;
+};
 } // namespace pdns_conf
