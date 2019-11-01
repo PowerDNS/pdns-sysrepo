@@ -1,6 +1,6 @@
 project('pdns-sysrepo', 'cpp',
   version : '0.0.0',
-  default_options : ['cpp_std=c++11'],
+  default_options : ['cpp_std=c++17'],
   license: ['MIT', 'Apache2']
   )
 
@@ -18,6 +18,9 @@ mstch_dep = dependency('mstch')
 yaml_dep = dependency('yaml-cpp')
 systemd_dep = dependency('libsystemd')
 
+## This will need to be shipped to the customer though...
+sdbusplus_dep = dependency('sdbusplus')
+
 executable('pdns-sysrepo-configurator', 'src/pdns-configurator.cc',
   sr_wrapper, pdns_configurator,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, systemd_dep, libyang_cpp_dep])
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, systemd_dep, libyang_cpp_dep, sdbusplus_dep])

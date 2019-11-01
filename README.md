@@ -25,11 +25,16 @@ In lieu of using NETOPEER2 to manage the YANG datastore, the `sysrepocfg` tool c
 This project requires sysrepo 1.2.x and its C++ bindings, which in turn require the libyang C++ bindings.
 
 ### Dependencies
-This project uses C++11 and requires the following libraries:
+This project uses C++17 and requires the following libraries:
 
+ * boost filesystem (`libboost-filesystem-dev`)
+ * libsystemd (`libsystemd-dev`)
  * libyang (see below)
- * sysrepo (see below)
+ * mstch (`libmstch-dev`)
+ * sdbusplus (see below)
  * spdlog (`libspdlog-dev`)
+ * sysrepo (see below)
+ * yaml-cpp (`libyaml-cpp-dev`)
 
 It also requires the `meson` package to build.
 
@@ -79,6 +84,15 @@ cmake \
     -DGEN_CPP_BINDINGS=1 \
     -Wno-dev \
     ..
+make install
+cd ../..
+
+## sdbusplus is not in Debian, but can be statically linked into the binary during build-time
+### You do need to have the autoconf-archive package installed
+git clone https://github.com/openbmc/sdbusplus.git
+cd sdbusplus
+./bootstrap.sh
+./configure --disable-sdbuspp --enable-static --prefix=${SYSREPO_INSTALL}
 make install
 cd ../..
 ```

@@ -17,6 +17,7 @@
 
 #include <sysrepo-cpp/Session.hpp>
 #include <spdlog/spdlog.h>
+#include <sdbusplus/message.hpp>
 
 #include "configurator.hh"
 
@@ -39,8 +40,10 @@ public:
 
 private:
   string tmpFile(const uint32_t request_id);
+  void restartService(const string &service);
 
   map<string, string> privData;
+  vector<string> sdJobs;
 
   // TODO figure out if we actually need this
   shared_ptr<PdnsServerConfig> pdnsServerConfig;
