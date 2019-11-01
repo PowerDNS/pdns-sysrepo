@@ -48,6 +48,25 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
 
   if (node->schema()->nodetype() == LYS_CONTAINER && nodename == "pdns-server") {
     auto child = node->child();
+    /*
+     * Assume the tree looks like this:
+     *                /- pdns-server ---------------\
+     *               /     |                         \
+     *            master  listen-address[name=foo]    listen-address[name=bar]
+     *                       /          |      \         |       |           \
+     *                     name  ip-address    port     name    ip-address   port
+     * 
+     * We walk through the tree horizontally, skipping the root. Each child need its own
+     * parsing code for its own data, as the it can be a leaf-list, but the top-level loop
+     * will **only** go through all siblings below pdns-server.
+     * 
+     * In this example, we first see 'master' and handle it.
+     * Next we see 'listen-address[name=foo]' and we know it is a leaf-list. We use a depth-first search
+     * (even though we know listen-address is one level deep) to parse all the leafs into a
+     * struct and adding that struct into a vector.
+     * 
+     * Then we see 'listen-address[name=bar]' and do the same thing.
+     */
     do {
       nodename = child->schema()->name();
       // spdlog::debug("node name={} schema_type={} path={}", child->schema()->name(), libyangNodeType2String(child->schema()->nodetype()), child->schema()->path());
