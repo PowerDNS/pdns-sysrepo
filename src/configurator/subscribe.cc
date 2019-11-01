@@ -58,6 +58,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
     auto fpath = tmpFile(request_id);
 
     try {
+      spdlog::debug("Moving {} to {}", fpath, privData["fpath"]);
       fs::rename(fpath, privData["fpath"]);
     } catch (const exception &e) {
       spdlog::warn("Unable to move {} to {}: {}", fpath, privData["fpath"], e.what());
