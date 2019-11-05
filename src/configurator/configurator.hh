@@ -41,7 +41,7 @@ private:
       string address;
       uint16_t port;
   };
-  vector<listenAddress> listenAddresses;
+  vector<listenAddress> listenAddresses{};
   bool master;
   bool slave;
 };

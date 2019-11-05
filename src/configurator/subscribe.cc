@@ -48,6 +48,8 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
     srEvent2String(event), request_id);
 
   if (event == SR_EV_CHANGE) {
+    /*
+    TODO fix when sysrepo bug https://github.com/sysrepo/sysrepo/issues/1597 is fixed
     auto fpath = tmpFile(request_id);
     auto sess = static_pointer_cast<sr::Session>(session);
 
@@ -55,11 +57,19 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
     PdnsServerConfig c(sess->getConfigTree());
 
     c.writeToFile(fpath);
+    */
   }
 
   if (event == SR_EV_DONE) {
     auto fpath = tmpFile(request_id);
 
+    auto sess = static_pointer_cast<sr::Session>(session);
+    PdnsServerConfig c(sess->getConfigTree());
+
+    c.writeToFile(privData["fpath"]);
+
+    /*
+    TODO fix when sysrepo bug https://github.com/sysrepo/sysrepo/issues/1597 is fixed
     try {
       spdlog::debug("Moving {} to {}", fpath, privData["fpath"]);
       fs::rename(fpath, privData["fpath"]);
@@ -67,6 +77,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       spdlog::warn("Unable to move {} to {}: {}", fpath, privData["fpath"], e.what());
       return SR_ERR_OPERATION_FAILED;
     }
+    */
 
     try {
       // TODO Are we responsible for this, or should we let the network service controller decide?
