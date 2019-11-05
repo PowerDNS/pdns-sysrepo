@@ -29,9 +29,10 @@ namespace fs = boost::filesystem;
 
 namespace pdns_conf
 {
-sysrepo::S_Callback getServerConfigCB(const string& fpath) {
+sysrepo::S_Callback getServerConfigCB(const string& fpath, const string &serviceName) {
   sysrepo::S_Callback cb(new ServerConfigCB(
-    {{"fpath", fpath}}));
+    {{"fpath", fpath},
+      {"service", serviceName}}));
   return cb;
 }
 
@@ -173,6 +174,9 @@ void ServerConfigCB::restartService(const string& service) {
   }
   catch (const sdbusplus::exception_t& e) {
     spdlog::warn("Could not communicate to dbus: {}", e.description());
+  }
+  catch (const runtime_error &e) {
+    spdlog::warn("Error restarting: {}", e.what());
   }
 }
 } // namespace pdns_conf

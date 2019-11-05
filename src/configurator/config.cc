@@ -36,5 +36,8 @@ Config::Config(string fpath) :
   if (c["pdns_conf"]) {
     d_pdns_conf = c["pdns_conf"].as<string>();
   }
+  if (c["pdns_service"]) {
+    d_pdns_service = c["pdns_service"].as<string>();
+  }
 }
 } // namespace pdns_conf

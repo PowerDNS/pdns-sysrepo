@@ -25,7 +25,7 @@ using namespace std;
 
 namespace pdns_conf
 {
-sysrepo::S_Callback getServerConfigCB(const string& fpath);
+sysrepo::S_Callback getServerConfigCB(const string& fpath, const string& serviceName);
 
 class ServerConfigCB : public sysrepo::Callback
 {
@@ -40,7 +40,7 @@ public:
 
 private:
   string tmpFile(const uint32_t request_id);
-  void restartService(const string &service);
+  void restartService(const string& service);
 
   map<string, string> privData;
   vector<string> sdJobs;

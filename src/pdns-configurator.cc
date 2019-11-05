@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 
       spdlog::debug("Registring config change callbacks");
       auto s = sysrepo::Subscribe(make_shared<sysrepo::Session>(sess));
-      auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename());
+      auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename(), myConfig.getServiceName());
       s.module_change_subscribe("pdns-server", cb);
       spdlog::trace("callbacks registered, registring signal handlers");
 

@@ -1,0 +1,15 @@
+/*
+ * Policykit file for the PowerDNS configurator.
+ * Store this file into /etc/polkit-1/rules.d/10-pdns-config.rules and edit if
+ * required. This ensures that the unpriviliged user running the configurator
+ * can restart the PowerDNS service using DBUS.
+ */
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        action.lookup("verb") == "restart" &&
+        action.lookup("unit") == "pdns.service" &&
+        subject.user == "pdns-configurator") {
+        return polkit.Result.YES;
+    }
+});
+// vim: noai:ts=4:sw=4:ft=javascript

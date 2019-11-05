@@ -4,3 +4,8 @@
 # to use a 'drop-in' config file in the pdns.d directory and set the `include-dir`
 # directive in the main pdns.conf
 pdns_conf: /etc/powerdns/pdns.conf.d/sysrepo.conf
+
+## pdns_service
+#
+# The name of the PowerDNS systemd service. This is used to restart the PowerDNS service
+pdns_service: pdns.service

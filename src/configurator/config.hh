@@ -28,9 +28,11 @@ class Config
 public:
   Config(string fpath);
   string getPdnsConfigFilename() { return d_pdns_conf; };
+  string getServiceName() { return d_pdns_service; };
 
 private:
   string d_config_path;
+  string d_pdns_service = "pdns.service";
   string d_pdns_conf = "/etc/powerdns/pdns.conf.d/sysrepo.conf";
 };
 } // namespace pdns_conf
