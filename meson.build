@@ -4,6 +4,11 @@ project('pdns-sysrepo', 'cpp',
   license: ['MIT', 'Apache2']
   )
 
+conf_data = configuration_data()
+conf_data.set('prefix', get_option('prefix'))
+conf_data.set('bindir', get_option('bindir'))
+conf_data.set('version', meson.project_version())
+
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
 pdns_configurator = files('src/configurator/configurator.cc', 'src/configurator/config.cc',
   'src/configurator/subscribe.hh', 'src/configurator/subscribe.cc',
@@ -21,16 +26,17 @@ libsystemd_dep = dependency('libsystemd')
 ## This will need to be shipped to the customer though...
 sdbusplus_dep = dependency('sdbusplus')
 
+version_h = configure_file(input : 'version.h.in',
+               output : 'version.h',
+               configuration : conf_data)
+
 executable('pdns-sysrepo-configurator', 'src/pdns-configurator.cc',
-  sr_wrapper, pdns_configurator,
+  sr_wrapper, pdns_configurator, version_h,
   dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep],
   install: true)
 
 # Generate a systemd unit file
 systemd_dep = dependency('systemd')
-conf_data = configuration_data()
-conf_data.set('prefix', get_option('prefix'))
-conf_data.set('bindir', get_option('bindir'))
 configure_file(input : 'pdns-configurator.service.in',
                output : 'pdns-configurator.service',
                configuration : conf_data,
