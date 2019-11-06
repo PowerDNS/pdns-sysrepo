@@ -16,11 +16,23 @@ spdlog_dep = dependency('spdlog')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options'])
 mstch_dep = dependency('mstch')
 yaml_dep = dependency('yaml-cpp')
-systemd_dep = dependency('libsystemd')
+libsystemd_dep = dependency('libsystemd')
 
 ## This will need to be shipped to the customer though...
 sdbusplus_dep = dependency('sdbusplus')
 
 executable('pdns-sysrepo-configurator', 'src/pdns-configurator.cc',
   sr_wrapper, pdns_configurator,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, systemd_dep, libyang_cpp_dep, sdbusplus_dep])
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep],
+  install: true)
+
+# Generate a systemd unit file
+systemd_dep = dependency('systemd')
+conf_data = configuration_data()
+conf_data.set('prefix', get_option('prefix'))
+conf_data.set('bindir', get_option('bindir'))
+configure_file(input : 'pdns-configurator.service.in',
+               output : 'pdns-configurator.service',
+               configuration : conf_data,
+               install: true,
+               install_dir: systemd_dep.get_pkgconfig_variable('systemdsystemunitdir'))
