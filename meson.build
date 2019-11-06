@@ -42,3 +42,5 @@ configure_file(input : 'pdns-configurator.service.in',
                configuration : conf_data,
                install: true,
                install_dir: systemd_dep.get_pkgconfig_variable('systemdsystemunitdir'))
+
+install_data('polkit/10-pdns.rules', install_dir: get_option('datadir') + '/polkit-1/rules.d')
