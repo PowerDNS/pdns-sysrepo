@@ -20,7 +20,7 @@
 
 #include <spdlog/spdlog.h>
 #include <boost/program_options.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <systemd/sd-daemon.h>
 
 #include "sr_wrapper/session.hh"

@@ -53,6 +53,7 @@ This project requires sysrepo 1.2.x and its C++ bindings, which in turn require 
 This project uses C++17 and requires the following libraries:
 
  * boost filesystem (`libboost-filesystem-dev`)
+ * boost program options (`libboost-program-options-dev`)
  * libsystemd (`libsystemd-dev`)
  * libyang (see below)
  * mstch (`libmstch-dev`)
