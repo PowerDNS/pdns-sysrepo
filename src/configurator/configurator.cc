@@ -38,6 +38,14 @@ local-address += {{ address }}:{{ port }} # {{ name }}
 {{ /local-address }}
 master = {{ master }}
 slave = {{ slave }}
+
+launch =
+{{ #launch }}
+launch += {{ backendtype }}:{{ name }}
+{{ /launch }}
+{{ # backend-options }}
+{{ name }}-{{ option }} = {{ value }}
+{{ /backend-options }}
 )";
 
 PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
@@ -98,11 +106,40 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
         }
         listenAddresses.push_back(la);
       }
+
+      if (nodename == "backend") {
+        backend b;
+        for (const auto &n: child->tree_dfs()) {
+          if(n->schema()->nodetype() == LYS_LEAF) {
+            string leafName(n->schema()->name());
+            leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+            if(leafName == "name") {
+              b.name = leaf->value_str();
+            }
+            else if(leafName == "backendtype") {
+              b.backendtype = leaf->value_str();
+            }
+            else {
+              b.options.push_back({
+                leafName,
+                leaf->value_str()
+              });
+            }
+          }
+        }
+        backends.push_back(b);
+      }
+
     } while(child = child->next());
   }
 }
 
 void PdnsServerConfig::writeToFile(const string &fpath) {
+  // Don't do HTML escaping, we're not a webserver
+  mstch::config::escape = [](const std::string& str) -> std::string {
+    return str;
+  };
+
   spdlog::debug("Attempting to create configuration file={}", fpath);
   auto p = fs::path(fpath);
   auto d = p.remove_filename();
@@ -119,10 +156,28 @@ void PdnsServerConfig::writeToFile(const string &fpath) {
       {"port", la.port}});
   }
 
+  mstch::array backendOptions;
+  mstch::array backendLaunch;
+  for (const auto& b : backends) {
+      backendLaunch.push_back(mstch::map{
+        {"name", b.name},
+        {"backendtype", b.backendtype}});
+
+    for (const auto& o : b.options) {
+      backendOptions.push_back(mstch::map{
+        {"name", b.name},
+        {"option", o.first},
+        {"value", o.second}
+      });
+    }
+  }
+
   mstch::map ctx{
     {"master", bool2str(master)},
     {"slave", bool2str(slave)},
-    {"local-address", laddrs}
+    {"local-address", laddrs},
+    {"launch", backendLaunch},
+    {"backend-options", backendOptions}
   };
 
   spdlog::trace("Generated config:\n{}", mstch::render(pdns_conf_template, ctx));

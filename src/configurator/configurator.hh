@@ -41,7 +41,15 @@ private:
       string address;
       uint16_t port;
   };
+
+  struct backend {
+    string name;
+    string backendtype;
+    vector<pair<string, string>> options{};
+  };
+
   vector<listenAddress> listenAddresses{};
+  vector<backend> backends;
   bool master;
   bool slave;
 };

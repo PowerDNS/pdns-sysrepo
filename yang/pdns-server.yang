@@ -37,9 +37,52 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2019-11-08 {
+        description
+          "Added backends and config";
+    }
+
     revision 2019-10-25 {
         description
           "Initial revision, not for public consumption yet";
+    }
+
+    typedef backendtype {
+      type enumeration {
+        enum "gsqlite3";
+        /*
+        enum "gmysql";
+        enum "gpgsql";
+        enum "lmdb";
+        */
+      }
+    }
+
+    typedef sqlite3-journal-mode {
+      description
+      "Possible PRAGMA values for the sqlite3 journal mode setting";
+      
+      type enumeration {
+        enum "DELETE";
+        enum "MEMORY";
+        enum "OFF";
+        enum "PERSIST";
+        enum "TRUNCATE";
+        enum "WAL";
+      }
+    }
+
+    typedef sqlite3-synchronous-mode {
+      type enumeration {
+        enum "0"; // OFF
+        enum "OFF";
+        enum "1"; // NORMAL
+        enum "NORMAL";
+        enum "2"; // FULL
+        enum "FULL";
+        enum "3"; // EXTRA
+        enum "EXTRA";
+      }
     }
 
     /*
@@ -54,6 +97,53 @@ module pdns-server {
         }
         leaf port {
             type inet:port-number;
+        }
+    }
+
+    grouping backend {
+        description
+          "The configuration of a PowerDNS backend";
+        leaf backendtype { // TODO figure out a better name!
+            type backendtype;
+        }
+
+        leaf database {
+            description
+              "Name or location of the database";
+            type string;
+            when "../backendtype = 'gsqlite3'";
+        }
+
+        leaf pragma-journal-mode {
+            description
+              "SQLite3 journal mode to set";
+            type sqlite3-journal-mode;
+            default "WAL";
+            when "../backendtype = 'gsqlite3'";
+        }
+
+        leaf pragma-synchronous {
+            description
+              "Set this to OFF for blazing speed";
+            type sqlite3-synchronous-mode;
+            default "NORMAL";
+            when "../backendtype = 'gsqlite3'";
+        }
+
+        leaf pragma-foreign-keys {
+            description
+              "Enable foreign key constraints";
+            type boolean;
+            default false;
+            when "../backendtype = 'gsqlite3'";
+        }
+
+        leaf dnssec {
+            description
+              "Enable DNSSEC support in this backend";
+            type boolean;
+            default false;
+            when "../backendtype = 'gsqlite3'";
         }
     }
 
@@ -90,6 +180,21 @@ module pdns-server {
                This means checking zone validity and retrieving when out of date.";
             type boolean;
             default false;
+        }
+
+        list backend {
+            description
+              "All backends that should be launched on startup, with their config";
+
+            /*
+            As there's no 'default' backend... we can't enforce this
+            min-elements 1;
+            */
+            key "name";
+            leaf name {
+                type string;
+            }
+            uses backend;
         }
     }
 }
