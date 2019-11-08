@@ -1,0 +1,22 @@
+FROM dist-base as sdbusplus-builder
+ARG APT_URL
+RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
+
+
+RUN mkdir -p /dist/3rdparty /sdbusplus /builder-support
+WORKDIR /sdbusplus
+
+RUN curl -L https://github.com/openbmc/sdbusplus/archive/4212292bcf136d04b38ba5116aa568b0fa312798.tar.gz | gunzip | tar xf - && \
+      mv sdbusplus-4212292bcf136d04b38ba5116aa568b0fa312798       sdbusplus_0.0.0+git.20190701.4212292
+
+ADD builder-support/debian/sdbusplus sdbusplus_0.0.0+git.20190701.4212292/debian
+
+RUN mkdir /builder
+ADD builder/helpers /builder/helpers
+
+RUN /builder/helpers/build-debs.sh sdbusplus_0.0.0+git.20190701.4212292
+
+RUN cp libsdbus*.deb /dist/3rdparty
+RUN cp libsdbus*.ddeb /dist/3rdparty
+
+RUN mkdir /sdist

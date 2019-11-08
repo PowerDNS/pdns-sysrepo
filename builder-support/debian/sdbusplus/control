@@ -1,0 +1,35 @@
+Source: sdbusplus
+Priority: optional
+Maintainer: Pieter Lexis <pieter.lexis@powerdns.com>
+Build-Depends: debhelper (>= 11~),
+               libsystemd-dev,
+               autoconf-archive,
+               autoconf,
+               libtool,
+               pkg-config
+Standards-Version: 4.1.4
+Section: libs
+Homepage: https://github.com/openbmc/sdbusplus
+
+Package: libsdbusplus-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libsdbusplus1 (= ${binary:Version}), ${misc:Depends}
+Description: C++ bindings for systemd dbus APIs -- development files
+ The sdbusplus library builds on top of the sd-bus library to create
+ a modern C++ API for D-Bus.  The library attempts to be
+ as lightweight as possible, usually compiling to exactly the sd-bus API
+ calls that would have been necessary, while also providing compile-time
+ type-safety and memory leak protection afforded by modern C++ practices.
+
+Package: libsdbusplus1
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: C++ bindings for systemd dbus APIs
+ The sdbusplus library builds on top of the sd-bus library to create
+ a modern C++ API for D-Bus.  The library attempts to be
+ as lightweight as possible, usually compiling to exactly the sd-bus API
+ calls that would have been necessary, while also providing compile-time
+ type-safety and memory leak protection afforded by modern C++ practices.

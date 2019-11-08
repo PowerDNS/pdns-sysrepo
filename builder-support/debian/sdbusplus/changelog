@@ -1,0 +1,5 @@
+sdbusplus (0.0.0+git.20190701.4212292-1) UNRELEASED; urgency=medium
+
+  * Initial release
+
+ -- Pieter Lexis <pieter.lexis@powerdns.com>  Fri, 08 Nov 2019 11:32:41 +0100
