@@ -21,6 +21,31 @@ In lieu of using NETOPEER2 to manage the YANG datastore, the `sysrepocfg` tool c
 
 `sysrepocfg --edit -v4 -f json -m pdns-server` will spawen an editor allowing changing the configuration in JSON format.
 
+An example of a configuration (in JSON format) may look like this:
+
+```json
+{
+  "pdns-server:pdns-server": {
+    "listen-addresses": [
+      {
+        "name": "main",
+        "ip-address": "127.0.0.1",
+        "port": 5300
+      }
+    ],
+    "backend": [
+      {
+        "name": "main",
+        "backendtype": "gsqlite3",
+        "database": "/var/lib/powerdns/pdns.sqlite3"
+      }
+    ],
+    "master": true,
+    "slave": false
+  }
+}
+```
+
 ## How to set up a working development environment
 This project requires sysrepo 1.2.x and its C++ bindings, which in turn require the libyang C++ bindings.
 
