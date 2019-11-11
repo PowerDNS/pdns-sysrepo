@@ -1,4 +1,4 @@
 new-package-should-close-itp-bug
-systemd-service-file-refers-to-unusual-wantedby-target lib/systemd/system/pdns-configurator.service pdns.service
-binary-without-manpage usr/bin/pdns-sysrepo-configurator
-service-key-has-whitespace lib/systemd/system/pdns-configurator.service at line 8
+systemd-service-file-refers-to-unusual-wantedby-target lib/systemd/system/pdns-sysrepo.service pdns.service
+binary-without-manpage usr/bin/pdns-sysrepo
+service-key-has-whitespace lib/systemd/system/pdns-sysrepo.service at line 8

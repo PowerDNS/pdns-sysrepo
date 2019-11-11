@@ -8,7 +8,7 @@ polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.systemd1.manage-units" &&
         action.lookup("verb") == "restart" &&
         action.lookup("unit") == "pdns.service" &&
-        subject.user == "pdns-configurator") {
+        subject.user == "pdns-sysrepo") {
         return polkit.Result.YES;
     }
 });

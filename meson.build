@@ -10,7 +10,7 @@ conf_data.set('bindir', get_option('bindir'))
 conf_data.set('version', meson.project_version())
 
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
-pdns_configurator = files('src/configurator/configurator.cc', 'src/configurator/config.cc',
+pdns_sysrepo = files('src/configurator/configurator.cc', 'src/configurator/config.cc',
   'src/configurator/subscribe.hh', 'src/configurator/subscribe.cc',
   'src/configurator/util.hh', 'src/configurator/util.cc'
   )
@@ -44,17 +44,18 @@ version_h = configure_file(input : 'src/version.h.in',
                output : 'version.h',
                configuration : conf_data)
 
-executable('pdns-sysrepo-configurator', 'src/pdns-configurator.cc',
-  sr_wrapper, pdns_configurator, version_h,
+executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
+  sr_wrapper, pdns_sysrepo, version_h,
   dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep],
   install: true)
 
 # Generate a systemd unit file
 systemd_dep = dependency('systemd')
-configure_file(input : 'pdns-configurator.service.in',
-               output : 'pdns-configurator.service',
+configure_file(input : 'pdns-sysrepo.service.in',
+               output : 'pdns-sysrepo.service',
                configuration : conf_data,
                install: true,
                install_dir: systemd_dep.get_pkgconfig_variable('systemdsystemunitdir'))
 
 install_data('polkit/10-pdns.rules', install_dir: get_option('datadir') + '/polkit-1/rules.d')
+install_data('pdns-sysrepo.example.yaml', install_dir: get_option('sysconfdir') + '/pdns-sysrepo')

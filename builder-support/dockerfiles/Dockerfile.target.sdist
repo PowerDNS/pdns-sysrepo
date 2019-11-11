@@ -28,7 +28,7 @@ RUN cd /dist/3rdparty && \
 
 @EXEC sdist_dirs=(builder builder-support polkit src sr_wrapper subprojects yang .git)
 @EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /pdns-sysrepo-sdist/$d/" ; done
-ADD LICENSE meson.build pdns-configurator.example.yaml pdns-configurator.service.in pdns-configurator.yaml README.md /pdns-sysrepo-sdist/
+ADD LICENSE meson.build pdns-sysrepo.example.yaml pdns-sysrepo.service.in README.md /pdns-sysrepo-sdist/
 
 WORKDIR /pdns-sysrepo-sdist
 RUN meson build && \

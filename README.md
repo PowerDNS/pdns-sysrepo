@@ -1,10 +1,10 @@
 # PDNS Sysrepo Configurator
 
 ## Working with the software
-After installing the dependencies and building the PDNS Sysrepo configurator (see below), the configurator can be run and config can be changed.
+After installing the dependencies and building the PDNS Sysrepo plugin (see below), the plugin can be run and config can be changed.
 
 The tool requires a configuration file in YAML format, there is an annotated example available.
-By default `/etc/pdns-configurator/pdns-configurator.yaml` is used, but the `-c` option can be used to specify a different file.
+By default `/etc/pdns-sysrepo/pdns-sysrepo.yaml` is used, but the `-c` option can be used to specify a different file.
 
 ### Loading the YANG models into sysrepo
 Use the `sysrepoctl` tool to load the YANG models:

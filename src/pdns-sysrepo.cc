@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
   po::options_description opts("Options");
   string logLevelHelp = fmt::format("The loglevel of the program, possible values are {}", fmt::join(logLevels, ", "));
 
-  opts.add_options()("help,h", "Output a help message")("config,c", po::value<string>()->default_value("/etc/pdns-configurator/pdns-configurator.yaml"), "Configuration file to load.")("loglevel,l", po::value<string>()->default_value("info"), logLevelHelp.c_str())("version,v", "Show the version");
+  opts.add_options()("help,h", "Output a help message")("config,c", po::value<string>()->default_value("/etc/pdns-sysrepo/pdns-sysrepo.yaml"), "Configuration file to load.")("loglevel,l", po::value<string>()->default_value("info"), logLevelHelp.c_str())("version,v", "Show the version");
 
   po::variables_map vm;
   try {
