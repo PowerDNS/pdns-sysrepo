@@ -1,0 +1,44 @@
+Source: libyang
+Priority: optional
+Maintainer: Pieter Lexis <pieter.lexis@powerdns.com>
+Build-Depends: debhelper (>= 11~),
+               cmake,
+               flex,
+               bison,
+               doxygen,
+               libpcre3-dev,
+               swig,
+               pkg-config,
+               graphviz
+Standards-Version: 4.1.4
+Section: libs
+Homepage: https://github.com/CESNET/libyang
+
+Package: libyang1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: YANG data modelling language parser and toolkit
+ Libyang is YANG data modelling language parser and toolkit
+ written (and providing API) in C.
+
+Package: libyang-dev
+Section: libdevel
+Architecture: any
+Depends: libyang1 (= ${binary:Version}), ${misc:Depends}
+Description: YANG data modelling language parser and toolkit
+ Development files
+
+Package: libyang-cpp1
+Section: libs
+Architecture: any
+Depends: libyang1 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: YANG data modelling language parser and toolkit
+ C++ bindings library
+
+Package: libyang-cpp-dev
+Section: libdevel
+Architecture: any
+Depends: libyang-cpp1 (= ${binary:Version}), ${misc:Depends}
+Description: YANG data modelling language parser and toolkit
+ C++ bindings library, development files
