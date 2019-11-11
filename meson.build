@@ -26,7 +26,7 @@ sdbusplus_dep = dependency('sdbusplus')
 # Ubuntu Bionic ships with an spdlog that does not support the API we use
 spdlog_dep = dependency('spdlog', required: false)
 if not spdlog_dep.found() or spdlog_dep.version().version_compare('<1.4.0')
-  spdlog_proj = subproject('spdlog-1.4.2')
+  spdlog_proj = subproject('spdlog-1.4.2', default_options: ['enable_examples=false'])
   spdlog_dep = spdlog_proj.get_variable('spdlog_dep')
 endif
 
