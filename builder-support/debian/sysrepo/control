@@ -1,0 +1,68 @@
+Source: sysrepo
+Priority: optional
+Maintainer: Pieter Lexis <pieter.lexis@powerdns.com>
+Build-Depends: debhelper (>= 11~),
+               cmake,
+               libyang-dev (>= 1.0),
+               libyang-cpp-dev (>= 1.0),
+               pkg-config
+Standards-Version: 4.1.4
+Section: libs
+Homepage: https://www.sysrepo.org
+Vcs-Git: https://github.com/sysrepo/sysrepo.git
+Vcs-Browser: https://github.com/sysrepo/sysrepo
+
+Package: libsysrepo-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libsysrepo4 (= ${binary:Version}), ${misc:Depends}
+Description: YANG configuration and operational state data store
+ Applications can use sysrepo to store their
+ configuration modeled by provided YANG model
+ instead of using e.g. flat configuration files.
+ Sysrepo will ensure data consistency of the
+ data stored in the datastore and enforce
+ data constraints defined by YANG model.
+ .
+ This package contains the development headers
+
+Package: libsysrepo4
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: YANG configuration and operational state data store
+ Applications can use sysrepo to store their
+ configuration modeled by provided YANG model
+ instead of using e.g. flat configuration files.
+ Sysrepo will ensure data consistency of the
+ data stored in the datastore and enforce
+ data constraints defined by YANG model.
+
+Package: libsysrepo-cpp4
+Architecture: any
+Multi-Arch: same
+Depends: libsysrepo4 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: YANG configuration and operational state data store
+ Applications can use sysrepo to store their
+ configuration modeled by provided YANG model
+ instead of using e.g. flat configuration files.
+ Sysrepo will ensure data consistency of the
+ data stored in the datastore and enforce
+ data constraints defined by YANG model.
+ .
+ This package contains the C++ bindings
+
+Package: libsysrepo-cpp-dev
+Architecture: any
+Multi-Arch: same
+Depends: libsysrepo-cpp4 (= ${binary:Version}), ${misc:Depends}
+Description: YANG configuration and operational state data store
+ Applications can use sysrepo to store their
+ configuration modeled by provided YANG model
+ instead of using e.g. flat configuration files.
+ Sysrepo will ensure data consistency of the
+ data stored in the datastore and enforce
+ data constraints defined by YANG model.
+ .
+ This package contains the C++ bindings' header files

@@ -1,0 +1,3 @@
+usr/include/sysrepo-cpp/*.hpp
+usr/lib/*/libSysrepo-cpp.so
+usr/lib/*/pkgconfig/libSysrepo-cpp.pc
