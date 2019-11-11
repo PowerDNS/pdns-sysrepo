@@ -8,10 +8,7 @@ RUN apt-get update && apt-get -y dist-upgrade
 @INCLUDE Dockerfile.libyang
 @INCLUDE Dockerfile.sysrepo
 
-FROM dist-base as pkg-base
-
-COPY --from=sdbusplus-builder /dist/3rdparty /dist/3rdparty
-COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
-COPY --from=sysrepo-builder /dist/3rdparty /dist/3rdparty
+# Here we build the real package
+@INCLUDE Dockerfile.pdns-sysrepo
 
 RUN mkdir /sdist

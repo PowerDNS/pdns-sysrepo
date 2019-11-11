@@ -1,0 +1,5 @@
+pdns-sysrepo (0.0.0-1) UNRELEASED; urgency=medium
+
+  * Initial release
+
+ -- Pieter Lexis <pieter.lexis@powerdns.com>  Mon, 11 Nov 2019 14:20:18 +0000

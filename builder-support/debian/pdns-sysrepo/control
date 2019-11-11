@@ -1,0 +1,29 @@
+Source: pdns-sysrepo
+Section: net
+Priority: optional
+Maintainer: Pieter Lexis <pieter.lexis@powerdns.com>
+Build-Depends: debhelper (>= 11~),
+               libboost-filesystem-dev,
+               libboost-program-options-dev,
+               libfmt-dev,
+               libmstch-dev,
+               libpcre3-dev,
+               libsdbusplus-dev,
+               libspdlog-dev,
+               libsysrepo-cpp-dev (>= 1.2),
+               libsystemd-dev,
+               libyaml-cpp-dev,
+               libyang-cpp-dev (>= 1.0),
+               meson,
+               pkg-config,
+               systemd
+Standards-Version: 4.1.2
+Homepage: https://github.com/PowerDNS/pdns-sysrepo-cpp
+
+Package: pdns-sysrepo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Sysrepo plugin for PowerDNS
+ This program uses the sysrepo YANG data store
+ to write configuration for the PowerDNS Authoritative
+ Server.

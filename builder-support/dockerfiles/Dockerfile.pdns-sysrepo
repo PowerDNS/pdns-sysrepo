@@ -13,7 +13,7 @@ WORKDIR /pdns-sysrepo
 COPY build/meson-dist/pdns-sysrepo-0.0.0.tar.xz .
 RUN tar xf pdns-sysrepo-0.0.0.tar.xz
 
-ADD builder-support/debian/pdns-config pdns-sysrepo-0.0.0/debian
+ADD builder-support/debian/pdns-sysrepo pdns-sysrepo-0.0.0/debian
 
 RUN mkdir /builder
 ADD builder/helpers /builder/helpers
