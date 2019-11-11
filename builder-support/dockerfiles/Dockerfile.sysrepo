@@ -2,7 +2,7 @@ FROM dist-base as sysrepo-builder
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 
-RUN mkdir -p /dist/3rdparty /sysrepo /builder-support
+RUN mkdir -p /dist/3rdparty /sysrepo /builder
 
 COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
 RUN cd /dist/3rdparty && apt install -y ./libyang*.deb
@@ -13,8 +13,6 @@ RUN curl -L https://github.com/sysrepo/sysrepo/archive/d6c4560363c5b2dfcf46da6c9
       mv sysrepo-d6c4560363c5b2dfcf46da6c96de435cbb901cb3 sysrepo_1.3.6
 
 ADD builder-support/debian/sysrepo sysrepo_1.3.6/debian
-
-RUN mkdir /builder
 ADD builder/helpers /builder/helpers
 
 RUN /builder/helpers/build-debs.sh sysrepo_1.3.6

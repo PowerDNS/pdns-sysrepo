@@ -2,7 +2,7 @@ FROM dist-base as pdns-sysrepo-builder
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 
-RUN mkdir -p /dist /pdns-sysrepo /builder-support
+RUN mkdir -p /dist /pdns-sysrepo /builder
 
 COPY --from=sdbusplus-builder /dist/3rdparty /dist/3rdparty
 COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
@@ -10,15 +10,14 @@ COPY --from=sysrepo-builder /dist/3rdparty /dist/3rdparty
 RUN cd /dist/3rdparty && apt install -y ./lib*.deb
 
 WORKDIR /pdns-sysrepo
-COPY build/meson-dist/pdns-sysrepo-0.0.0.tar.xz .
-RUN tar xf pdns-sysrepo-0.0.0.tar.xz
+ARG BUILDER_VERSION
+COPY build/meson-dist/pdns-sysrepo-${BUILDER_VERSION}.tar.xz .
+RUN tar xf pdns-sysrepo-${BUILDER_VERSION}.tar.xz
 
-ADD builder-support/debian/pdns-sysrepo pdns-sysrepo-0.0.0/debian
-
-RUN mkdir /builder
+ADD builder-support/debian/pdns-sysrepo pdns-sysrepo-${BUILDER_VERSION}/debian
 ADD builder/helpers /builder/helpers
 
-RUN /builder/helpers/build-debs.sh pdns-sysrepo-0.0.0
+RUN /builder/helpers/build-debs.sh pdns-sysrepo-${BUILDER_VERSION}
 
 RUN cp pdns-sysrepo*.deb /dist
 RUN cp pdns-sysrepo*.ddeb /dist
