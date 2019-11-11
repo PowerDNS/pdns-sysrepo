@@ -1,4 +1,4 @@
-FROM dist-base as sysrepo-builder
+FROM sdist-base as sysrepo-builder
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 

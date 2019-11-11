@@ -1,4 +1,4 @@
-FROM dist-base as libyang-builder
+FROM sdist-base as libyang-builder
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 

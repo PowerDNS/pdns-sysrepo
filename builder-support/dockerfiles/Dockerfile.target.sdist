@@ -1,0 +1,37 @@
+FROM ubuntu:bionic as sdist-base
+
+ARG BUILDER_CACHE_BUSTER=
+ARG APT_URL
+RUN mkdir -p /sdist /dist/3rdparty /pdns-sysrepo-sdist
+
+RUN apt-get update && apt-get -y dist-upgrade
+@INCLUDE Dockerfile.sdbusplus
+@INCLUDE Dockerfile.libyang
+@INCLUDE Dockerfile.sysrepo
+
+FROM sdist-base as sdist
+COPY --from=sdbusplus-builder /dist/3rdparty /dist/3rdparty
+COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
+COPY --from=sysrepo-builder /dist/3rdparty /dist/3rdparty
+
+RUN cd /dist/3rdparty && \
+    apt install -y ./lib*.deb && \
+    apt-get install -y \
+      git \
+      libboost-all-dev \
+      libfmt-dev \
+      libmstch-dev \
+      libsystemd-dev \
+      libyaml-cpp-dev \
+      meson \
+      systemd
+
+@EXEC sdist_dirs=(builder builder-support polkit src sr_wrapper subprojects yang .git)
+@EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /pdns-sysrepo-sdist/$d/" ; done
+ADD LICENSE meson.build pdns-configurator.example.yaml pdns-configurator.service.in pdns-configurator.yaml README.md /pdns-sysrepo-sdist/
+
+WORKDIR /pdns-sysrepo-sdist
+RUN meson build && \
+      cd build && \
+      ninja dist && \
+      cp meson-dist/*.tar.xz /sdist

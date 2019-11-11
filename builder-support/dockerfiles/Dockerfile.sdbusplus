@@ -1,4 +1,4 @@
-FROM dist-base as sdbusplus-builder
+FROM sdist-base as sdbusplus-builder
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 
