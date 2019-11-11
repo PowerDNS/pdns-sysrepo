@@ -40,7 +40,7 @@ if not mstch_dep.found()
   mstch_dep = meson.get_compiler('cpp').find_library('mstch')
 endif
 
-version_h = configure_file(input : 'version.h.in',
+version_h = configure_file(input : 'src/version.h.in',
                output : 'version.h',
                configuration : conf_data)
 
