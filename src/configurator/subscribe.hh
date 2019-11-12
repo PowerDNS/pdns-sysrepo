@@ -47,8 +47,5 @@ private:
 
   map<string, string> privData;
   vector<string> sdJobs;
-
-  // TODO figure out if we actually need this
-  shared_ptr<PdnsServerConfig> pdnsServerConfig;
 };
 } // namespace pdns_conf
