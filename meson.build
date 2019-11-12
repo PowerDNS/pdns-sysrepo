@@ -7,6 +7,7 @@ project('pdns-sysrepo', 'cpp',
 conf_data = configuration_data()
 conf_data.set('prefix', get_option('prefix'))
 conf_data.set('bindir', get_option('bindir'))
+conf_data.set('sysconfdir', get_option('sysconfdir'))
 conf_data.set('version', meson.project_version())
 
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
@@ -40,8 +41,8 @@ if not mstch_dep.found()
   mstch_dep = meson.get_compiler('cpp').find_library('mstch')
 endif
 
-version_h = configure_file(input : 'src/version.h.in',
-               output : 'version.h',
+version_h = configure_file(input : 'src/config.h.in',
+               output : 'config.h',
                configuration : conf_data)
 
 executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
@@ -59,3 +60,5 @@ configure_file(input : 'pdns-sysrepo.service.in',
 
 install_data('polkit/10-pdns.rules', install_dir: get_option('datadir') + '/polkit-1/rules.d')
 install_data('pdns-sysrepo.example.yaml', install_dir: get_option('sysconfdir') + '/pdns-sysrepo')
+install_data('yang/pdns-server.yang', 'yang/ietf-inet-types@2013-07-15.yang',
+              install_dir: get_option('datadir') + '/pdns-sysrepo')

@@ -1,0 +1,3 @@
+#define VERSION "@version@"
+
+#define PDNSSYSREPOCONFDIR "@prefix@/@sysconfdir@/pdns-sysrepo"
