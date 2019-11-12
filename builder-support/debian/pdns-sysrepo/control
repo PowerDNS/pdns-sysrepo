@@ -15,6 +15,7 @@ Build-Depends: debhelper (>= 11~),
                libyang-cpp-dev (>= 1.0),
                meson,
                pkg-config,
+               python3-sphinx,
                systemd
 Standards-Version: 4.1.2
 Homepage: https://github.com/PowerDNS/pdns-sysrepo-cpp
