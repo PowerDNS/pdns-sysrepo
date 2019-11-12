@@ -79,7 +79,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       spdlog::warn("Could not copy running config to startup config");
       return SR_ERR_OPERATION_FAILED;
     }
-    restartService("pdns.service");
+    restartService(privData["service"]);
   }
 
   if (event == SR_EV_ABORT) {
