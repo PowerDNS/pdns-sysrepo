@@ -3,7 +3,7 @@
 
 #include "util.hh"
 
-namespace pdns_conf
+namespace pdns_conf::util
 {
 string libyangNodeType2String(const LYS_NODE& node) {
   switch (node) {

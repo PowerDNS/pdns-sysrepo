@@ -7,8 +7,25 @@
 
 using std::string;
 
-namespace pdns_conf
+
+/**
+ * @brief This namespace contains a bunch of functions to make life easier
+ */
+namespace pdns_conf::util
 {
-string libyangNodeType2String(const LYS_NODE &node);
-string srEvent2String(const sr_event_t &event);
-} // namespace pdns_conf
+/**
+ * @brief Get the type of a node as a string
+ * 
+ * @param node     Node to get the type for
+ * @return string 
+ */
+string libyangNodeType2String(const LYS_NODE& node);
+
+/**
+ * @brief Get the name of the sysrepo event
+ * 
+ * @param event    Event to get the name for
+ * @return string 
+ */
+string srEvent2String(const sr_event_t& event);
+} // namespace pdns_conf::util

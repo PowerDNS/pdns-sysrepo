@@ -45,7 +45,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
   spdlog::trace("Had callback. module_name={} xpath={} event={} request_id={}",
     (module_name == nullptr) ? "" : module_name,
     (xpath == nullptr) ? "<none>" : xpath,
-    srEvent2String(event), request_id);
+    util::srEvent2String(event), request_id);
 
   if (event == SR_EV_CHANGE) {
     auto fpath = tmpFile(request_id);
@@ -130,14 +130,13 @@ void ServerConfigCB::restartService(const string& service) {
       sdbusplus::message::object_path job;
       reply.read(job);
       spdlog::debug("restart requested job={}", job.str);
-      // sdJobs.push_back(job.str);
     } catch (const sdbusplus::exception_t &e) {
       throw runtime_error("Problem getting reply: " + string(e.description()));
     }
 
     // Wait for the signal to come back
-    for (size_t i = 0; i < 16 && !hadSignal; i++) {
-      b.wait(200000);
+    for (size_t i = 0; i < 15 && !hadSignal; i++) {
+      b.wait(200000); // microseconds, so maximum 3 seconds
       b.process_discard();
     }
 

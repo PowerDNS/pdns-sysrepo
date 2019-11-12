@@ -22,12 +22,30 @@ namespace pdns_conf
 {
 class Config
 {
-  /*
-   * This class contains the configuration of this program
-   */
 public:
+  /**
+   * @brief Construct a new Config object
+   * 
+   * This Config object contains the configuration of the pdns-sysrepo
+   * progam.
+   * 
+   * @param fpath  The path to the YAML configuration file to read
+   * @throw std::runtime_error  When the file cannot be read or parsed
+   */
   Config(string fpath);
+
+  /**
+   * @brief Get the path to the PowerDNS Authoritative Server config file
+   * 
+   * @return string 
+   */
   string getPdnsConfigFilename() { return d_pdns_conf; };
+
+  /**
+   * @brief Get the name of the PowerDNS service
+   * 
+   * @return string
+   */
   string getServiceName() { return d_pdns_service; };
 
 private:

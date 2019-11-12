@@ -31,13 +31,38 @@ namespace pdns_conf
 class PdnsServerConfig
 {
 public:
+  /**
+   * @brief Construct a new PdnsServerConfig object
+   * 
+   * This object contains the config for a PowerDNS Authoritative Server,
+   * along with some functions to manipulate the stored config.
+   * 
+   * @param node  A node rooted at '/pdns-server:pdns-server/', used to
+   *              extract the PowerDNS configuration
+   */
   PdnsServerConfig(const libyang::S_Data_Node &node);
+
+  /**
+   * @brief Write a pdns.conf-style file to fpath
+   * 
+   * @param fpath             File path to write to
+   * @throw std::range_error  When the path is invalid
+   */
   void writeToFile(const string &fpath);
   void changeConfigValue(const libyang::S_Data_Node_Leaf_List &node);
   void deleteConfigValue();
 
 private:
+  /**
+   * @brief Converts a bool to a string
+   * 
+   * Returns "true" or "false"
+   * 
+   * @param b        bool to convert
+   * @return string 
+   */
   string bool2str(const bool b);
+
   struct listenAddress {
       string name;
       string address;
