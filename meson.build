@@ -62,3 +62,29 @@ install_data('polkit/10-pdns.rules', install_dir: get_option('datadir') + '/polk
 install_data('pdns-sysrepo.example.yaml', install_dir: get_option('sysconfdir') + '/pdns-sysrepo')
 install_data('yang/pdns-server.yang', 'yang/ietf-inet-types@2013-07-15.yang',
               install_dir: get_option('datadir') + '/pdns-sysrepo')
+
+sphinxbuild = find_program('sphinx-build', required: false)
+doc_files = files(
+  'documentation/guides/config-changes.rst',
+  'documentation/guides/config.rst',
+  'documentation/install.rst',
+  'documentation/changelog.rst',
+  'documentation/index.rst',
+  'documentation/development/building.rst',
+  'documentation/development/index.rst',
+  'documentation/development/release.rst',
+  'documentation/development/sysrepo-gotchas.rst'
+)
+if sphinxbuild.found()
+  custom_target('documentation',
+    command : [sphinxbuild,
+              '-b', 'html',
+              meson.current_source_dir() + '/documentation',
+              meson.current_build_dir() + '/documentation'],
+    input: doc_files,
+    output: 'documentation',
+    install : true,
+    install_dir : get_option('prefix') + '/' + get_option('datadir') + '/pdns-sysrepo')
+else
+  message('sphinx-build not found. Unable to generate documentation')
+endif

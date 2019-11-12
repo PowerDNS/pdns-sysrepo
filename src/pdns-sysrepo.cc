@@ -45,21 +45,6 @@ static void siginthandler(int signum) {
   doExit = true;
 }
 
-/*
- * # The grand plan
- * 
- * This program will subscribe to a "dns-server" and a "pdns-server" YANG model installed in sysrepo.
- * These models will have all the config options from PowerDNS and a way to express the zones with their configuration.
- * For the zones we will 'take over' the part of the tree and use the PowerDNS API to query the zone status and config
- * 
- * ## Service configuration changes:
- * When the configuration changes, this program will write a new pdns.conf and tell systemd over dbus to restart the service
- *
- * ## Zone changes
- * The API will be used for these changes
- * 
- */
-
 int main(int argc, char* argv[]) {
   po::options_description opts("Options");
   string logLevelHelp = fmt::format("The loglevel of the program, possible values are {}", fmt::join(logLevels, ", "));

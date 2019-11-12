@@ -1,11 +1,14 @@
 ## pdns_conf
 #
-# The path to the file that we need to write with configuration. It is recommended
-# to use a 'drop-in' config file in the pdns.d directory and set the `include-dir`
-# directive in the main pdns.conf
-pdns_conf: /etc/powerdns/pdns.conf.d/sysrepo.conf
+# The path to the file that we need to write with configuration.
+# It is recommended to write to the main pdns.conf, as that will
+# ensure that all settings are properly set as they are in the
+# YANG datastore.
+pdns_conf: /etc/powerdns/pdns.conf
 
 ## pdns_service
 #
-# The name of the PowerDNS systemd service. This is used to restart the PowerDNS service
+# The name of the PowerDNS systemd service. This is used to
+# restart the PowerDNS service after the configuration has
+# changed.
 pdns_service: pdns.service

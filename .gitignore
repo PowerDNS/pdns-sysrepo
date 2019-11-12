@@ -56,3 +56,5 @@ tags
 
 # End of https://www.gitignore.io/api/visualstudiocode
 pdns-sysrepo.yaml
+
+documentation/_build
