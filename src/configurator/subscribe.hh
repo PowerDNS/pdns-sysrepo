@@ -21,7 +21,10 @@
 
 #include "configurator.hh"
 
-using namespace std;
+using std::map;
+using std::shared_ptr;
+using std::string;
+using std::vector;
 
 namespace pdns_conf
 {

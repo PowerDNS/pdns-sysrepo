@@ -20,7 +20,7 @@
 
 #include "config.hh"
 
-using namespace std;
+using std::runtime_error;
 
 namespace pdns_conf
 {

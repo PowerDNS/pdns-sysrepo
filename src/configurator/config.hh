@@ -16,7 +16,7 @@
 #pragma once
 #include <string>
 
-using namespace std;
+using std::string;
 
 namespace pdns_conf
 {

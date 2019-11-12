@@ -24,7 +24,6 @@
 #include "util.hh"
 #include "sr_wrapper/session.hh"
 
-using namespace std;
 namespace fs = boost::filesystem;
 
 namespace pdns_conf

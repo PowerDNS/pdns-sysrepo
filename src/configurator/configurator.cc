@@ -26,7 +26,9 @@
 #include "configurator.hh"
 #include "util.hh"
 
-using namespace std;
+using std::make_shared;
+using std::range_error;
+using std::runtime_error;
 namespace fs = boost::filesystem;
 
 namespace pdns_conf

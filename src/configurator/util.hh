@@ -5,7 +5,7 @@
 #include <libyang/Libyang.hpp>
 #include <sysrepo.h>
 
-using namespace std;
+using std::string;
 
 namespace pdns_conf
 {

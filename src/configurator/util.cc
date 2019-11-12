@@ -3,8 +3,6 @@
 
 #include "util.hh"
 
-using namespace std;
-
 namespace pdns_conf
 {
   /*

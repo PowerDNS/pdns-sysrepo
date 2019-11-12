@@ -22,7 +22,9 @@
 #include <libyang/Libyang.hpp>
 #include <libyang/Tree_Data.hpp>
 
-using namespace std;
+using std::vector;
+using std::string;
+using std::pair;
 
 namespace pdns_conf
 {

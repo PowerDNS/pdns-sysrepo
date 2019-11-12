@@ -29,7 +29,8 @@
 #include "configurator/config.hh"
 #include "version.h"
 
-using namespace std;
+using std::set;
+using std::cout;
 namespace po = boost::program_options;
 
 static const set<string> logLevels{"trace", "debug", "info", "warning", "error", "critical", "off"};
