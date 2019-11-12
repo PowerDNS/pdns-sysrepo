@@ -23,13 +23,7 @@ Session::~Session() {
   session_stop();
 }
 
-void Session::session_stop() {
-  if (d_started) {
-    sysrepo::Session::session_stop();
-  }
-}
-
 libyang::S_Data_Node Session::getConfigTree(uint32_t timeout_ms) {
-  return get_subtree("/pdns-server:pdns-server/.");
+  return get_subtree("/pdns-server:pdns-server/.", timeout_ms);
 }
 } // namespace sr

@@ -25,15 +25,12 @@ class Session : public sysrepo::Session
 {
 public:
   Session(sysrepo::S_Connection conn, sr_datastore_t datastore = (sr_datastore_t)sysrepo::DS_RUNNING) :
-    sysrepo::Session(conn, datastore) {
-    d_started = true;
-  };
+    sysrepo::Session(conn, datastore) {};
   ~Session();
-  void session_stop();
 
+  /*
+   * Returns the LibYANG datanode rooted at '/pdns-server:pdns-server'
+  */
   libyang::S_Data_Node getConfigTree(uint32_t timeout_ms = 0);
-
-  private:
-    bool d_started{false};
 };
 } // namespace sr
