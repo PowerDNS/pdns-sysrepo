@@ -5,56 +5,6 @@
 
 namespace pdns_conf
 {
-  /*
-string libyangType2String(const libyang::S_Attr &attr) {
-  switch (attr->value_type()) {
-  case LY_TYPE_DER:
-    return "derived";
-  case LY_TYPE_BINARY:
-    return "binary";
-  case LY_TYPE_BITS:
-    return "bits";
-  case LY_TYPE_BOOL:
-    return "boolean";
-  case LY_TYPE_DEC64:
-    return "float64";
-  case LY_TYPE_EMPTY:
-    return "empty";
-  case LY_TYPE_ENUM:
-    return "enum";
-  case LY_TYPE_IDENT:
-    return "ident";
-  case LY_TYPE_INST:
-    return "reference";
-  case LY_TYPE_INT16:
-    return "int16";
-  case LY_TYPE_INT32:
-    return "int32";
-  case LY_TYPE_INT64:
-    return "int64";
-  case LY_TYPE_INT8:
-    return "int8";
-  case LY_TYPE_LEAFREF:
-    return "leafref";
-  case LY_TYPE_STRING:
-    return "string";
-  case LY_TYPE_UINT16:
-    return "uint16";
-  case LY_TYPE_UINT32:
-    return "uint32";
-  case LY_TYPE_UINT64:
-    return "int64";
-  case LY_TYPE_UINT8:
-    return "uint8";
-  case LY_TYPE_UNION:
-    return "union";
-  case LY_TYPE_UNKNOWN:
-    return "unknown";
-  }
-  return "unknown type";
-}
-*/
-
 string libyangNodeType2String(const LYS_NODE& node) {
   switch (node) {
   case LYS_UNKNOWN:
