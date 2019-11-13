@@ -49,7 +49,12 @@ int main(int argc, char* argv[]) {
   po::options_description opts("Options");
   string logLevelHelp = fmt::format("The loglevel of the program, possible values are {}", fmt::join(logLevels, ", "));
 
-  opts.add_options()("help,h", "Output a help message")("config,c", po::value<string>()->default_value(PDNSSYSREPOCONFDIR"/pdns-sysrepo.yaml"), "Configuration file to load.")("loglevel,l", po::value<string>()->default_value("info"), logLevelHelp.c_str())("version,v", "Show the version");
+  opts.add_options()
+    ("help,h", "Output a help message")
+    ("config,c", po::value<string>()->default_value(PDNSSYSREPOCONFDIR"/pdns-sysrepo.yaml"), "Configuration file to load.")
+    ("loglevel,l", po::value<string>()->default_value("info"), logLevelHelp.c_str())
+    ("version,v", "Show the version")
+    ("log-timestamps", po::value<bool>()->default_value(true), "Add timestamps to the logs");
 
   po::variables_map vm;
   try {
@@ -69,6 +74,13 @@ int main(int argc, char* argv[]) {
   if (vm.count("version")) {
     cout << VERSION << endl;
     return 0;
+  }
+
+  spdlog::set_pattern("%l - %v");
+  if (vm.count("log-timestamps")) {
+    if (vm["log-timestamps"].as<bool>()) {
+      spdlog::set_pattern("%Y-%m-%d %H:%M:%S.%f - %l - %v");
+    }
   }
 
   if (logLevels.count(vm["loglevel"].as<string>()) == 0) {
