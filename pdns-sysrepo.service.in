@@ -5,8 +5,8 @@ Before=pdns.service
 [Service]
 Type=notify
 ExecStart=@prefix@/@bindir@/pdns-sysrepo
-User=pdns-sysrepo
-Group=pdns-sysrepo
+User=root
+Group=root
 
 # Sandboxing
 CapabilityBoundingSet= # None! We might need CAP_NET_BIND_SERVICE for prometheus in the future
@@ -17,7 +17,7 @@ ProtectKernelModules=true
 ProtectKernelTunables=true
 
 ProtectSystem=full
-ReadWritePaths=/etc/powerdns
+ReadWritePaths=-/etc/powerdns -/etc/sysrepo /dev/shm
 
 RestrictAddressFamilies=
 RestrictNamespaces=true

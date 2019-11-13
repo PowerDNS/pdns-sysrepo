@@ -1,2 +1,3 @@
 usr/bin/yanglint
 usr/lib/*/libyang.so.*
+usr/lib/*/libyang/*

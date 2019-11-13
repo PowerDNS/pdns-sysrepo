@@ -46,7 +46,7 @@ launch =
 launch += {{ backendtype }}:{{ name }}
 {{ /launch }}
 {{ # backend-options }}
-{{ name }}-{{ option }} = {{ value }}
+{{ backendtype }}-{{name}}-{{ option }} = {{ value }}
 {{ /backend-options }}
 )";
 
@@ -169,7 +169,8 @@ void PdnsServerConfig::writeToFile(const string &fpath) {
       backendOptions.push_back(mstch::map{
         {"name", b.name},
         {"option", o.first},
-        {"value", o.second}
+        {"value", o.second},
+        {"backendtype", b.backendtype}
       });
     }
   }

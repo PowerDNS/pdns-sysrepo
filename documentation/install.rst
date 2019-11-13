@@ -60,10 +60,14 @@ From the root of the git repository or an extracted source tarball, :program:`pd
   cd build
   ninja install
 
+Post installation steps
+-----------------------
+No matter the installation method, several actions need to be taken to ensure the service operates correctly.
+
 .. _yang-module-install:
 
-Installing YANG modules
------------------------
+Install YANG modules
+^^^^^^^^^^^^^^^^^^^^
 This project comes with several YANG modules.
 In the source code tarball or git repository, these are stored in ``yang/``.
 When installing packages, these files are available in ``/usr/share/pdns-sysrepo/*.yang``.
@@ -73,3 +77,28 @@ The :program:`sysrepoctl` tool can be used::
 
   sysrepoctl -i ietf-inet-types@2013-07-15.yang
   sysrepoctl -i pdns-server.yang
+
+Configure :program:`pdns-sysrepo`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure the service in ``/etc/pdns-sysrepo/pdns-sysrepo.yaml``.
+See :doc:`guides/config` for more information.
+
+Create an initial PowerDNS startup config
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The YANG model comes without listen-addresses and backends for the PowerDNS Authoritative Server configured.
+As these are required for the server to start and there are no defaults from the package, these need to be added to the startup config.
+
+See :doc:`guides/config-changes` on how to change the settings for the pdns-server YANG model.
+Use ``-d startup`` in the :program:`sysrepocfg` invocation.
+
+Then copy the startup config to the running config::
+
+  sysrepocfg -m pdns-server -d running -C startup
+
+Enable and start the service
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Neither the package nor the source installation starts or enables the :program:`pdns-sysrepo` service automatically, as it will fail starting when the YANG modules are not installed.
+This has to be done after all the above steps have been completed::
+
+  systemctl enable pdns-sysrepo.service
+  systemctl start pdns-sysrepo.service

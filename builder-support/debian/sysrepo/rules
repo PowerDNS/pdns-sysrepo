@@ -10,6 +10,8 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 %:
 	dh $@
 
-
 override_dh_auto_configure:
-	dh_auto_configure -- -DGEN_CPP_BINDINGS=ON
+	dh_auto_configure -- \
+	  -DGEN_CPP_BINDINGS=ON \
+	  -DREPOSITORY_LOC=/etc/sysrepo \
+	  -DDREPO_PATH=/etc/sysrepo
