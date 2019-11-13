@@ -3,6 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Pieter Lexis <pieter.lexis@powerdns.com>
 Build-Depends: debhelper (>= 11~),
+               dh-sysuser,
                libboost-filesystem-dev,
                libboost-program-options-dev,
                libfmt-dev,

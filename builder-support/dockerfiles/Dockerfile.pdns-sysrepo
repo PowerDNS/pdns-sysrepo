@@ -15,6 +15,7 @@ RUN tar xf /sdist/pdns-sysrepo-${BUILDER_VERSION}.tar.xz
 ADD builder-support/debian/pdns-sysrepo pdns-sysrepo-${BUILDER_VERSION}/debian
 ADD builder/helpers /builder/helpers
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN /builder/helpers/build-debs.sh pdns-sysrepo-${BUILDER_VERSION}
 
 RUN cp pdns-sysrepo*.deb /dist

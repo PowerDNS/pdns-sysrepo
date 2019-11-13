@@ -14,4 +14,4 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 
 %:
-	dh $@
+	dh $@ --with sysuser
