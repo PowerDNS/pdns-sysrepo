@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
       s.module_change_subscribe("pdns-server", cb);
 
       spdlog::debug("done, registring operational zone CB");
-      auto zoneCB = pdns_conf::getZoneCB();
+      auto zoneCB = pdns_conf::getZoneCB("http://127.0.0.1:8050/", "secret");
       auto zoneSubscribe = sysrepo::Subscribe(sSess);
       zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
       spdlog::trace("callbacks registered, registring signal handlers");

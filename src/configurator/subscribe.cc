@@ -23,8 +23,11 @@
 #include "configurator.hh"
 #include "util.hh"
 #include "sr_wrapper/session.hh"
+#include "api/ZonesApi.h"
+#include "model/Zone.h"
 
 namespace fs = boost::filesystem;
+namespace pdns_model = org::openapitools::client::model;
 
 namespace pdns_conf
 {
@@ -35,8 +38,8 @@ sysrepo::S_Callback getServerConfigCB(const string& fpath, const string &service
   return cb;
 }
 
-sysrepo::S_Callback getZoneCB() {
-  sysrepo::S_Callback cb(new ZoneCB());
+sysrepo::S_Callback getZoneCB(const string &url, const string &passwd) {
+  sysrepo::S_Callback cb(new ZoneCB(url, passwd));
   return cb;
 }
 
@@ -183,15 +186,25 @@ int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
   libyang::S_Context ctx = session->get_context();
   libyang::S_Module mod = ctx->get_module(module_name);
 
+  pdns_api::ZonesApi zoneApiClient(d_apiClient);
+
+  // We use a blocking call
+  auto res = zoneApiClient.listZones("localhost", boost::none);
+  auto zones = res.get();
+
   parent.reset(new libyang::Data_Node(ctx, "/pdns-server:zones-state", nullptr, LYD_ANYDATA_CONSTSTRING, 0));
 
-  libyang::S_Data_Node zone(new libyang::Data_Node(parent, mod, "zones"));
-  libyang::S_Data_Node name(new libyang::Data_Node(zone, mod, "name", "example.net"));
-  libyang::S_Data_Node serial(new libyang::Data_Node(zone, mod, "serial", "15"));
+  for (const auto &zone : zones) {
+    libyang::S_Data_Node zoneNode(new libyang::Data_Node(parent, mod, "zones"));
+    libyang::S_Data_Node nameNode(new libyang::Data_Node(zoneNode, mod, "name", zone->getName().c_str()));
+    libyang::S_Data_Node serialNode(new libyang::Data_Node(zoneNode, mod, "serial", to_string(zone->getSerial()).c_str()));
+  }
 
+/*
   zone.reset(new libyang::Data_Node(parent, mod, "zones"));
   name.reset(new libyang::Data_Node(zone, mod, "name", "example.com"));
   serial.reset(new libyang::Data_Node(zone, mod, "serial", "15534534"));
+  */
 
   return SR_ERR_OK;
 }

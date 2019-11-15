@@ -21,10 +21,14 @@
 
 #include "configurator.hh"
 
+#include "ApiClient.h"
+
 using std::map;
 using std::shared_ptr;
 using std::string;
 using std::vector;
+using std::make_shared;
+namespace pdns_api = org::openapitools::client::api;
 
 namespace pdns_conf
 {
@@ -43,7 +47,7 @@ sysrepo::S_Callback getServerConfigCB(const string& fpath, const string& service
  * 
  * @return sysrepo::S_Callback 
  */
-sysrepo::S_Callback getZoneCB();
+sysrepo::S_Callback getZoneCB(const string &url, const string &passwd);
 
 class ServerConfigCB : public sysrepo::Callback
 {
@@ -107,6 +111,15 @@ private:
 
 class ZoneCB : public sysrepo::Callback
 {
+  public:
+  ZoneCB(const string &url, const string &passwd) : sysrepo::Callback() {
+    std::shared_ptr<pdns_api::ApiConfiguration> apiConfig(new pdns_api::ApiConfiguration);
+    d_apiClient = make_shared<pdns_api::ApiClient>(pdns_api::ApiClient(apiConfig));
+    apiConfig->setBaseUrl(url);
+    d_apiClient->setConfiguration(apiConfig);
+  };
+  ~ZoneCB(){};
+
   /**
    * @brief Callback called when an application is requesting operational or config data
    * 
@@ -125,5 +138,7 @@ class ZoneCB : public sysrepo::Callback
     const char* path, const char* request_xpath,
     uint32_t request_id, libyang::S_Data_Node& parent, void* private_data) override;
 
+  private:
+  shared_ptr<pdns_api::ApiClient> d_apiClient;
 };
 } // namespace pdns_conf

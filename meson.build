@@ -41,13 +41,19 @@ if not mstch_dep.found()
   mstch_dep = meson.get_compiler('cpp').find_library('mstch')
 endif
 
+# pdns_api_cpp_incdir =  include_directories('ext', 'ext/pdns-api-cpp/model', 'ext/pdns-api-cpp/api')
+pdns_api_cpp_proj = subproject('pdns-api-cpp')
+pdns_api_cpp_dep = pdns_api_cpp_proj.get_variable('pdns_api_cpp_dep')
+pdns_api_cpp_incdir = pdns_api_cpp_proj.get_variable('pdns_api_cpp_incdir')
+
 version_h = configure_file(input : 'src/config.h.in',
                output : 'config.h',
                configuration : conf_data)
 
 executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
   sr_wrapper, pdns_sysrepo, version_h,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep],
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep],
+  include_directories: [pdns_api_cpp_incdir],
   install: true)
 
 # Generate a systemd unit file
