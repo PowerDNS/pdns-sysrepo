@@ -29,6 +29,10 @@ module pdns-server {
         revision-date 2013-07-15;
     }
 
+    import iana-dns-class-rr-type {
+        prefix dnsct;
+    }
+
     organization
       "PowerDNS.COM BV";
     contact
@@ -48,41 +52,41 @@ module pdns-server {
     }
 
     typedef backendtype {
-      type enumeration {
-        enum "gsqlite3";
+        type enumeration {
+            enum "gsqlite3";
         /*
-        enum "gmysql";
-        enum "gpgsql";
-        enum "lmdb";
-        */
-      }
+         * enum "gmysql";
+         * enum "gpgsql";
+         * enum "lmdb";
+         */
+        }
     }
 
     typedef sqlite3-journal-mode {
-      description
-      "Possible PRAGMA values for the sqlite3 journal mode setting";
-      
-      type enumeration {
-        enum "DELETE";
-        enum "MEMORY";
-        enum "OFF";
-        enum "PERSIST";
-        enum "TRUNCATE";
-        enum "WAL";
-      }
+        description
+          "Possible PRAGMA values for the sqlite3 journal mode setting";
+
+        type enumeration {
+            enum "DELETE";
+            enum "MEMORY";
+            enum "OFF";
+            enum "PERSIST";
+            enum "TRUNCATE";
+            enum "WAL";
+        }
     }
 
     typedef sqlite3-synchronous-mode {
-      type enumeration {
-        enum "0"; // OFF
-        enum "OFF";
-        enum "1"; // NORMAL
-        enum "NORMAL";
-        enum "2"; // FULL
-        enum "FULL";
-        enum "3"; // EXTRA
-        enum "EXTRA";
-      }
+        type enumeration {
+            enum "0"; // OFF
+            enum "OFF";
+            enum "1"; // NORMAL
+            enum "NORMAL";
+            enum "2"; // FULL
+            enum "FULL";
+            enum "3"; // EXTRA
+            enum "EXTRA";
+        }
     }
 
     /*
@@ -147,6 +151,39 @@ module pdns-server {
         }
     }
 
+    typedef zonetype {
+        type enumeration {
+            enum "master";
+            enum "slave";
+            enum "native";
+        }
+    }
+
+    typedef zone-state-ref {
+        type leafref {
+            path "/pdns-server:zones-state/pdns-server:zones/pdns-server:name";
+        }
+        description
+          "Reference to the a leaf in the zones-state";
+    }
+
+    grouping zone {
+        description
+          "A DNS Zone";
+        leaf name {
+            type inet:domain-name;
+            mandatory true;
+        }
+
+        leaf class {
+            type dnsct:dns-class;
+            mandatory true;
+        }
+        leaf zonetype {
+            type zonetype;
+        }
+    }
+
     /*
      * Configuration data
      */
@@ -187,14 +224,42 @@ module pdns-server {
               "All backends that should be launched on startup, with their config";
 
             /*
-            As there's no 'default' backend... we can't enforce this
-            min-elements 1;
-            */
+             * As there's no 'default' backend... we can't enforce this
+             * min-elements 1;
+             */
             key "name";
             leaf name {
                 type string;
             }
             uses backend;
+        }
+
+        list zones {
+            description
+              "All zones configured on this server";
+
+            uses zone;
+            key "name";
+        }
+    }
+
+    container zones-state {
+        config false;
+        description
+          "Operational state of zones";
+
+        list zones {
+            description
+              "All zones configured on this server";
+
+            uses zone;
+            key "name";
+
+            leaf serial {
+                description
+                  "The SOA serial for this zone";
+                type uint32;
+            }
         }
     }
 }

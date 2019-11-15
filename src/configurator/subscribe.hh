@@ -38,6 +38,13 @@ namespace pdns_conf
  */
 sysrepo::S_Callback getServerConfigCB(const string& fpath, const string& serviceName);
 
+/**
+ * @brief Get a shared pointer a ZoneCB object
+ * 
+ * @return sysrepo::S_Callback 
+ */
+sysrepo::S_Callback getZoneCB();
+
 class ServerConfigCB : public sysrepo::Callback
 {
 public:
@@ -96,5 +103,27 @@ private:
   void restartService(const string& service);
 
   map<string, string> privData;
+};
+
+class ZoneCB : public sysrepo::Callback
+{
+  /**
+   * @brief Callback called when an application is requesting operational or config data
+   * 
+   * @see sysrepo::Callback::oper_get_items
+   * 
+   * @param session 
+   * @param module_name 
+   * @param path 
+   * @param request_xpath 
+   * @param request_id 
+   * @param parent 
+   * @param private_data 
+   * @return int 
+   */
+  int oper_get_items(sysrepo::S_Session session, const char* module_name,
+    const char* path, const char* request_xpath,
+    uint32_t request_id, libyang::S_Data_Node& parent, void* private_data) override;
+
 };
 } // namespace pdns_conf

@@ -35,6 +35,11 @@ sysrepo::S_Callback getServerConfigCB(const string& fpath, const string &service
   return cb;
 }
 
+sysrepo::S_Callback getZoneCB() {
+  sysrepo::S_Callback cb(new ZoneCB());
+  return cb;
+}
+
 string ServerConfigCB::tmpFile(const uint32_t request_id) {
   return privData["fpath"] + "-tmp-" + to_string(request_id);
 }
@@ -168,4 +173,27 @@ void ServerConfigCB::restartService(const string& service) {
     spdlog::warn("Error restarting: {}", e.what());
   }
 }
+
+int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
+  const char* path, const char* request_xpath,
+  uint32_t request_id, libyang::S_Data_Node& parent, void* private_data) {
+  spdlog::trace("oper_get_items called path={} request_xpath={}",
+    path, (request_xpath != nullptr) ? request_xpath : "<none>");
+
+  libyang::S_Context ctx = session->get_context();
+  libyang::S_Module mod = ctx->get_module(module_name);
+
+  parent.reset(new libyang::Data_Node(ctx, "/pdns-server:zones-state", nullptr, LYD_ANYDATA_CONSTSTRING, 0));
+
+  libyang::S_Data_Node zone(new libyang::Data_Node(parent, mod, "zones"));
+  libyang::S_Data_Node name(new libyang::Data_Node(zone, mod, "name", "example.net"));
+  libyang::S_Data_Node serial(new libyang::Data_Node(zone, mod, "serial", "15"));
+
+  zone.reset(new libyang::Data_Node(parent, mod, "zones"));
+  name.reset(new libyang::Data_Node(zone, mod, "name", "example.com"));
+  serial.reset(new libyang::Data_Node(zone, mod, "serial", "15534534"));
+
+  return SR_ERR_OK;
+}
+
 } // namespace pdns_conf

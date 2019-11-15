@@ -107,9 +107,15 @@ int main(int argc, char* argv[]) {
       config->writeToFile(myConfig.getPdnsConfigFilename());
 
       spdlog::debug("Registring config change callbacks");
-      auto s = sysrepo::Subscribe(make_shared<sysrepo::Session>(sess));
+      sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
+      auto s = sysrepo::Subscribe(sSess);
       auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename(), myConfig.getServiceName());
       s.module_change_subscribe("pdns-server", cb);
+
+      spdlog::debug("done, registring operational zone CB");
+      auto zoneCB = pdns_conf::getZoneCB();
+      auto zoneSubscribe = sysrepo::Subscribe(sSess);
+      zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
       spdlog::trace("callbacks registered, registring signal handlers");
 
       signal(SIGINT, siginthandler);
