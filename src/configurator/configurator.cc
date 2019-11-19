@@ -48,6 +48,17 @@ launch += {{ backendtype }}:{{ name }}
 {{ # backend-options }}
 {{ backendtype }}-{{name}}-{{ option }} = {{ value }}
 {{ /backend-options }}
+
+webserver = {{ webserver }}
+webserver-address = {{ webserver-address }}:{{ webserver-port }}
+webserver-max-bodysize = {{ webserver-max-body-size }}
+webserver-loglevel = {{ webserver-loglevel }}
+webserver-allow-from =
+{{ #webserver-allow-from }}
+webserver-allow-from += {{ . }}
+{{ /webserver-allow-from }}
+api = {{ api }}
+api-key = {{ api-key }}
 )";
 
 PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
@@ -132,6 +143,40 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
         backends.push_back(b);
       }
 
+      if (nodename == "webserver") {
+        for (const auto& n : child->tree_dfs()) {
+          if (n->schema()->nodetype() == LYS_CONTAINER) {
+            // The first child is the container leaf
+            continue;
+          }
+          leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+          string leafName(n->schema()->name());
+          spdlog::trace("in webserver leaf type={} name={}", util::libyangNodeType2String(n->schema()->nodetype()), leafName);
+          if (leafName == "password") {
+            webserver.password = leaf->value_str();
+            webserver.webserver = true;
+          }
+          if (leafName == "api-key") {
+            webserver.api_key = leaf->value_str();
+            webserver.api = true;
+          }
+          if (leafName == "address") {
+            webserver.address = leaf->value_str();
+          }
+          if (leafName == "port") {
+            webserver.port = leaf->value()->uint16();
+          }
+          if (leafName == "allow-from") {
+            webserver.allow_from.push_back(leaf->value_str());
+          }
+          if (leafName == "loglevel") {
+            webserver.loglevel = leaf->value_str();
+          }
+          if (leafName == "max-body-size") {
+            webserver.max_body_size = leaf->value()->uintu32();
+          }
+        }
+      }
     } while(child = child->next());
   }
 }
@@ -175,12 +220,26 @@ void PdnsServerConfig::writeToFile(const string &fpath) {
     }
   }
 
+  // :(
+  mstch::array webserverAllowFrom;
+  for (const auto& a : webserver.allow_from) {
+    webserverAllowFrom.push_back(a);
+  }
+
   mstch::map ctx{
     {"master", bool2str(master)},
     {"slave", bool2str(slave)},
     {"local-address", laddrs},
     {"launch", backendLaunch},
-    {"backend-options", backendOptions}
+    {"backend-options", backendOptions},
+    {"webserver", bool2str(webserver.webserver)},
+    {"webserver-address", webserver.address},
+    {"webserver-port", webserver.port},
+    {"webserver-max-body-size", std::to_string(webserver.max_body_size)},
+    {"webserver-loglevel", webserver.loglevel},
+    {"webserver-allow-from", webserverAllowFrom},
+    {"api", bool2str(webserver.api)},
+    {"api-key", webserver.api_key}
   };
 
   spdlog::trace("Generated config:\n{}", mstch::render(pdns_conf_template, ctx));

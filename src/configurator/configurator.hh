@@ -52,6 +52,34 @@ public:
   void changeConfigValue(const libyang::S_Data_Node_Leaf_List &node);
   void deleteConfigValue();
 
+  /**
+   * @brief Get the Webserver Address
+   * 
+   * @return string 
+   */
+  std::string getWebserverAddress() {
+    return webserver.address + ":" + std::to_string(webserver.port);
+  };
+
+  /**
+   * @brief Get the Api Key
+   * 
+   * @return string 
+   */
+  std::string getApiKey() {
+    return webserver.api_key;
+  };
+
+/**
+ * @brief Whether or not the API is enabled
+ * 
+ * @return true 
+ * @return false 
+ */
+  bool doesAPI() {
+    return webserver.api;
+  };
+
 private:
   /**
    * @brief Converts a bool to a string
@@ -74,6 +102,18 @@ private:
     string backendtype;
     vector<pair<string, string>> options{};
   };
+
+  struct {
+    bool webserver{false};
+    string address{"127.0.0.1"};
+    uint16_t port{8081};
+    string password;
+    bool api{false};
+    string api_key;
+    vector<string> allow_from{{"127.0.0.0/8"}};
+    uint32_t max_body_size{2};
+    string loglevel{"normal"};
+  } webserver;
 
   vector<listenAddress> listenAddresses{};
   vector<backend> backends;

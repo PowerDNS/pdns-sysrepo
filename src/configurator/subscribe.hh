@@ -113,10 +113,13 @@ class ZoneCB : public sysrepo::Callback
 {
   public:
   ZoneCB(const string &url, const string &passwd) : sysrepo::Callback() {
+    spdlog::trace("Creating ZoneCB url={}, password={}", url, passwd);
     std::shared_ptr<pdns_api::ApiConfiguration> apiConfig(new pdns_api::ApiConfiguration);
     d_apiClient = make_shared<pdns_api::ApiClient>(pdns_api::ApiClient(apiConfig));
     apiConfig->setBaseUrl(url);
+    apiConfig->setApiKey("X-Api-Key", passwd);
     d_apiClient->setConfiguration(apiConfig);
+    spdlog::trace("Done creating ZoneCB");
   };
   ~ZoneCB(){};
 

@@ -41,6 +41,12 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2019-11-19 {
+      description
+          "Added Zone config, Zone operational status and webserver settings";
+      
+    }
+
     revision 2019-11-08 {
         description
           "Added backends and config";
@@ -184,6 +190,43 @@ module pdns-server {
         }
     }
 
+    grouping webserver {
+      description "Webserver configuration";
+      leaf address {
+        type inet:ip-address;
+      }
+      leaf port {
+        type inet:port-number;
+      }
+      leaf password {
+        description
+              "Password required to access the non-API webserver paths";
+        type string;
+      }
+      leaf api-key {
+        description
+              "Pre-shared API key. Set this to enable the API";
+        type string;
+      }
+      leaf-list allow-from {
+        description
+              "ACL for the webserver";
+        type inet:ip-prefix;
+      }
+      leaf max-body-size {
+        description "Maximum size of the response sent by the webserver in megabytes";
+        type uint32;
+      }
+      leaf loglevel {
+        description "How munch the webserver should log";
+        type enumeration {
+          enum "none";
+          enum "normal";
+          enum "detailed";
+        }
+      }
+    }
+
     /*
      * Configuration data
      */
@@ -217,6 +260,14 @@ module pdns-server {
                This means checking zone validity and retrieving when out of date.";
             type boolean;
             default false;
+        }
+
+        container webserver {
+          uses webserver {
+            refine port {default 8081;}
+            refine address {default "127.0.0.1";}
+            refine allow-from {default "127.0.0.0/8";}
+          }
         }
 
         list backend {
