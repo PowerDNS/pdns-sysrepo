@@ -187,20 +187,24 @@ int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
 
   libyang::S_Context ctx = session->get_context();
   libyang::S_Module mod = ctx->get_module(module_name);
-
-  pdns_api::ZonesApi zoneApiClient(d_apiClient);
-
-  // We use a blocking call
-  auto res = zoneApiClient.listZones("localhost", boost::none);
-  auto zones = res.get();
-
   parent.reset(new libyang::Data_Node(ctx, "/pdns-server:zones-state", nullptr, LYD_ANYDATA_CONSTSTRING, 0));
 
-  for (const auto &zone : zones) {
-    libyang::S_Data_Node zoneNode(new libyang::Data_Node(parent, mod, "zones"));
-    libyang::S_Data_Node nameNode(new libyang::Data_Node(zoneNode, mod, "name", zone->getName().c_str()));
-    libyang::S_Data_Node serialNode(new libyang::Data_Node(zoneNode, mod, "serial", to_string(zone->getSerial()).c_str()));
+  pdns_api::ZonesApi zoneApiClient(d_apiClient);
+  try {
+    // We use a blocking call
+    auto res = zoneApiClient.listZones("localhost", boost::none);
+    auto zones = res.get();
+    for (const auto &zone : zones) {
+      libyang::S_Data_Node zoneNode(new libyang::Data_Node(parent, mod, "zones"));
+      libyang::S_Data_Node nameNode(new libyang::Data_Node(zoneNode, mod, "name", zone->getName().c_str()));
+      libyang::S_Data_Node serialNode(new libyang::Data_Node(zoneNode, mod, "serial", to_string(zone->getSerial()).c_str()));
+    }
+  } catch (const web::uri_exception &e) {
+    spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
+  } catch (const org::openapitools::client::api::ApiException &e) {
+    spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
   }
+
 
 /*
   zone.reset(new libyang::Data_Node(parent, mod, "zones"));

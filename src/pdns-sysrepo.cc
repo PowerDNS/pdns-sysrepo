@@ -112,10 +112,10 @@ int main(int argc, char* argv[]) {
       auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename(), myConfig.getServiceName());
       s.module_change_subscribe("pdns-server", cb);
 
+      auto zoneSubscribe = sysrepo::Subscribe(sSess);
       if (config->doesAPI()) {
         spdlog::debug("done, registring operational zone CB");
         auto zoneCB = pdns_conf::getZoneCB(config->getWebserverAddress(), config->getApiKey());
-        auto zoneSubscribe = sysrepo::Subscribe(sSess);
         zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
       }
       
