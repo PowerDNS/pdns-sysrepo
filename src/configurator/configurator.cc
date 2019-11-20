@@ -155,7 +155,6 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
           }
           leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
           string leafName(n->schema()->name());
-          spdlog::trace("in webserver leaf type={} name={}", util::libyangNodeType2String(n->schema()->nodetype()), leafName);
           if (leafName == "password") {
             webserver.password = leaf->value_str();
             webserver.webserver = true;

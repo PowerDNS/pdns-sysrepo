@@ -28,4 +28,6 @@ string libyangNodeType2String(const LYS_NODE& node);
  * @return string 
  */
 string srEvent2String(const sr_event_t& event);
+
+string srChangeOper2String(const sr_change_oper_t &changeOper);
 } // namespace pdns_conf::util

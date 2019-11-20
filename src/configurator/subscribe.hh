@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include "ApiClient.h"
+#include "model/Zone.h"
 
 using std::map;
 using std::shared_ptr;
@@ -30,22 +31,17 @@ using std::string;
 using std::vector;
 using std::make_shared;
 namespace pdns_api = org::openapitools::client::api;
+namespace pdns_api_model = org::openapitools::client::model;
 
 namespace pdns_conf
 {
 class ZoneCB : public sysrepo::Callback
 {
   public:
-  ZoneCB(const string &url, const string &passwd) : sysrepo::Callback() {
-    spdlog::trace("Creating ZoneCB url={}, password={}", url, passwd);
-    std::shared_ptr<pdns_api::ApiConfiguration> apiConfig(new pdns_api::ApiConfiguration);
-    apiConfig->setBaseUrl("http://" + url + "/api/v1");
-    apiConfig->setApiKey("X-API-Key", passwd);
-    apiConfig->setUserAgent("pdns-sysrepo/" + string(VERSION));
-    d_apiClient = make_shared<pdns_api::ApiClient>(pdns_api::ApiClient(apiConfig));
-    d_apiClient->setConfiguration(apiConfig);
-    spdlog::trace("Done creating ZoneCB");
-  };
+  ZoneCB(shared_ptr<pdns_api::ApiClient> &apiClient) :
+    sysrepo::Callback(),
+    d_apiClient(apiClient)
+    {};
   ~ZoneCB(){};
 
   /**
@@ -66,8 +62,6 @@ class ZoneCB : public sysrepo::Callback
     const char* path, const char* request_xpath,
     uint32_t request_id, libyang::S_Data_Node& parent, void* private_data) override;
 
-  void setApiKey(const string &apiKey);
-
   private:
   shared_ptr<pdns_api::ApiClient> d_apiClient;
 };
@@ -85,9 +79,11 @@ public:
  * 
  * @param privData  Data that the functions can use
  */
-  ServerConfigCB(const map<string, string>& privData) :
+  ServerConfigCB(const map<string, string>& privData, shared_ptr<pdns_api::ApiClient> &apiClient) :
     sysrepo::Callback(),
-    privData(privData){};
+    d_apiClient(apiClient),
+    privData(privData)
+    {};
   ~ServerConfigCB(){};
 
 
@@ -107,10 +103,6 @@ public:
   int module_change(sysrepo::S_Session session, const char* module_name,
     const char* xpath, sr_event_t event,
     uint32_t request_id, void* private_data) override;
-
-  void setZoneCB(shared_ptr<ZoneCB> &zoneCB) {
-    d_zoneCB = zoneCB;
-  };
 
 private:
   /**
@@ -134,14 +126,17 @@ private:
   void restartService(const string& service);
 
   /**
-   * @brief ZoneCB that will receive APIKey updates
+   * @brief API client
    */
-  shared_ptr<ZoneCB> d_zoneCB{nullptr};
+  shared_ptr<pdns_api::ApiClient> d_apiClient;
 
   /**
    * @brief Private data that this class can use
    */
   map<string, string> privData;
+
+  vector<pdns_api_model::Zone> zonesCreated;
+  vector<string> zonesRemoved;
 };
 
 /**
@@ -156,7 +151,7 @@ private:
  * @param serviceName           Name of the PowerDNS service
  * @return std::shared_ptr<ServerConfigCB> 
  */
-std::shared_ptr<ServerConfigCB> getServerConfigCB(const string& fpath, const string& serviceName);
+std::shared_ptr<ServerConfigCB> getServerConfigCB(const string& fpath, const string& serviceName, shared_ptr<pdns_api::ApiClient> &apiClient);
 
 /**
  * @brief Get a new ZoneCB object wrapped in a shared_ptr
@@ -165,6 +160,6 @@ std::shared_ptr<ServerConfigCB> getServerConfigCB(const string& fpath, const str
  * @param passwd  The API Key to use
  * @return std::shared_ptr<ZoneCB> 
  */
-std::shared_ptr<ZoneCB> getZoneCB(const string &url, const string &passwd);
+std::shared_ptr<ZoneCB> getZoneCB(shared_ptr<pdns_api::ApiClient> &apiClient);
 
 } // namespace pdns_conf

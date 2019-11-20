@@ -104,22 +104,31 @@ int main(int argc, char* argv[]) {
       // Sysrepo will copy the startup config to the running config on the first query
       auto node = sess.getConfigTree();
       auto config = make_shared<pdns_conf::PdnsServerConfig>(node);
+
+      shared_ptr<pdns_api::ApiClient> apiClient{nullptr};
+      if (config->doesAPI()) {
+        std::shared_ptr<pdns_api::ApiConfiguration> apiConfig(new pdns_api::ApiConfiguration);
+        apiConfig->setBaseUrl("http://" + config->getWebserverAddress() + "/api/v1");
+        apiConfig->setApiKey("X-API-Key", config->getApiKey());
+        apiConfig->setUserAgent("pdns-sysrepo/" + string(VERSION));
+        apiClient = make_shared<pdns_api::ApiClient>(pdns_api::ApiClient(apiConfig));
+      } else {
+        spdlog::warn("");
+      }
+
       config->writeToFile(myConfig.getPdnsConfigFilename());
 
       spdlog::debug("Registring config change callbacks");
       sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
       auto s = sysrepo::Subscribe(sSess);
-      auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename(), myConfig.getServiceName());
+      auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename(), myConfig.getServiceName(), apiClient);
       s.module_change_subscribe("pdns-server", cb);
 
       auto zoneSubscribe = sysrepo::Subscribe(sSess);
-      if (config->doesAPI()) {
-        spdlog::debug("done, registring operational zone CB");
-        auto zoneCB = pdns_conf::getZoneCB(config->getWebserverAddress(), config->getApiKey());
-        zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
-        cb->setZoneCB(zoneCB);
-      }
-      
+      spdlog::debug("done, registring operational zone CB");
+      auto zoneCB = pdns_conf::getZoneCB(apiClient);
+      zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
+
       spdlog::trace("callbacks registered, registring signal handlers");
 
       signal(SIGINT, siginthandler);

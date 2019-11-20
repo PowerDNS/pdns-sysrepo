@@ -65,4 +65,18 @@ string srEvent2String(const sr_event_t &event){
   }
   return "unknown event";
 }
+
+string srChangeOper2String(const sr_change_oper_t &changeOper) {
+  switch (changeOper) {
+  case SR_OP_CREATED:
+    return "created";
+  case SR_OP_DELETED:
+    return "deleted";
+  case SR_OP_MODIFIED:
+    return "modified";
+  case SR_OP_MOVED:
+    return "moved";
+  }
+  return "unknown";
+}
 } // namespace pdns_conf
