@@ -31,15 +31,15 @@ namespace pdns_model = org::openapitools::client::model;
 
 namespace pdns_conf
 {
-sysrepo::S_Callback getServerConfigCB(const string& fpath, const string &serviceName) {
-  sysrepo::S_Callback cb(new ServerConfigCB(
+std::shared_ptr<ServerConfigCB> getServerConfigCB(const string& fpath, const string &serviceName) {
+  auto cb = make_shared<ServerConfigCB>(ServerConfigCB(
     {{"fpath", fpath},
       {"service", serviceName}}));
   return cb;
 }
 
-sysrepo::S_Callback getZoneCB(const string &url, const string &passwd) {
-  sysrepo::S_Callback cb(new ZoneCB(url, passwd));
+std::shared_ptr<ZoneCB> getZoneCB(const string &url, const string &passwd) {
+  auto cb = make_shared<ZoneCB>(ZoneCB(url, passwd));
   return cb;
 }
 
@@ -69,8 +69,6 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
     auto fpath = tmpFile(request_id);
 
     auto sess = static_pointer_cast<sr::Session>(session);
-    PdnsServerConfig c(sess->getConfigTree());
-
     try {
       spdlog::debug("Moving {} to {}", fpath, privData["fpath"]);
       fs::rename(fpath, privData["fpath"]);
@@ -89,6 +87,10 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
     }
     if (!privData["service"].empty()) {
       restartService(privData["service"]);
+    }
+    if (d_zoneCB != nullptr) {
+      PdnsServerConfig c(sess->getConfigTree());
+      d_zoneCB->setApiKey(c.getApiKey());
     }
   }
 
@@ -205,14 +207,11 @@ int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
     spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
   }
 
-
-/*
-  zone.reset(new libyang::Data_Node(parent, mod, "zones"));
-  name.reset(new libyang::Data_Node(zone, mod, "name", "example.com"));
-  serial.reset(new libyang::Data_Node(zone, mod, "serial", "15534534"));
-  */
-
   return SR_ERR_OK;
+}
+
+void ZoneCB::setApiKey(const string &apiKey) {
+  d_apiClient->getConfiguration()->setApiKey("X-API-Key", apiKey);
 }
 
 } // namespace pdns_conf

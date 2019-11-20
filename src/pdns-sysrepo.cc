@@ -117,6 +117,7 @@ int main(int argc, char* argv[]) {
         spdlog::debug("done, registring operational zone CB");
         auto zoneCB = pdns_conf::getZoneCB(config->getWebserverAddress(), config->getApiKey());
         zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
+        cb->setZoneCB(zoneCB);
       }
       
       spdlog::trace("callbacks registered, registring signal handlers");
