@@ -19,6 +19,7 @@ RUN cd /dist/3rdparty && \
     apt-get install -y \
       git \
       libboost-all-dev \
+      libcpprest-dev \
       libfmt-dev \
       libmstch-dev \
       libsystemd-dev \

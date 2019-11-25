@@ -2,9 +2,11 @@ Source: pdns-sysrepo
 Section: net
 Priority: optional
 Maintainer: Pieter Lexis <pieter.lexis@powerdns.com>
-Build-Depends: debhelper (>= 11~),
+Build-Depends: cmake,
+               debhelper (>= 11~),
                libboost-filesystem-dev,
                libboost-program-options-dev,
+               libcpprest-dev,
                libfmt-dev,
                libmstch-dev,
                libsdbusplus-dev,
