@@ -15,3 +15,4 @@ New Features
   - Slave operation
 - Configuration file writing
 - Service restarting
+- Zone status are available as operational data
