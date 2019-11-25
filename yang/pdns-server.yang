@@ -284,14 +284,6 @@ module pdns-server {
             }
             uses backend;
         }
-
-        list zones {
-            description
-              "All zones configured on this server";
-
-            uses zone;
-            key "name";
-        }
     }
 
     container zones-state {
