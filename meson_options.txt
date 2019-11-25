@@ -1,0 +1,2 @@
+option('build-tests', type: 'boolean', value: true,
+       description: 'Build the tests')

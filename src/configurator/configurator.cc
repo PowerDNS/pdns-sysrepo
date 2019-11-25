@@ -69,6 +69,10 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
 
   if (node->schema()->nodetype() == LYS_CONTAINER && nodename == "pdns-server") {
     auto child = node->child();
+    if (child == nullptr) {
+      // We were passed an empty container, use all the defaults
+      return;
+    }
     /*
      * Assume the tree looks like this:
      *                /- pdns-server ---------------\
@@ -182,11 +186,6 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
 }
 
 void PdnsServerConfig::writeToFile(const string &fpath) {
-  // Don't do HTML escaping, we're not a webserver
-  mstch::config::escape = [](const std::string& str) -> std::string {
-    return str;
-  };
-
   spdlog::debug("Attempting to create configuration file={}", fpath);
   auto p = fs::path(fpath);
   auto d = p.remove_filename();
@@ -194,6 +193,22 @@ void PdnsServerConfig::writeToFile(const string &fpath) {
     // TODO find better exception
     throw range_error(d.string() + " is not a directory");
   }
+
+  std::ofstream outputFile(fpath);
+  if (!outputFile) {
+    throw runtime_error("Unable to open output file '" + fpath + "'");
+  }
+
+  outputFile << getConfig();
+  outputFile.close();
+  spdlog::trace("Written config file {}", fpath);
+}
+
+string PdnsServerConfig::getConfig() {
+  // Don't do HTML escaping, we're not a webserver
+  mstch::config::escape = [](const std::string& str) -> std::string {
+    return str;
+  };
 
   mstch::array laddrs;
   for (const auto& la : listenAddresses) {
@@ -243,15 +258,8 @@ void PdnsServerConfig::writeToFile(const string &fpath) {
   };
 
   spdlog::trace("Generated config:\n{}", mstch::render(pdns_conf_template, ctx));
-  // TODO tmpfile
-  std::ofstream outputFile(fpath);
-  if (!outputFile) {
-    throw runtime_error("Unable to open output file '" + fpath + "'");
-  }
 
-  outputFile << mstch::render(pdns_conf_template, ctx);
-  outputFile.close();
-  spdlog::trace("Written config file {}", fpath);
+  return mstch::render(pdns_conf_template, ctx);
 }
 
 string PdnsServerConfig::bool2str(const bool b) {

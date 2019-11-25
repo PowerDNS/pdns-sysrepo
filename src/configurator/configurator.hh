@@ -52,6 +52,8 @@ public:
   void changeConfigValue(const libyang::S_Data_Node_Leaf_List &node);
   void deleteConfigValue();
 
+  std::string getConfig();
+
   /**
    * @brief Get the Webserver Address
    * 
@@ -117,7 +119,7 @@ private:
 
   vector<listenAddress> listenAddresses{};
   vector<backend> backends;
-  bool master;
-  bool slave;
+  bool master{false};
+  bool slave{false};
 };
 } // namespace pdns_conf

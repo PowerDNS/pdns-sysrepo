@@ -77,3 +77,10 @@ subdir('documentation', if_found: sphinxbuild)
 if not sphinxbuild.found()
   message('sphinx-build not found. Unable to generate documentation')
 endif
+
+##
+# Tests
+##
+if get_option('build-tests')
+  subdir('test')
+endif
