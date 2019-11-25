@@ -5,13 +5,13 @@ RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 RUN mkdir -p /dist/3rdparty /libyang /builder
 WORKDIR /libyang
 
-RUN curl -L https://github.com/CESNET/libyang/archive/ac3427b10e532eaee877a52a71c1efdeece8411a.tar.gz | gunzip | tar xf - && \
-      mv libyang-ac3427b10e532eaee877a52a71c1efdeece8411a libyang_1.0.92
+RUN curl -L https://github.com/CESNET/libyang/archive/2806c1147198cbbeb1e463d8447f25350362262a.tar.gz | gunzip | tar xf - && \
+      mv libyang-2806c1147198cbbeb1e463d8447f25350362262a libyang_1.0.97
 
-ADD builder-support/debian/libyang libyang_1.0.92/debian
+ADD builder-support/debian/libyang libyang_1.0.97/debian
 ADD builder/helpers /builder/helpers
 
-RUN /builder/helpers/build-debs.sh libyang_1.0.92
+RUN /builder/helpers/build-debs.sh libyang_1.0.97
 
 RUN cp libyang*.deb /dist/3rdparty
 RUN cp libyang*.ddeb /dist/3rdparty

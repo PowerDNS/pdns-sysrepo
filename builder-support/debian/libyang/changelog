@@ -1,3 +1,9 @@
+libyang (1.0.97-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Pieter Lexis <pieter.lexis@powerdns.com>  Mon, 25 Nov 2019 14:06:55 +0100
+
 libyang (1.0.92-1) UNRELEASED; urgency=medium
 
   * Initial release

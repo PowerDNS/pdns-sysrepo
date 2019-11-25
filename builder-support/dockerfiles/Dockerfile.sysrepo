@@ -9,13 +9,13 @@ RUN cd /dist/3rdparty && apt install -y ./libyang*.deb
 
 WORKDIR /sysrepo
 
-RUN curl -L https://github.com/sysrepo/sysrepo/archive/d6c4560363c5b2dfcf46da6c96de435cbb901cb3.tar.gz | gunzip | tar xf - && \
-      mv sysrepo-d6c4560363c5b2dfcf46da6c96de435cbb901cb3 sysrepo_1.3.6
+RUN curl -L https://github.com/sysrepo/sysrepo/archive/9f8938d9d9bca18853b88150ca9d742fe891b2eb.tar.gz | gunzip | tar xf - && \
+      mv sysrepo-9f8938d9d9bca18853b88150ca9d742fe891b2eb sysrepo_1.3.10
 
-ADD builder-support/debian/sysrepo sysrepo_1.3.6/debian
+ADD builder-support/debian/sysrepo sysrepo_1.3.10/debian
 ADD builder/helpers /builder/helpers
 
-RUN /builder/helpers/build-debs.sh sysrepo_1.3.6
+RUN /builder/helpers/build-debs.sh sysrepo_1.3.10
 
 RUN cp libsysrepo*.deb /dist/3rdparty
 RUN cp libsysrepo*.ddeb /dist/3rdparty
