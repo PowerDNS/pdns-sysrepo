@@ -14,12 +14,12 @@ using std::endl;
 using ::testing::HasSubstr;
 using ::testing::MatchesRegex;
 
-#define YANG_DIR "../yang"
 #define MODULE_NAME "pdns-server"
 
+string yangDir;
 
 libyang::S_Data_Node getBasicConfig() {
-  libyang::S_Context ctx = make_shared<libyang::Context>(libyang::Context(YANG_DIR));
+  libyang::S_Context ctx = make_shared<libyang::Context>(libyang::Context(yangDir.c_str()));
   auto mod = ctx->load_module(MODULE_NAME);
 
   libyang::S_Data_Node node = make_shared<libyang::Data_Node>(libyang::Data_Node(ctx, "/pdns-server:pdns-server", nullptr, LYD_ANYDATA_CONSTSTRING, 0));
@@ -27,7 +27,7 @@ libyang::S_Data_Node getBasicConfig() {
 }
 
 libyang::S_Data_Node getMasterConfig() {
-  libyang::S_Context ctx = make_shared<libyang::Context>(libyang::Context(YANG_DIR));
+  libyang::S_Context ctx = make_shared<libyang::Context>(libyang::Context(yangDir.c_str()));
   auto mod = ctx->load_module(MODULE_NAME);
 
   libyang::S_Data_Node node = make_shared<libyang::Data_Node>(libyang::Data_Node(ctx, "/pdns-server:pdns-server", nullptr, LYD_ANYDATA_CONSTSTRING, 0));
@@ -73,5 +73,10 @@ TEST(config_test, master) {
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
+  if (argc != 2) {
+    cerr<<"Please prove the path to the yang directory"<<endl;
+    return 1;
+  }
+  yangDir = argv[1];
   return RUN_ALL_TESTS();
 }

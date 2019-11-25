@@ -12,4 +12,4 @@ config_test = executable('create-config',
   include_directories: [src_include],
   dependencies: [spdlog_dep, sysrepo_cpp_dep, libyang_cpp_dep, boost_deps, mstch_dep, gtest_dep])
 
-test('configurator', config_test)
+test('configurator', config_test, args: [meson.source_root() + '/yang'])
