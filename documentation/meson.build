@@ -11,11 +11,11 @@ doc_files = files(
 )
 
 custom_target('documentation',
+  input: doc_files,
+  output: 'documentation',
   command : [sphinxbuild,
             '-b', 'html',
             meson.current_source_dir(),
-            meson.current_build_dir() + '/documentation'],
-  input: doc_files,
-  output: 'documentation',
+            '@OUTPUT@'],
   install : true,
   install_dir : get_option('prefix') + '/' + get_option('datadir') + '/pdns-sysrepo')
