@@ -1,0 +1,2 @@
+FROM dist-base as libyang-builder
+@INCLUDE Dockerfile.libyang

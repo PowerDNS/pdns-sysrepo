@@ -1,0 +1,2 @@
+FROM sdist-base as libyang-builder-sdist
+@INCLUDE Dockerfile.libyang

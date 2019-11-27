@@ -1,0 +1,3 @@
+FROM sdist-base as sysrepo-builder-sdist
+COPY --from=libyang-builder-sdist /dist/3rdparty /dist/3rdparty
+@INCLUDE Dockerfile.sysrepo

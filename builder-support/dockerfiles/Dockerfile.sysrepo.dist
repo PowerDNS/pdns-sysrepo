@@ -1,0 +1,3 @@
+FROM dist-base as sysrepo-builder
+COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
+@INCLUDE Dockerfile.sysrepo

@@ -5,14 +5,14 @@ ARG APT_URL
 RUN mkdir -p /sdist /dist/3rdparty /pdns-sysrepo-sdist
 
 RUN apt-get update && apt-get -y dist-upgrade
-@INCLUDE Dockerfile.sdbusplus
-@INCLUDE Dockerfile.libyang
-@INCLUDE Dockerfile.sysrepo
+@INCLUDE Dockerfile.sdbusplus.sdist
+@INCLUDE Dockerfile.libyang.sdist
+@INCLUDE Dockerfile.sysrepo.sdist
 
 FROM sdist-base as sdist
-COPY --from=sdbusplus-builder /dist/3rdparty /dist/3rdparty
-COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
-COPY --from=sysrepo-builder /dist/3rdparty /dist/3rdparty
+COPY --from=sdbusplus-builder-sdist /dist/3rdparty /dist/3rdparty
+COPY --from=libyang-builder-sdist /dist/3rdparty /dist/3rdparty
+COPY --from=sysrepo-builder-sdist /dist/3rdparty /dist/3rdparty
 
 RUN cd /dist/3rdparty && \
     apt install -y ./lib*.deb && \

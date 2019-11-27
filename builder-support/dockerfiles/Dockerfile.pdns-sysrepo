@@ -1,10 +1,17 @@
+@INCLUDE Dockerfile.sdbusplus.dist
+@INCLUDE Dockerfile.libyang.dist
+@INCLUDE Dockerfile.sysrepo.dist
+
 FROM dist-base as pdns-sysrepo-builder
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 
 RUN mkdir -p /dist /pdns-sysrepo /builder
 
-COPY --from=sdist /dist/3rdparty /dist/3rdparty
+COPY --from=sdbusplus-builder /dist/3rdparty /dist/3rdparty
+COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
+COPY --from=sysrepo-builder /dist/3rdparty /dist/3rdparty
+
 RUN cd /dist/3rdparty && apt install -y ./lib*.deb
 
 WORKDIR /pdns-sysrepo
@@ -19,4 +26,4 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN /builder/helpers/build-debs.sh pdns-sysrepo-${BUILDER_VERSION}
 
 RUN cp pdns-sysrepo*.deb /dist
-RUN cp pdns-sysrepo*.ddeb /dist
+RUN cp pdns-sysrepo*.ddeb /dist || true
