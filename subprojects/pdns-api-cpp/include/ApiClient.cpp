@@ -62,6 +62,14 @@ utility::string_t ApiClient::parameterToString(utility::string_t value)
 {
     return value;
 }
+utility::string_t ApiClient::parameterToString(bool value)
+{
+    if (value) {
+      return utility::conversions::to_string_t("true");
+    }
+    return utility::conversions::to_string_t("false");
+}
+
 utility::string_t ApiClient::parameterToString(int64_t value)
 {
     std::stringstream valueAsStringStream;
