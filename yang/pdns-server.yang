@@ -188,43 +188,54 @@ module pdns-server {
         leaf zonetype {
             type zonetype;
         }
+
+        leaf-list masters {
+            description
+              "Master servers for this zone";
+            type inet:ip-address;
+            when "../zonetype = 'slave'";
+            min-elements 1;
+        }
     }
 
     grouping webserver {
-      description "Webserver configuration";
-      leaf address {
-        type inet:ip-address;
-      }
-      leaf port {
-        type inet:port-number;
-      }
-      leaf password {
         description
-              "Password required to access the non-API webserver paths";
-        type string;
-      }
-      leaf api-key {
-        description
-              "Pre-shared API key. Set this to enable the API";
-        type string;
-      }
-      leaf-list allow-from {
-        description
-              "ACL for the webserver";
-        type inet:ip-prefix;
-      }
-      leaf max-body-size {
-        description "Maximum size of the response sent by the webserver in megabytes";
-        type uint32;
-      }
-      leaf loglevel {
-        description "How munch the webserver should log";
-        type enumeration {
-          enum "none";
-          enum "normal";
-          enum "detailed";
+          "Webserver configuration";
+        leaf address {
+            type inet:ip-address;
         }
-      }
+        leaf port {
+            type inet:port-number;
+        }
+        leaf password {
+            description
+              "Password required to access the non-API webserver paths";
+            type string;
+        }
+        leaf api-key {
+            description
+              "Pre-shared API key. Set this to enable the API";
+            type string;
+        }
+        leaf-list allow-from {
+            description
+              "ACL for the webserver";
+            type inet:ip-prefix;
+        }
+        leaf max-body-size {
+            description
+              "Maximum size of the response sent by the webserver in megabytes";
+            type uint32;
+        }
+        leaf loglevel {
+            description
+              "How munch the webserver should log";
+            type enumeration {
+                enum "none";
+                enum "normal";
+                enum "detailed";
+            }
+        }
     }
 
     /*
@@ -263,11 +274,17 @@ module pdns-server {
         }
 
         container webserver {
-          uses webserver {
-            refine port {default 8081;}
-            refine address {default "127.0.0.1";}
-            refine allow-from {default "127.0.0.0/8";}
-          }
+            uses webserver {
+                refine port {
+                    default 8081;
+                }
+                refine address {
+                    default "127.0.0.1";
+                }
+                refine allow-from {
+                    default "127.0.0.0/8";
+                }
+            }
         }
 
         list backend {

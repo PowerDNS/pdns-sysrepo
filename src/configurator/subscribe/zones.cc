@@ -10,7 +10,7 @@ namespace pdns_model = org::openapitools::client::model;
 namespace pdns_conf
 {
 void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
-  // This fetches only created and deleted zones
+  // This fetches only full zone nodes, not subnodes.
   auto iter = session->get_changes_iter("/pdns-server:pdns-server/zones");
   auto change = session->get_change_tree_next(iter);
 
@@ -26,8 +26,7 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
     spdlog::trace("zones change. operation={}", util::srChangeOper2String(change->oper()));
 
     if (change->oper() == SR_OP_CREATED) {
-      auto tree = sess->get_subtree(("/pdns-server:pdns-server" + change->node()->path()).c_str());
-      auto child = tree->child();
+      auto child = change->node()->child();
       pdns_api::Zone z;
       while (child) {
         auto leaf = make_shared<libyang::Data_Node_Leaf_List>(child);
@@ -68,6 +67,34 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
   }
 }
 
+void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
+  // Fetch the sub-nodes of all zones that changed
+  auto iter = session->get_changes_iter("/pdns-server:pdns-server/zones/*");
+  auto change = session->get_change_tree_next(iter);
+
+  if (d_apiClient == nullptr && change != nullptr) {
+    throw std::runtime_error("Unable to change zone configuration, API not enabled.");
+  }
+
+  pdns_api::ZonesApi zoneApiClient(d_apiClient);
+
+  while (change != nullptr && change->oper() == SR_OP_MODIFIED && change->node() != nullptr) {
+    // spdlog::trace("Zone modify. operation={} path={}, node_path={}, list_pos={}", util::srChangeOper2String(change->oper()), change->node()->path(), change->node()->schema()->path(), change->node()->list_pos());
+    auto namenode = change->node()->parent()->find_path("/pdns-server:pdns-server/pdns-server:zones/pdns-server:name")->data().at(0);
+    if (!namenode) {
+      throw std::runtime_error("Unable to find the name of a changed zone!");
+    }
+    string zoneName = make_shared<libyang::Data_Node_Leaf_List>(namenode)->value_str();
+    pdns_api_model::Zone z = zonesModified[zoneName];
+    auto leaf = make_shared<libyang::Data_Node_Leaf_List>(change->node());
+    if (string(leaf->schema()->name()) == "zonetype") {
+      z.setKind(leaf->value_str());
+    }
+    zonesModified[zoneName] = z;
+    change = session->get_change_tree_next(iter);
+  }
+}
+
 void ServerConfigCB::doneZoneAddAndDelete() {
   vector<string> errors;
   if (d_apiClient != nullptr) {
@@ -94,14 +121,9 @@ void ServerConfigCB::doneZoneAddAndDelete() {
     for (auto const& z : zonesRemoved) {
       string err = fmt::format("Unable to delete zone '{}'", z);
       try {
-        auto zones = zonesApiClient.listZones("localhost", z).get();
-        if (zones.size() != 1) {
-          errors.push_back(fmt::format("API returned the wrong number of zones ({}) for '{}', expected 1", zones.size(), z));
-          continue;
-        }
-        auto zone = zones.at(0);
+        string zoneId = getZoneId(z);
         spdlog::debug("Deleting zone {}", z);
-        zonesApiClient.deleteZone("localhost", zone->getId());
+        zonesApiClient.deleteZone("localhost", zoneId).get();
         spdlog::debug("Deleted zone {}", z);
       }
       catch (const pdns_api::ApiException& e) {
@@ -119,6 +141,38 @@ void ServerConfigCB::doneZoneAddAndDelete() {
   zonesRemoved.clear();
   if (!errors.empty()) {
     throw std::runtime_error(boost::algorithm::join(errors, ", "));
+  }
+}
+
+void ServerConfigCB::doneZoneModify() {
+  vector<string> errors;
+  for (auto const &z : zonesModified) {
+    auto zoneName = z.first;
+    auto zone = z.second;
+    string zoneId;
+    try {
+      zoneId = getZoneId(zoneName);
+    } catch (const runtime_error &e) {
+      errors.push_back(fmt::format("unable to modify zone {}: {}", zoneName, e.what()));
+      continue;
+    }
+
+    spdlog::debug("have ZoneID");
+    if (d_apiClient != nullptr) {
+      pdns_api::ZonesApi zonesApiClient(d_apiClient);
+      auto zp = make_shared<pdns_api_model::Zone>(zone);
+      try {
+        zonesApiClient.putZone("localhost", zoneId, zp).get();
+      } catch (const pdns_api::ApiException &e) {
+        errors.push_back(fmt::format("Unable to modify zone {}: {}", zoneId, e.what()));
+        spdlog::debug("API PUT call to modify zone {} returned: {}", zoneId, e.getContent()->get());
+        continue;
+      }
+    }
+  }
+  zonesModified.clear();
+  if (!errors.empty()) {
+    throw runtime_error(boost::algorithm::join(errors, ", "));
   }
 }
 } // namespace pdns_conf

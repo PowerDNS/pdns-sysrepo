@@ -62,6 +62,13 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       return SR_ERR_OPERATION_FAILED;
     }
 
+    try {
+      changeZoneModify(session);
+    } catch (const std::runtime_error &e) {
+      spdlog::warn("Zone modifications not possible: {}", e.what());
+      return SR_ERR_OPERATION_FAILED;
+    }
+
     // The session already has the new datastore values
     PdnsServerConfig c(sess->getConfigTree());
     c.writeToFile(fpath);
@@ -97,6 +104,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
 
       try {
         doneZoneAddAndDelete();
+        doneZoneModify();
       } catch (const std::runtime_error &e) {
         spdlog::warn("Zone manipulation failed: {}", e.what());
         return SR_ERR_OPERATION_FAILED;

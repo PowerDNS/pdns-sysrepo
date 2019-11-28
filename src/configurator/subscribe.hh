@@ -144,17 +144,24 @@ private:
    * 
    * @param sess    The session passed to the callback, used to get data if required
    * 
-   * @throw 
+   * @throw std::runtime_error  When an addition or removal is not possible
    */
   void changeZoneAddAndDelete(sysrepo::S_Session &sess);
 
   /**
    * @brief Uses the API to add and remove zones
    * 
+   * @throw std::runtime_error  When one or more zones can't be added/deleted
    */
   void doneZoneAddAndDelete();
 
+  void changeZoneModify(sysrepo::S_Session &session);
+  void doneZoneModify();
+
+  string getZoneId(const string &zone);
+
   vector<pdns_api_model::Zone> zonesCreated;
+  map<string, pdns_api_model::Zone> zonesModified;
   vector<string> zonesRemoved;
 };
 

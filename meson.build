@@ -13,10 +13,11 @@ conf_data.set('version', meson.project_version())
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
 pdns_sysrepo = files('src/configurator/configurator.cc', 'src/configurator/config.cc',
   'src/configurator/subscribe.cc', 'src/configurator/subscribe/zones.cc', 'src/configurator/subscribe/service.cc',
+  'src/configurator/subscribe/helpers.cc',
   'src/configurator/util.hh', 'src/configurator/util.cc'
   )
 
-sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.2.0')
+sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.3.13')
 libyang_cpp_dep = dependency('libyang-cpp')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
 yaml_dep = dependency('yaml-cpp')
