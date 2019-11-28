@@ -21,6 +21,7 @@
 
 #include "configurator.hh"
 #include "config.h"
+#include "sr_wrapper/session.hh"
 
 #include "ApiClient.h"
 #include "model/Zone.h"
@@ -134,6 +135,24 @@ private:
    * @brief Private data that this class can use
    */
   map<string, string> privData;
+
+  /**
+   * @brief Handles the additions and removals of zones.
+   * 
+   * This will add the zones that are removed or added to the zonesCreated and zonesRemoved
+   * lists
+   * 
+   * @param sess    The session passed to the callback, used to get data if required
+   * 
+   * @throw 
+   */
+  void changeZoneAddAndDelete(sysrepo::S_Session &sess);
+
+  /**
+   * @brief Uses the API to add and remove zones
+   * 
+   */
+  void doneZoneAddAndDelete();
 
   vector<pdns_api_model::Zone> zonesCreated;
   vector<string> zonesRemoved;

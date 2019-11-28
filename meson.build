@@ -12,7 +12,7 @@ conf_data.set('version', meson.project_version())
 
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
 pdns_sysrepo = files('src/configurator/configurator.cc', 'src/configurator/config.cc',
-  'src/configurator/subscribe.hh', 'src/configurator/subscribe.cc',
+  'src/configurator/subscribe.cc', 'src/configurator/subscribe/zones.cc', 'src/configurator/subscribe/service.cc',
   'src/configurator/util.hh', 'src/configurator/util.cc'
   )
 
