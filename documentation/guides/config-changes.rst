@@ -42,9 +42,35 @@ A configuration in JSON format for the PowerDNS Authoritative Server could look 
         }
       ],
       "master": true,
-      "slave": false
+      "slave": false,
+      "webserver": {
+        "api-key": "mySecretKey"
+      }
     }
   }
 
 This can be edited, saved after which sysrepo will apply the changes.
 Or it won't apply the changes if the configuration does not conform to the YANG model.
+
+Adding and Removing Zone
+^^^^^^^^^^^^^^^^^^^^^^^^
+The Yang model has a leaf-list at ``/pdns-server:pdns-server/zones`` that can be manipulated to create and remove zones, e.g:
+
+.. code-block:: json
+
+  {
+    "pdns-server:pdns-server": {
+      "zones": [
+        {
+          "name": "foo.example.net.",
+          "class": "IN",
+          "zonetype": "master"
+        }
+      ],
+    }
+  }
+
+Would create a zone named "foo.example.net".
+
+.. note::
+  :program:`pdns-sysrepo` will reject changes to zones if the API is disabled.

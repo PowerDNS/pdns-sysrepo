@@ -32,7 +32,7 @@ To install the distribution provided dependencies on a Debian system::
 
 Furthermore, some other build requirements should be installed::
 
-  apt install -y meson g++ 
+  apt install -y meson g++
 
 .. _dev-setup:
 

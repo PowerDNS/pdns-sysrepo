@@ -76,6 +76,7 @@ These modules need to be installed into sysrepo before they can be used.
 The :program:`sysrepoctl` tool can be used::
 
   sysrepoctl -i ietf-inet-types@2013-07-15.yang
+  sysrepoctl -i iana-dns-class-rr-type@2019-06-27.yang
   sysrepoctl -i pdns-server.yang
 
 Configure :program:`pdns-sysrepo`

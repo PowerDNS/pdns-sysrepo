@@ -13,18 +13,21 @@ For correct startup configuration, the PowerDNS service is made to depend on :pr
 
 Conceptually, the whole system looks like this::
 
-                           +--------- DNS Server --------------------+
-                           |                                         |
-  [NSO] <= NETCONF => [Netopeer] <=> [sysrepo] <=> [pdns-sysrepo]    |
-                           |                        ^       |        |
-                           |                  calls |       | writes |
-                           |                        v       |        |
-                           |           /----[systemd]       v        |
-                           |          | restarts       <config file> |
-                           |          |                  ^           |
-                           |          |      /----------/            |
-                           |          v     /   reads                |
-                           +-----[pdns_server]-----------------------+
+                           +--------- DNS Server -----------------------+
+                           |                                            |
+  [NSO] <= NETCONF => [Netopeer] <=> [sysrepo] <=> [pdns-sysrepo] <-\   |
+                           |                        ^       |        |  |
+                           |                  calls |       | writes |  |
+                           |                        v       |        |  |
+                           |          /-------[systemd]     v        |  |
+                           |         | restarts       <config file>  |  |
+                           |         |                  ^            |  |
+                           |         |      /----------/             |  |
+                           |         |     /   reads                 |  |
+                           |         |    /                         /   |
+                           |         v   /  /----------------------/    |
+                           |         v  /   v       API calls           |
+                           +-----[pdns_server]--------------------------+
 
 In pseudo code :program:`pdns-sysrepo` does the following:
 
