@@ -103,7 +103,7 @@ If the external dependencies have been installed separately, export the followin
 
 Now use :program:`meson` to create the build directory, in the root of the git repository::
 
-    meson build
+    meson -Dbuild-tests=true build
 
 The :program:`ninja` program can be used to build the software::
 

@@ -27,9 +27,9 @@ RUN cd /dist/3rdparty && \
       meson \
       systemd
 
-@EXEC sdist_dirs=(builder builder-support documentation polkit src sr_wrapper subprojects yang .git)
+@EXEC sdist_dirs=(builder builder-support documentation polkit src sr_wrapper subprojects test yang .git)
 @EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /pdns-sysrepo-sdist/$d/" ; done
-ADD LICENSE meson.build pdns-sysrepo.example.yaml pdns-sysrepo.service.in README.md /pdns-sysrepo-sdist/
+ADD LICENSE meson.build meson_options.txt pdns-sysrepo.example.yaml pdns-sysrepo.service.in README.md /pdns-sysrepo-sdist/
 
 WORKDIR /pdns-sysrepo-sdist
 RUN meson build && \

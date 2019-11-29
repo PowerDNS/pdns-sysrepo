@@ -1,5 +1,3 @@
-#include <fmt/format.h>
-
 #include "../subscribe.hh"
 #include "ZonesApi.h"
 

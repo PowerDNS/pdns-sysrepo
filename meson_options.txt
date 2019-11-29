@@ -1,2 +1,2 @@
-option('build-tests', type: 'boolean', value: true,
+option('build-tests', type: 'boolean', value: false,
        description: 'Build the tests')
