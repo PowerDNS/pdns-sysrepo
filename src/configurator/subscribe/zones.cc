@@ -11,7 +11,7 @@ namespace pdns_conf
 {
 void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
   // This fetches only full zone nodes, not subnodes.
-  auto iter = session->get_changes_iter("/pdns-server:pdns-server/zones");
+  auto iter = session->get_changes_iter("/pdns-server:zones");
   auto change = session->get_change_tree_next(iter);
 
   if (d_apiClient == nullptr && change != nullptr) {
@@ -69,7 +69,7 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
 
 void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
   // Fetch the sub-nodes of all zones that changed
-  auto iter = session->get_changes_iter("/pdns-server:pdns-server/zones/*");
+  auto iter = session->get_changes_iter("/pdns-server:zones/*");
   auto change = session->get_change_tree_next(iter);
 
   if (d_apiClient == nullptr && change != nullptr) {
@@ -80,7 +80,7 @@ void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
 
   while (change != nullptr && change->oper() == SR_OP_MODIFIED && change->node() != nullptr) {
     // spdlog::trace("Zone modify. operation={} path={}, node_path={}, list_pos={}", util::srChangeOper2String(change->oper()), change->node()->path(), change->node()->schema()->path(), change->node()->list_pos());
-    auto namenode = change->node()->parent()->find_path("/pdns-server:pdns-server/pdns-server:zones/pdns-server:name")->data().at(0);
+    auto namenode = change->node()->parent()->find_path("/pdns-server:zones/pdns-server:name")->data().at(0);
     if (!namenode) {
       throw std::runtime_error("Unable to find the name of a changed zone!");
     }

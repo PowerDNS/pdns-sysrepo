@@ -301,14 +301,14 @@ module pdns-server {
             }
             uses backend;
         }
+    }
 
-        list zones {
-            description
-              "All zones configured on this server";
+    list zones {
+        description
+          "All zones configured on this server";
 
-            uses zone;
-            key "name";
-        }
+        uses zone;
+        key "name";
     }
 
     container zones-state {
