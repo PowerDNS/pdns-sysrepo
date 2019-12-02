@@ -16,6 +16,7 @@ using std::endl;
 using ::testing::HasSubstr;
 using ::testing::MatchesRegex;
 
+#define APIKEY "foo"
 #define MODULE_NAME "pdns-server"
 string yangDir;
 

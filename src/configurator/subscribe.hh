@@ -105,7 +105,7 @@ public:
     const char* xpath, sr_event_t event,
     uint32_t request_id, void* private_data) override;
 
-private:
+protected:
   /**
    * @brief Return a file path to a tempfile
    * 

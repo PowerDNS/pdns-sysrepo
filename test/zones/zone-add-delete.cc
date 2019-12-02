@@ -2,61 +2,34 @@
 
 #include "configurator/subscribe.hh"
 
-#include "httpmockserver/mock_server.h"
-#include "httpmockserver/test_environment.h"
+#include "callback-wrapper.hh"
+#include "api-mock.hh"
 
-#define APIKEY "foo"
-
-class HTTPMock: public httpmock::MockServer {
-  public:
-    /// Create HTTP server on port 9200
-    explicit HTTPMock(int port = 9200): MockServer(port) {}
-  private:
-
-    /// Handler called by MockServer on HTTP request.
-    Response responseHandler(
-            const std::string &url,
-            const std::string &method,
-            const std::string &data,
-            const std::vector<UrlArg> &urlArguments,
-            const std::vector<Header> &headers)
-    {
-        for (auto const &h : headers) {
-            if (h.key == "X-API-Key" && h.value != APIKEY) {
-                return Response(401, "{\"error\": \"not authorized\"");
-            }
-        }
-
-        if (method == "POST" && matchesPrefix(url, "/api/v1/servers/localhost/zones")) {
-            return Response(500, "Fake HTTP response");
-        }
-        // Return "URI not found" for the undefined methods
-        return Response(404, "Not Found");
-    }
-
-    /// Return true if \p url starts with \p str.
-    bool matchesPrefix(const std::string &url, const std::string &str) const {
-        return url.substr(0, str.size()) == str;
-    }
-};
-
-/// Server started in the main().
+/// Server started in main().
 static httpmock::TestEnvironment<httpmock::MockServerHolder>* mock_server_env = nullptr;
 static std::shared_ptr<pdns_api::ApiClient> apiClient;
 
-TEST(zone_test, add) {
-    auto cb = pdns_conf::ServerConfigCB({{}}, apiClient);
+TEST(zone_test, modify_zonetype) {
+  auto cb = TestServerConfigCB({{}}, apiClient);
+  cb.modifyZoneType("example.com.", "master");
+  ASSERT_NO_THROW(cb.doDoneZoneModify());
 }
 
-int main(int argc, char **argv) {
+TEST(zone_test, add_zone) {
+  auto cb = TestServerConfigCB({{}}, apiClient);
+  cb.addZone("create.example.com.", "master");
+  ASSERT_NO_THROW(cb.doDoneZoneAddAndDelete());
+}
+
+int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   if (argc != 2) {
-    cerr<<"Please prove the path to the yang directory"<<endl;
+    cerr << "Please prove the path to the yang directory" << endl;
     return 1;
   }
   yangDir = argv[1];
 
-  ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(httpmock::createMockServerEnvironment<HTTPMock>(9200));
+  ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(httpmock::createMockServerEnvironment<PDNSApiMock>(9200));
   mock_server_env = dynamic_cast<httpmock::TestEnvironment<httpmock::MockServerHolder>*>(env);
 
   std::shared_ptr<pdns_api::ApiConfiguration> apiConfig(new pdns_api::ApiConfiguration);
