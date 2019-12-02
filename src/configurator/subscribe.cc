@@ -51,6 +51,16 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
     (xpath == nullptr) ? "" : xpath,
     util::srEvent2String(event), request_id);
 
+  if (event == SR_EV_ENABLED) {
+    // Called when the subscription starts
+    auto fpath = tmpFile(request_id);
+    auto sess = static_pointer_cast<sr::Session>(session);
+
+    // Create the initial config, we'll restart the service once we get the SR_EV_DONE event
+    PdnsServerConfig c(sess->getConfigTree());
+    c.writeToFile(fpath);
+  }
+
   if (event == SR_EV_CHANGE) {
     auto fpath = tmpFile(request_id);
     auto sess = static_pointer_cast<sr::Session>(session);
@@ -93,22 +103,27 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       spdlog::warn("Could not copy running config to startup config");
       return SR_ERR_OPERATION_FAILED;
     }
+
     if (!privData["service"].empty()) {
       restartService(privData["service"]);
     }
-    if (d_apiClient) {
-      // XXX is this needed?
-      auto sess = static_pointer_cast<sr::Session>(session);
-      PdnsServerConfig c(sess->getConfigTree());
-      d_apiClient->getConfiguration()->setApiKey("X-API-Key", c.getApiKey());
 
-      try {
-        doneZoneAddAndDelete();
-        doneZoneModify();
-      } catch (const std::runtime_error &e) {
-        spdlog::warn("Zone manipulation failed: {}", e.what());
-        return SR_ERR_OPERATION_FAILED;
-      }
+    auto sess = static_pointer_cast<sr::Session>(session);
+    try {
+      configureApi(sess->getConfigTree());
+    }
+    catch (const std::exception& e) {
+      spdlog::warn("Could not initiate API Client: {}", e.what());
+      return SR_ERR_OPERATION_FAILED;
+    }
+
+    try {
+      doneZoneAddAndDelete();
+      doneZoneModify();
+    }
+    catch (const std::exception& e) {
+      spdlog::warn("Zone manipulation failed: {}", e.what());
+      return SR_ERR_OPERATION_FAILED;
     }
   }
 
@@ -136,11 +151,6 @@ int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
   libyang::S_Module mod = ctx->get_module(module_name);
   parent.reset(new libyang::Data_Node(ctx, "/pdns-server:zones-state", nullptr, LYD_ANYDATA_CONSTSTRING, 0));
 
-  if (d_apiClient == nullptr) {
-    // TODO actually send an error?
-    return SR_ERR_OK;
-  }
-
   pdns_api::ZonesApi zoneApiClient(d_apiClient);
   try {
     // We use a blocking call
@@ -161,7 +171,7 @@ int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
     spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
   } catch (const web::http::http_exception &e) {
     spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
-  } catch (const std::runtime_error &e) {
+  } catch (const std::exception &e) {
     spdlog::warn("Could not create zonestatus: {}", e.what());
   }
 

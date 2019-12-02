@@ -127,6 +127,13 @@ protected:
   void restartService(const string& service);
 
   /**
+   * @brief Configures d_apiClient
+   * 
+   * @param node The current config for the server (node rooted at /pdns-server:pdns-server)
+   */
+  void configureApi(const libyang::S_Data_Node &node); 
+
+  /**
    * @brief API client
    */
   shared_ptr<pdns_api::ApiClient> d_apiClient;
@@ -158,6 +165,14 @@ protected:
   void changeZoneModify(sysrepo::S_Session &session);
   void doneZoneModify();
 
+  /**
+   * @brief Get the ID of a zone
+   * 
+   * @param zone 
+   * @return string 
+   * @throw runtime_error when the API does not return what we need
+   * @throw org::openapitools::client::api::ApiException when the API does not return with 2xx
+   */
   string getZoneId(const string &zone);
 
   vector<pdns_api_model::Zone> zonesCreated;

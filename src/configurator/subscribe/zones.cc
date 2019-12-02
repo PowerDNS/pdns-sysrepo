@@ -3,6 +3,7 @@
 #include "../subscribe.hh"
 #include "../util.hh"
 #include "api/ZonesApi.h"
+#include "api/ServersApi.h"
 #include "model/Zone.h"
 
 namespace pdns_model = org::openapitools::client::model;
@@ -14,13 +15,17 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
   auto iter = session->get_changes_iter("/pdns-server:zones");
   auto change = session->get_change_tree_next(iter);
 
-  if (d_apiClient == nullptr && change != nullptr) {
-    throw std::runtime_error("Unable to change zone configuration, API not enabled.");
+  if (change == nullptr) {
+    return;
   }
 
+  // Sanity check, if this throws, we can't do anything...
+  {
+    auto sApi = pdns_api::ServersApi(d_apiClient);
+    sApi.listServers().get();
+  }
+  
   auto sess = static_pointer_cast<sr::Session>(session);
-
-  pdns_api::ZonesApi zoneApiClient(d_apiClient);
 
   while (change != nullptr && change->node() != nullptr) {
     spdlog::trace("zones change. operation={}", util::srChangeOper2String(change->oper()));
@@ -72,10 +77,6 @@ void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
   auto iter = session->get_changes_iter("/pdns-server:zones/*");
   auto change = session->get_change_tree_next(iter);
 
-  if (d_apiClient == nullptr && change != nullptr) {
-    throw std::runtime_error("Unable to change zone configuration, API not enabled.");
-  }
-
   pdns_api::ZonesApi zoneApiClient(d_apiClient);
 
   while (change != nullptr && change->oper() == SR_OP_MODIFIED && change->node() != nullptr) {
@@ -97,43 +98,41 @@ void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
 
 void ServerConfigCB::doneZoneAddAndDelete() {
   vector<string> errors;
-  if (d_apiClient != nullptr) {
-    pdns_api::ZonesApi zonesApiClient(d_apiClient);
+  pdns_api::ZonesApi zonesApiClient(d_apiClient);
 
-    for (auto const& z : zonesCreated) {
-      string err = fmt::format("Unable to create zone '{}'", z.getName());
-      try {
-        auto zp = make_shared<pdns_api_model::Zone>(z);
-        spdlog::debug("Creating zone {}", zp->getName());
-        auto zone = zonesApiClient.createZone("localhost", zp, false).get();
-        spdlog::debug("Created zone {}", zp->getName());
-      }
-      catch (const pdns_api::ApiException& e) {
-        errors.push_back(fmt::format("{}: {}", err, e.what()));
-        spdlog::warn(err);
-      }
-      catch (const std::runtime_error& e) {
-        errors.push_back(fmt::format("{}: {}", err, e.what()));
-        spdlog::warn(err);
-      }
+  for (auto const& z : zonesCreated) {
+    string err = fmt::format("Unable to create zone '{}'", z.getName());
+    try {
+      auto zp = make_shared<pdns_api_model::Zone>(z);
+      spdlog::debug("Creating zone {}", zp->getName());
+      auto zone = zonesApiClient.createZone("localhost", zp, false).get();
+      spdlog::debug("Created zone {}", zp->getName());
     }
+    catch (const pdns_api::ApiException& e) {
+      errors.push_back(fmt::format("{}: {}", err, e.what()));
+      spdlog::warn(err);
+    }
+    catch (const std::exception& e) {
+      errors.push_back(fmt::format("{}: {}", err, e.what()));
+      spdlog::warn(err);
+    }
+  }
 
-    for (auto const& z : zonesRemoved) {
-      string err = fmt::format("Unable to delete zone '{}'", z);
-      try {
-        string zoneId = getZoneId(z);
-        spdlog::debug("Deleting zone {}", z);
-        zonesApiClient.deleteZone("localhost", zoneId).get();
-        spdlog::debug("Deleted zone {}", z);
-      }
-      catch (const pdns_api::ApiException& e) {
-        errors.push_back(fmt::format("{}: {}", err, e.what()));
-        spdlog::warn(err);
-      }
-      catch (const std::runtime_error& e) {
-        errors.push_back(fmt::format("{}: {}", err, e.what()));
-        spdlog::warn(err);
-      }
+  for (auto const& z : zonesRemoved) {
+    string err = fmt::format("Unable to delete zone '{}'", z);
+    try {
+      string zoneId = getZoneId(z);
+      spdlog::debug("Deleting zone {}", z);
+      zonesApiClient.deleteZone("localhost", zoneId).get();
+      spdlog::debug("Deleted zone {}", z);
+    }
+    catch (const pdns_api::ApiException& e) {
+      errors.push_back(fmt::format("{}: {}", err, e.what()));
+      spdlog::warn(err);
+    }
+    catch (const std::exception& e) {
+      errors.push_back(fmt::format("{}: {}", err, e.what()));
+      spdlog::warn(err);
     }
   }
   // TODO Store zones that could not be created or deleted and try again later, returning SR_ERR_CALLBACK_SHELVE and starting a thread to try the creation again
@@ -157,17 +156,15 @@ void ServerConfigCB::doneZoneModify() {
       continue;
     }
 
-    spdlog::debug("have ZoneID");
-    if (d_apiClient != nullptr) {
-      pdns_api::ZonesApi zonesApiClient(d_apiClient);
-      auto zp = make_shared<pdns_api_model::Zone>(zone);
-      try {
-        zonesApiClient.putZone("localhost", zoneId, zp).get();
-      } catch (const pdns_api::ApiException &e) {
-        errors.push_back(fmt::format("Unable to modify zone {}: {}", zoneId, e.what()));
-        spdlog::debug("API PUT call to modify zone {} returned: {}", zoneId, e.getContent()->get());
-        continue;
-      }
+    pdns_api::ZonesApi zonesApiClient(d_apiClient);
+    auto zp = make_shared<pdns_api_model::Zone>(zone);
+    try {
+      zonesApiClient.putZone("localhost", zoneId, zp).get();
+    }
+    catch (const pdns_api::ApiException& e) {
+      errors.push_back(fmt::format("Unable to modify zone {}: {}", zoneId, e.what()));
+      spdlog::debug("API PUT call to modify zone {} returned: {}", zoneId, e.getContent()->get());
+      continue;
     }
   }
   zonesModified.clear();

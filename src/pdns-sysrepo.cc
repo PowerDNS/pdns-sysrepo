@@ -100,29 +100,17 @@ int main(int argc, char* argv[]) {
     auto sess = sr::Session(conn);
 
     try {
-      spdlog::debug("Getting current config");
-      // Sysrepo will copy the startup config to the running config on the first query
-      auto node = sess.getConfigTree();
-      auto config = make_shared<pdns_conf::PdnsServerConfig>(node);
+      /* This is passed to both the ServerConfigCB and the ZoneCB.
+         As the have the same reference, the ServerConfigCB can update the pdns_api::ApiClient with the
+         correct config, allowing both the ZoneCB and the ServerConfigCB to work with the API
+      */
+      auto apiClient = make_shared<pdns_api::ApiClient>();
 
-      shared_ptr<pdns_api::ApiClient> apiClient{nullptr};
-      if (config->doesAPI()) {
-        std::shared_ptr<pdns_api::ApiConfiguration> apiConfig(new pdns_api::ApiConfiguration);
-        apiConfig->setBaseUrl("http://" + config->getWebserverAddress() + "/api/v1");
-        apiConfig->setApiKey("X-API-Key", config->getApiKey());
-        apiConfig->setUserAgent("pdns-sysrepo/" + string(VERSION));
-        apiClient = make_shared<pdns_api::ApiClient>(pdns_api::ApiClient(apiConfig));
-      } else {
-        spdlog::warn("");
-      }
-
-      config->writeToFile(myConfig.getPdnsConfigFilename());
-
-      spdlog::debug("Registring config change callbacks");
+      spdlog::debug("Registering config change callbacks");
       sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
       auto s = sysrepo::Subscribe(sSess);
       auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename(), myConfig.getServiceName(), apiClient);
-      s.module_change_subscribe("pdns-server", cb);
+      s.module_change_subscribe("pdns-server", cb, nullptr, nullptr, 0, SR_SUBSCR_ENABLED);
 
       auto zoneSubscribe = sysrepo::Subscribe(sSess);
       spdlog::debug("done, registring operational zone CB");
