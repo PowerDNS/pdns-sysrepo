@@ -52,14 +52,12 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
     util::srEvent2String(event), request_id);
 
   if (event == SR_EV_ENABLED) {
-    // Called when the subscription starts
-    pdnsConfigChanged = true;
-    auto fpath = tmpFile(request_id);
-    auto sess = static_pointer_cast<sr::Session>(session);
-
-    // Create the initial config, we'll restart the service once we get the SR_EV_DONE event
-    PdnsServerConfig c(sess->getConfigTree());
-    c.writeToFile(fpath);
+    try {
+      changeConfigUpdate(session, request_id);
+    } catch(const exception &e) {
+      spdlog::warn("Unable to create temporary config: {}", e.what());
+      return SR_ERR_OPERATION_FAILED;
+    }
   }
 
   if (event == SR_EV_CHANGE) {
@@ -112,13 +110,17 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
         restartService(privData["service"]);
       }
 
-      auto sess = static_pointer_cast<sr::Session>(session);
-      try {
-        configureApi(sess->getConfigTree());
-      }
-      catch (const std::exception& e) {
-        spdlog::warn("Could not initiate API Client: {}", e.what());
-        return SR_ERR_OPERATION_FAILED;
+      if (apiConfigChanged) {
+        try {
+          auto sess = static_pointer_cast<sr::Session>(session);
+          configureApi(sess->getConfigTree());
+          apiConfigChanged = false;
+        }
+        catch (const std::exception& e) {
+          spdlog::warn("Could not initiate API Client: {}", e.what());
+          apiConfigChanged = false;
+          return SR_ERR_OPERATION_FAILED;
+        }
       }
     }
 
@@ -142,6 +144,9 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       catch (const exception& e) {
         spdlog::warn("Unable to remove temporary file fpath={}: {}", fpath, e.what());
       }
+    }
+    if (apiConfigChanged) {
+      apiConfigChanged = false;
     }
     zonesCreated.clear();
     zonesRemoved.clear();

@@ -16,5 +16,16 @@ void ServerConfigCB::changeConfigUpdate(sysrepo::S_Session& session, const uint3
     PdnsServerConfig c(sess->getConfigTree());
     c.writeToFile(fpath);
   }
+
+  iter = session->get_changes_iter("/pdns-server:pdns-server/webserver/*");
+  change = session->get_change_tree_next(iter);
+  while (change != nullptr) {
+    string name = change->node()->schema()->name();
+    if (name == "address" || name == "port" || name == "api-key") {
+      apiConfigChanged = true;
+      break;
+    }
+    change = session->get_change_tree_next(iter);
+  }
 }
 } // namespace pdns_conf

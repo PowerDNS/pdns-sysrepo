@@ -190,6 +190,7 @@ protected:
   map<string, pdns_api_model::Zone> zonesModified;
   vector<string> zonesRemoved;
   bool pdnsConfigChanged{false};
+  bool apiConfigChanged{false};
 };
 
 /**
