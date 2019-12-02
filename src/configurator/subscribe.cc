@@ -57,14 +57,14 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
 
     try {
       changeZoneAddAndDelete(session);
-    } catch (const std::runtime_error &e) {
+    } catch (const exception &e) {
       spdlog::warn("Zone changes not possible: {}", e.what());
       return SR_ERR_OPERATION_FAILED;
     }
 
     try {
       changeZoneModify(session);
-    } catch (const std::runtime_error &e) {
+    } catch (const exception &e) {
       spdlog::warn("Zone modifications not possible: {}", e.what());
       return SR_ERR_OPERATION_FAILED;
     }
