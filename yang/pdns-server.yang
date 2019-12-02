@@ -95,6 +95,14 @@ module pdns-server {
         }
     }
 
+    typedef zonetype {
+        type enumeration {
+            enum "master";
+            enum "slave";
+            enum "native";
+        }
+    }
+
     /*
      * Groupings
      */
@@ -155,22 +163,6 @@ module pdns-server {
             default false;
             when "../backendtype = 'gsqlite3'";
         }
-    }
-
-    typedef zonetype {
-        type enumeration {
-            enum "master";
-            enum "slave";
-            enum "native";
-        }
-    }
-
-    typedef zone-state-ref {
-        type leafref {
-            path "/pdns-server:zones-state/pdns-server:zones/pdns-server:name";
-        }
-        description
-          "Reference to the a leaf in the zones-state";
     }
 
     grouping zone {
