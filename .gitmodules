@@ -1,3 +1,6 @@
 [submodule "builder"]
 	path = builder
 	url = https://github.com/PowerDNS/pdns-builder
+[submodule "test/httpmockserver"]
+	path = test/httpmockserver
+	url = https://github.com/seznam/httpmockserver.git
