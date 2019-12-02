@@ -144,6 +144,17 @@ protected:
   map<string, string> privData;
 
   /**
+   * @brief Checks if pdns.conf requires updating
+   * 
+   * If pdns.conf requires updating, it will create the temporary config file and
+   * set pdnsConfigChanged to true.
+   * 
+   * @param session The session passed to the callback
+   * @param request_id The request ID passed to the callback
+   */
+  void changeConfigUpdate(sysrepo::S_Session &session, const uint32_t request_id);
+
+  /**
    * @brief Handles the additions and removals of zones.
    * 
    * This will add the zones that are removed or added to the zonesCreated and zonesRemoved
@@ -178,11 +189,8 @@ protected:
   vector<pdns_api_model::Zone> zonesCreated;
   map<string, pdns_api_model::Zone> zonesModified;
   vector<string> zonesRemoved;
+  bool pdnsConfigChanged{false};
 };
-
-/**
- * @return sysrepo::S_Callback 
- */
 
 /**
  * @brief Get a shared pointer to a ServerConfigCB object

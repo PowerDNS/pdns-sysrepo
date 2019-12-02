@@ -53,6 +53,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
 
   if (event == SR_EV_ENABLED) {
     // Called when the subscription starts
+    pdnsConfigChanged = true;
     auto fpath = tmpFile(request_id);
     auto sess = static_pointer_cast<sr::Session>(session);
 
@@ -62,8 +63,12 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
   }
 
   if (event == SR_EV_CHANGE) {
-    auto fpath = tmpFile(request_id);
-    auto sess = static_pointer_cast<sr::Session>(session);
+    try {
+      changeConfigUpdate(session, request_id);
+    } catch(const exception &e) {
+      spdlog::warn("Unable to create temporary config: {}", e.what());
+      return SR_ERR_OPERATION_FAILED;
+    }
 
     try {
       changeZoneAddAndDelete(session);
@@ -78,43 +83,43 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       spdlog::warn("Zone modifications not possible: {}", e.what());
       return SR_ERR_OPERATION_FAILED;
     }
-
-    // The session already has the new datastore values
-    PdnsServerConfig c(sess->getConfigTree());
-    c.writeToFile(fpath);
   }
 
   if (event == SR_EV_DONE) {
-    auto fpath = tmpFile(request_id);
+    if (pdnsConfigChanged) {
+      pdnsConfigChanged = false;
+      auto fpath = tmpFile(request_id);
 
-    try {
-      spdlog::debug("Moving {} to {}", fpath, privData["fpath"]);
-      fs::rename(fpath, privData["fpath"]);
-    } catch (const exception &e) {
-      spdlog::warn("Unable to move {} to {}: {}", fpath, privData["fpath"], e.what());
-      return SR_ERR_OPERATION_FAILED;
-    }
+      try {
+        spdlog::debug("Moving {} to {}", fpath, privData["fpath"]);
+        fs::rename(fpath, privData["fpath"]);
+      }
+      catch (const exception& e) {
+        spdlog::warn("Unable to move {} to {}: {}", fpath, privData["fpath"], e.what());
+        return SR_ERR_OPERATION_FAILED;
+      }
 
-    try {
-      // TODO Are we responsible for this, or should we let the network service controller decide?
-      session->copy_config(SR_DS_RUNNING, SR_DS_STARTUP, module_name);
-    }
-    catch (const sysrepo::sysrepo_exception& se) {
-      spdlog::warn("Could not copy running config to startup config");
-      return SR_ERR_OPERATION_FAILED;
-    }
+      try {
+        // TODO Are we responsible for this, or should we let the network service controller decide?
+        session->copy_config(SR_DS_RUNNING, SR_DS_STARTUP, module_name);
+      }
+      catch (const sysrepo::sysrepo_exception& se) {
+        spdlog::warn("Could not copy running config to startup config");
+        return SR_ERR_OPERATION_FAILED;
+      }
 
-    if (!privData["service"].empty()) {
-      restartService(privData["service"]);
-    }
+      if (!privData["service"].empty()) {
+        restartService(privData["service"]);
+      }
 
-    auto sess = static_pointer_cast<sr::Session>(session);
-    try {
-      configureApi(sess->getConfigTree());
-    }
-    catch (const std::exception& e) {
-      spdlog::warn("Could not initiate API Client: {}", e.what());
-      return SR_ERR_OPERATION_FAILED;
+      auto sess = static_pointer_cast<sr::Session>(session);
+      try {
+        configureApi(sess->getConfigTree());
+      }
+      catch (const std::exception& e) {
+        spdlog::warn("Could not initiate API Client: {}", e.what());
+        return SR_ERR_OPERATION_FAILED;
+      }
     }
 
     try {
@@ -128,15 +133,19 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
   }
 
   if (event == SR_EV_ABORT) {
-    auto fpath = tmpFile(request_id);
-    try {
-      fs::remove(fpath);
-    }
-    catch (const exception& e) {
-      spdlog::warn("Unable to remove temporary file fpath={}: {}", fpath, e.what());
+    if (pdnsConfigChanged) {
+      pdnsConfigChanged = false;
+      auto fpath = tmpFile(request_id);
+      try {
+        fs::remove(fpath);
+      }
+      catch (const exception& e) {
+        spdlog::warn("Unable to remove temporary file fpath={}: {}", fpath, e.what());
+      }
     }
     zonesCreated.clear();
     zonesRemoved.clear();
+    zonesModified.clear();
   }
   return SR_ERR_OK;
 }
