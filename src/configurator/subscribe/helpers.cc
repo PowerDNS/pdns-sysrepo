@@ -22,7 +22,8 @@ void ServerConfigCB::configureApi(const libyang::S_Data_Node &node) {
     apiConfig->setApiKey("X-API-Key", make_shared<libyang::Data_Node_Leaf_List>(apiKeyNode)->value_str());
     auto addressNode = node->find_path("/pdns-server:pdns-server/webserver/address")->data().at(0);
     auto portNode = node->find_path("/pdns-server:pdns-server/webserver/port")->data().at(0);
-    apiConfig->setBaseUrl("http://" + string(make_shared<libyang::Data_Node_Leaf_List>(addressNode)->value_str()) + ":" + string(make_shared<libyang::Data_Node_Leaf_List>(portNode)->value_str()) + "/api/v1");
+    ComboAddress ws(string(make_shared<libyang::Data_Node_Leaf_List>(addressNode)->value_str()), make_shared<libyang::Data_Node_Leaf_List>(portNode)->value()->uint16());
+    apiConfig->setBaseUrl("http://" + ws.toStringWithPort() + "/api/v1");
     spdlog::debug("API Client config set to: API-Key={}, URL={}", apiConfig->getApiKey("X-API-Key"), apiConfig->getBaseUrl());
   }
   catch (const out_of_range &e) {
