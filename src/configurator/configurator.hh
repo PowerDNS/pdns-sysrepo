@@ -22,9 +22,12 @@
 #include <libyang/Libyang.hpp>
 #include <libyang/Tree_Data.hpp>
 
+#include "iputils/iputils.hh"
+
 using std::vector;
 using std::string;
 using std::pair;
+using iputils::ComboAddress;
 
 namespace pdns_conf
 {
@@ -60,7 +63,7 @@ public:
    * @return string 
    */
   std::string getWebserverAddress() {
-    return webserver.address + ":" + std::to_string(webserver.port);
+    return webserver.address.toStringWithPort();
   };
 
   /**
@@ -95,8 +98,7 @@ private:
 
   struct listenAddress {
       string name;
-      string address;
-      uint16_t port;
+      ComboAddress address;
   };
 
   struct backend {
@@ -107,8 +109,7 @@ private:
 
   struct {
     bool webserver{false};
-    string address{"127.0.0.1"};
-    uint16_t port{8081};
+    ComboAddress address{"127.0.0.1:8081"};
     string password;
     bool api{false};
     string api_key;

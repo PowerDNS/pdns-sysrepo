@@ -36,7 +36,7 @@ namespace pdns_conf
 static const string pdns_conf_template = R"(
 local-address =
 {{ #local-address }}
-local-address += {{ address }}:{{ port }} # {{ name }}
+local-address += {{ address }} # {{ name }}
 {{ /local-address }}
 master = {{ master }}
 slave = {{ slave }}
@@ -50,7 +50,7 @@ launch += {{ backendtype }}:{{ name }}
 {{ /backend-options }}
 
 webserver = {{ webserver }}
-webserver-address = {{ webserver-address }}:{{ webserver-port }}
+webserver-address = {{ webserver-address }}
 webserver-max-bodysize = {{ webserver-max-body-size }}
 webserver-loglevel = {{ webserver-loglevel }}
 webserver-allow-from =
@@ -114,10 +114,10 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
               la.name = leaf->value()->string();
             }
             if(leafName == "ip-address") {
-              la.address = leaf->value()->string();
+              la.address = ComboAddress(leaf->value()->string(), la.address.getPort());
             }
             if(leafName == "port") {
-              la.port = leaf->value()->uint16();
+              la.address.setPort(leaf->value()->uint16());
             }
           }
         }
@@ -164,10 +164,10 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
             webserver.api = true;
           }
           if (leafName == "address") {
-            webserver.address = leaf->value_str();
+            webserver.address = ComboAddress(leaf->value_str(), webserver.address.getPort());
           }
           if (leafName == "port") {
-            webserver.port = leaf->value()->uint16();
+            webserver.address.setPort(leaf->value()->uint16());
           }
           if (leafName == "allow-from") {
             webserver.allow_from.push_back(leaf->value_str());
@@ -213,8 +213,7 @@ string PdnsServerConfig::getConfig() {
   for (const auto& la : listenAddresses) {
     laddrs.push_back(mstch::map{
       {"name", la.name},
-      {"address", la.address},
-      {"port", la.port}});
+      {"address", la.address.toStringWithPort()}});
   }
 
   mstch::array backendOptions;
@@ -247,8 +246,7 @@ string PdnsServerConfig::getConfig() {
     {"launch", backendLaunch},
     {"backend-options", backendOptions},
     {"webserver", bool2str(webserver.webserver)},
-    {"webserver-address", webserver.address},
-    {"webserver-port", webserver.port},
+    {"webserver-address", webserver.address.toStringWithPort()},
     {"webserver-max-body-size", std::to_string(webserver.max_body_size)},
     {"webserver-loglevel", webserver.loglevel},
     {"webserver-allow-from", webserverAllowFrom},
