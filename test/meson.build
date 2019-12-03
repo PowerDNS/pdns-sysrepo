@@ -13,6 +13,7 @@ config_test_src = files('create-config/create-config.cc',
 
 zones_test_src = files('zones/zone-add-delete.cc',
   '../src/configurator/subscribe.cc',
+  '../src/configurator/subscribe/pdns-config.cc',
   '../src/configurator/subscribe/helpers.cc',
   '../src/configurator/subscribe/zones.cc',
   '../src/configurator/subscribe/service.cc',
