@@ -32,5 +32,14 @@ public:
    * Returns the LibYANG datanode rooted at '/pdns-server:pdns-server'
   */
   libyang::S_Data_Node getConfigTree(uint32_t timeout_ms = 0);
+
+  /**
+   * @brief Returns all masters for a configured zone
+   * 
+   * @param zone 
+   * @param timeout_ms 
+   * @return vector<string> 
+   */
+  vector<string> getZoneMasters(const string &zone, uint32_t timeout_ms = 0);
 };
 } // namespace sr

@@ -33,16 +33,24 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
     if (change->oper() == SR_OP_CREATED) {
       auto child = change->node()->child();
       pdns_api::Zone z;
+      string zoneName;
       while (child) {
         auto leaf = make_shared<libyang::Data_Node_Leaf_List>(child);
+        string leafName = leaf->schema()->name();
         // spdlog::trace("child name={} value={}", leaf->schema()->name(), leaf->value_str());
-        if (string(leaf->schema()->name()) == "name") {
+        if (leafName == "name") {
+          zoneName = leaf->value_str();
           z.setName(leaf->value_str());
         }
-        if (string(leaf->schema()->name()) == "zonetype") {
+        if (leafName == "zonetype") {
           z.setKind(leaf->value_str());
         }
-        if (string(leaf->schema()->name()) == "class" && !(string(leaf->value_str()) != "IN" || string(leaf->value_str()) != "1")) {
+        if (leafName == "masters") {
+          auto masters = z.getMasters();
+          masters.push_back(leaf->value_str());
+          z.setMasters(masters);
+        }
+        if (leafName == "class" && !(string(leaf->value_str()) != "IN" || string(leaf->value_str()) != "1")) {
           throw std::runtime_error(fmt::format("Zone {} can't be validated, class is not IN but {}", z.getName(), leaf->value_str()));
         }
         child = child->next();
@@ -79,7 +87,7 @@ void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
 
   pdns_api::ZonesApi zoneApiClient(d_apiClient);
 
-  while (change != nullptr && change->oper() == SR_OP_MODIFIED && change->node() != nullptr) {
+  while (change != nullptr && change->node() != nullptr) {
     // spdlog::trace("Zone modify. operation={} path={}, node_path={}, list_pos={}", util::srChangeOper2String(change->oper()), change->node()->path(), change->node()->schema()->path(), change->node()->list_pos());
     auto namenode = change->node()->parent()->find_path("/pdns-server:zones/pdns-server:name")->data().at(0);
     if (!namenode) {
@@ -88,9 +96,21 @@ void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
     string zoneName = make_shared<libyang::Data_Node_Leaf_List>(namenode)->value_str();
     pdns_api_model::Zone z = zonesModified[zoneName];
     auto leaf = make_shared<libyang::Data_Node_Leaf_List>(change->node());
-    if (string(leaf->schema()->name()) == "zonetype") {
-      z.setKind(leaf->value_str());
+    string leafName = leaf->schema()->name();
+
+    if (change->oper() == SR_OP_MODIFIED) {
+      if (leafName == "zonetype") {
+        z.setKind(leaf->value_str());
+      }
     }
+    else if(change->oper() == SR_OP_CREATED || change->oper() == SR_OP_DELETED) {
+      if (leafName == "masters") {
+        // No smart tricks, the current session already has the new values
+        auto masters = static_pointer_cast<sr::Session>(session)->getZoneMasters(zoneName);
+        z.setMasters(masters);
+      }
+    }
+
     zonesModified[zoneName] = z;
     change = session->get_change_tree_next(iter);
   }

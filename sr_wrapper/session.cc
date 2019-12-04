@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <fmt/format.h>
+#include "spdlog/spdlog.h"
+
 #include "session.hh"
 
 namespace sr
@@ -25,5 +28,27 @@ Session::~Session() {
 
 libyang::S_Data_Node Session::getConfigTree(uint32_t timeout_ms) {
   return get_subtree("/pdns-server:pdns-server/.", timeout_ms);
+}
+
+vector<string> Session::getZoneMasters(const string &zone, uint32_t timeout_ms) {
+  string path = fmt::format("/pdns-server:zones[name='{}']/pdns-server:masters", zone);
+  spdlog::trace("getZoneMasters({}), path={}", zone, path);
+
+  vector<string> ret;
+  try {
+    auto mastersSet = get_subtree("/pdns-server:zones", timeout_ms)->find_path(path.c_str());
+    for (auto const& n : mastersSet->data()) {
+      if (n->schema()->nodetype() == LYS_LEAFLIST) {
+        auto l = make_shared<libyang::Data_Node_Leaf_List>(n);
+        ret.push_back(l->value_str());
+      }
+    }
+  } catch (const sysrepo::sysrepo_exception &e) {
+    sysrepo::S_Errors errors = get_error();
+    for (size_t i = 0; i < errors->error_cnt(); i++) {
+      spdlog::warn("Unable to get zone masters: {}", errors->message(i));
+    }
+  }
+  return ret;
 }
 } // namespace sr

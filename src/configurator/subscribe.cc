@@ -180,6 +180,13 @@ int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
       string zoneKind = zone->getKind();
       std::transform(zoneKind.begin(), zoneKind.end(), zoneKind.begin(), [](unsigned char c){ return std::tolower(c); });
       libyang::S_Data_Node zonetypeNode(new libyang::Data_Node(zoneNode, mod, "zonetype", zoneKind.c_str()));
+
+      if (zoneKind == "slave") {
+        for (auto const &master: zone->getMasters()) {
+          libyang::S_Data_Node(new libyang::Data_Node(zoneNode, mod, "masters", master.c_str()));
+        }
+      }
+
     }
   } catch (const web::uri_exception &e) {
     spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
