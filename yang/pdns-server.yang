@@ -41,6 +41,11 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2019-12-04 {
+      description
+          "Add the LMDB backend as a configuration option";
+    }
+
     revision 2019-11-19 {
       description
           "Added Zone config, Zone operational status and webserver settings";
@@ -60,10 +65,10 @@ module pdns-server {
     typedef backendtype {
         type enumeration {
             enum "gsqlite3";
+            enum "lmdb";
         /*
          * enum "gmysql";
          * enum "gpgsql";
-         * enum "lmdb";
          */
         }
     }
@@ -93,6 +98,22 @@ module pdns-server {
             enum "3"; // EXTRA
             enum "EXTRA";
         }
+    }
+
+    typedef lmdb-sync-mode {
+      description
+          "Synchronisation mode for the on-disk database";
+      
+      type enumeration {
+        enum "sync";
+        enum "nosync";
+        enum "nometasync";
+        enum "mapasync";
+      }
+    }
+
+    typedef lmdb-shards {
+      type uint32;
     }
 
     typedef zonetype {
@@ -154,6 +175,28 @@ module pdns-server {
             type boolean;
             default false;
             when "../backendtype = 'gsqlite3'";
+        }
+
+        leaf shards {
+          description
+              "Records database will be split into this number of shards";
+          type lmdb-shards;
+          default 64;
+          when "../backendtype = 'lmdb'";
+        }
+
+        leaf sync-mode {
+          type lmdb-sync-mode;
+          default "mapasync";
+          when "../backendtype = 'lmdb'";
+        }
+
+        leaf filename {
+          description
+              "Path to the LMDB file";
+          type string;
+          mandatory true;
+          when "../backendtype = 'lmdb'";
         }
 
         leaf dnssec {
