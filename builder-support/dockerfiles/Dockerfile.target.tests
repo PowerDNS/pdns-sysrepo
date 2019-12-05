@@ -1,0 +1,54 @@
+FROM ubuntu:bionic as dist-base
+RUN apt-get update && apt-get -y dist-upgrade
+
+@INCLUDE Dockerfile.sdbusplus.dist
+@INCLUDE Dockerfile.libyang.dist
+@INCLUDE Dockerfile.sysrepo.dist
+
+FROM dist-base as pdns-sysrepo-test
+
+RUN mkdir -p /dist /pdns-sysrepo /sdist
+
+COPY --from=sdbusplus-builder /dist/3rdparty /dist/3rdparty
+COPY --from=libyang-builder /dist/3rdparty /dist/3rdparty
+COPY --from=sysrepo-builder /dist/3rdparty /dist/3rdparty
+
+RUN cd /dist/3rdparty && apt install -y ./lib*.deb && \
+    apt-get install -y \
+      curl \
+      git \
+      libboost-all-dev \
+      libcpprest-dev \
+      libfmt-dev \
+      libmstch-dev \
+      libsystemd-dev \
+      libyaml-cpp-dev \
+      meson \
+      systemd && \
+    echo 'deb [arch=amd64] http://repo.powerdns.com/ubuntu bionic-auth-master main' > /etc/apt/sources.list.d/pdns.list && \
+    curl https://repo.powerdns.com/CBC8B383-pub.asc | apt-key add - && \
+    echo 'Package: pdns-*' > /etc/apt/preferences.d/pdns && \
+    echo 'Pin: origin repo.powerdns.com' >> /etc/apt/preferences.d/pdns && \
+    echo 'Pin-Priority: 600' >> /etc/apt/preferences.d/pdns && \
+    apt-get update && \
+    apt-get install -y pdns-server pdns-backend-lmdb
+
+@EXEC sdist_dirs=(documentation polkit iputils src sr_wrapper subprojects yang .git test)
+@EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /pdns-sysrepo/$d/" ; done
+ADD LICENSE meson.build meson_options.txt pdns-sysrepo.example.yaml pdns-sysrepo.service.in README.md /pdns-sysrepo/
+
+WORKDIR /pdns-sysrepo
+RUN meson --prefix /usr build && \
+      cd build && \
+      ninja install
+
+RUN sysrepoctl -l && \
+    sysrepoctl -i /usr/share/pdns-sysrepo/ietf-inet-types@2013-07-15.yang && \
+    sysrepoctl -i /usr/share/pdns-sysrepo/iana-dns-class-rr-type@2019-06-27.yang && \
+    sysrepoctl -i /usr/share/pdns-sysrepo/pdns-server.yang && \
+    sysrepoctl -l
+
+RUN apt-get install -y python3 python3-pip python3-virtualenv
+COPY end-to-end-tests end-to-end-tests
+WORKDIR end-to-end-tests
+RUN ./runtests.sh
