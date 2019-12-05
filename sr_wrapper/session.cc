@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <fmt/format.h>
 #include "spdlog/spdlog.h"
 
 #include "session.hh"
