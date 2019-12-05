@@ -67,7 +67,7 @@ configure_file(input : 'pdns-sysrepo.service.in',
 
 install_data('polkit/10-pdns.rules', install_dir: get_option('datadir') + '/polkit-1/rules.d')
 install_data('pdns-sysrepo.example.yaml', install_dir: get_option('sysconfdir') + '/pdns-sysrepo')
-install_data('yang/pdns-server.yang', 'yang/ietf-inet-types@2013-07-15.yang',
+install_data('yang/pdns-server.yang', 'yang/ietf-inet-types@2013-07-15.yang', 'yang/iana-dns-class-rr-type@2019-06-27.yang',
               install_dir: get_option('datadir') + '/pdns-sysrepo')
 
 ##
