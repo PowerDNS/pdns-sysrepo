@@ -76,7 +76,9 @@ Now build the dependent software, it will be installed into ``~/.local/opt/sysre
         -DCMAKE_INSTALL_PREFIX=${SYSREPO_INSTALL} \
         -DREPOSITORY_LOC=${SYSREPO_INSTALL}/etc/sysrepo \
         -DREPO_PATH=${SYSREPO_INSTALL}/etc/sysrepo \
+        -DGEN_LANGUAGE_BINDINGS=1 \
         -DGEN_CPP_BINDINGS=1 \
+        -DGEN_PYTHON_BINDINGS=0 \
         -Wno-dev \
         ..
     make install
