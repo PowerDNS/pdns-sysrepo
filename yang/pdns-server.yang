@@ -212,6 +212,7 @@ module pdns-server {
         description
           "A DNS Zone";
         leaf name {
+          description "Name of the zone, MUST be suffixed with a dot";
             type inet:domain-name;
             mandatory true;
         }
@@ -342,7 +343,11 @@ module pdns-server {
         description
           "All zones configured on this server";
 
-        uses zone;
+        uses zone {
+            refine class {
+                default "IN";
+            }
+        }
         key "name";
     }
 
