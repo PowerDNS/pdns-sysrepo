@@ -42,14 +42,13 @@ module pdns-server {
       "This module describes the PowerDNS Authoritative Server";
 
     revision 2019-12-04 {
-      description
+        description
           "Add the LMDB backend as a configuration option";
     }
 
     revision 2019-11-19 {
-      description
+        description
           "Added Zone config, Zone operational status and webserver settings";
-      
     }
 
     revision 2019-11-08 {
@@ -101,19 +100,19 @@ module pdns-server {
     }
 
     typedef lmdb-sync-mode {
-      description
+        description
           "Synchronisation mode for the on-disk database";
-      
-      type enumeration {
-        enum "sync";
-        enum "nosync";
-        enum "nometasync";
-        enum "mapasync";
-      }
+
+        type enumeration {
+            enum "sync";
+            enum "nosync";
+            enum "nometasync";
+            enum "mapasync";
+        }
     }
 
     typedef lmdb-shards {
-      type uint32;
+        type uint32;
     }
 
     typedef zonetype {
@@ -178,25 +177,25 @@ module pdns-server {
         }
 
         leaf shards {
-          description
+            description
               "Records database will be split into this number of shards";
-          type lmdb-shards;
-          default 64;
-          when "../backendtype = 'lmdb'";
+            type lmdb-shards;
+            default 64;
+            when "../backendtype = 'lmdb'";
         }
 
         leaf sync-mode {
-          type lmdb-sync-mode;
-          default "mapasync";
-          when "../backendtype = 'lmdb'";
+            type lmdb-sync-mode;
+            default "mapasync";
+            when "../backendtype = 'lmdb'";
         }
 
         leaf filename {
-          description
+            description
               "Path to the LMDB file";
-          type string;
-          mandatory true;
-          when "../backendtype = 'lmdb'";
+            type string;
+            mandatory true;
+            when "../backendtype = 'lmdb'";
         }
 
         leaf dnssec {
@@ -212,7 +211,8 @@ module pdns-server {
         description
           "A DNS Zone";
         leaf name {
-          description "Name of the zone, MUST be suffixed with a dot";
+            description
+              "Name of the zone, MUST be suffixed with a dot";
             type inet:domain-name;
             mandatory true;
         }
