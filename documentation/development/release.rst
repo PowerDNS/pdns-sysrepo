@@ -1,6 +1,5 @@
 Building Releases
 =================
-
 There are several steps needed to build a release.
 
 Update version number
@@ -17,6 +16,8 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 The MINOR will be the most likely candidate for incrementing.
 
+Note that for pre 1.0.0 releases, backwards incompatible changes may be added in MINOR updates.
+
 Update Changelog
 ----------------
 Add the version including all changes to the changelog.
@@ -30,6 +31,9 @@ Commit all changes
 ------------------
 Evidently....
 
+Tag the Commit
+--------------
+
 Build the packages
 ------------------
 .. code-block:: bash
@@ -40,4 +44,6 @@ And store the resulting tarball and packages somewhere.
 
 Update version number
 ---------------------
-Add ``-dev`` and commit again.
+   * Increase the PATCH
+   * Update ``builder-support/debian/pdns-sysrepo/changelog`` with the new version with ``~pre`` attached
+   * Commit
