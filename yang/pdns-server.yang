@@ -219,7 +219,6 @@ module pdns-server {
 
         leaf class {
             type dnsct:dns-class;
-            mandatory true;
         }
         leaf zonetype {
             type zonetype;

@@ -1,0 +1,126 @@
+version: 2.1
+
+commands:
+  install-preqs:
+    steps:
+      - run: |
+          apt update && \
+          apt install -y \
+            autoconf-archive \
+            build-essential \
+            cmake \
+            git \
+            libboost-filesystem-dev \
+            libboost-program-options-dev \
+            libboost-system-dev \
+            libcpprest-dev \
+            libfmt-dev \
+            libgmock-dev \
+            libgtest-dev \
+            libmicrohttpd-dev \
+            libmstch-dev \
+            libpcre3-dev \
+            libspdlog-dev \
+            libsystemd-dev \
+            libsystemd-dev \
+            libtool \
+            libyaml-cpp-dev \
+            meson \
+            pkg-config \
+            swig \
+            systemd
+
+  build-libyang:
+    description: "Builds libyang"
+    steps:
+      - run: |
+          git clone -q --branch devel https://github.com/CESNET/libyang.git ~/libyang && \
+          mkdir ~/libyang/build
+      - run:
+          command: |
+            cmake -DCMAKE_INSTALL_PREFIX=/usr \
+                    -DCMAKE_INSTALL_LIBDIR=/usr/lib \
+                    -DCMAKE_BUILD_TYPE=Debug \
+                    -DENABLE_LYD_PRIV=ON \
+                    -DGEN_LANGUAGE_BINDINGS=1 \
+                    -DGEN_PYTHON_BINDINGS=0 \
+                    -DGEN_CPP_BINDINGS=1 \
+            ..
+          workdir: ~/libyang/build
+      - run:
+          command: make -j $(nproc) install
+          workdir: ~/libyang/build
+
+  build-sysrepo:
+    description: "Builds sysrepo"
+    steps:
+      - run: |
+          git clone -q --branch devel https://github.com/sysrepo/sysrepo.git ~/sysrepo && \
+          mkdir ~/sysrepo/build
+      - run:
+          command: |
+            cmake \
+                -DCMAKE_BUILD_TYPE=Debug \
+                -DCMAKE_INSTALL_PREFIX=/usr \
+                -DCMAKE_INSTALL_LIBDIR=/usr/lib \
+                -DREPOSITORY_LOC=/etc/sysrepo \
+                -DREPO_PATH=/etc/sysrepo \
+                -DGEN_LANGUAGE_BINDINGS=1 \
+                -DGEN_CPP_BINDINGS=1 \
+                -DGEN_PYTHON_BINDINGS=0 \
+                -Wno-dev \
+                ..
+          workdir: ~/sysrepo/build
+      - run:
+          command: make -j $(nproc) install
+          workdir: ~/sysrepo/build
+
+  build-sdbusplus:
+    description: "Builds sdbusplus"
+    steps:
+      - run: git clone https://github.com/openbmc/sdbusplus.git ~/sdbusplus
+      - run:
+          command: |
+            ./bootstrap.sh && \
+            ./configure --disable-sdbuspp --enable-static --prefix=/usr
+          workdir: ~/sdbusplus
+      - run:
+          command: make -j $(nproc) install
+          workdir: ~/sdbusplus
+
+jobs:
+  build-and-test:
+    docker:
+      - image: debian:buster
+    steps:
+      - checkout
+      - install-preqs
+      - build-libyang
+      - build-sysrepo
+      - build-sdbusplus
+      - run: git submodule init && git submodule update
+      - run: meson -Dbuild-tests=true build
+      - run:
+          command: ninja -j5 -v
+          workdir: ~/project/build
+      - run:
+          command: ninja -v test
+          workdir: ~/project/build
+
+  test-model:
+    docker:
+      - image: debian:buster
+    steps:
+      - checkout
+      - install-preqs
+      - build-libyang
+      - run: yanglint -VVV --strict yang/pdns-server.yang
+      - run: yanglint -VVV -f tree yang/pdns-server.yang
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build-and-test
+      - test-model
+

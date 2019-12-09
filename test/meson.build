@@ -4,7 +4,7 @@ gmock_dep = dependency('gmock')
 # we need to rethink this..
 src_include = include_directories('../src', '.', '..', '../sr_wrapper')
 
-microhttp_dep = dependency('libmicrohttpd', required: false)
+microhttp_dep = dependency('libmicrohttpd')
 httpmockserver_include = include_directories('httpmockserver/include')
 
 config_test_src = files('create-config/create-config.cc',
