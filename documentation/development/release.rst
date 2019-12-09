@@ -44,6 +44,6 @@ And store the resulting tarball and packages somewhere.
 
 Update version number
 ---------------------
-   * Increase the PATCH
-   * Update ``builder-support/debian/pdns-sysrepo/changelog`` with the new version with ``~pre`` attached
+   * Increase the PATCH number in ``meson.build``
+   * Update ``builder-support/debian/pdns-sysrepo/changelog`` with the previous release and ``+git`` attached
    * Commit
