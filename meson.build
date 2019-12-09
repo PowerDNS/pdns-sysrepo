@@ -1,7 +1,7 @@
 project('pdns-sysrepo', 'cpp',
   version : '0.0.0',
   default_options : ['cpp_std=c++17'],
-  license: ['MIT', 'Apache2']
+  license: ['Apache2']
   )
 
 conf_data = configuration_data()
