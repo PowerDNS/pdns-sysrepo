@@ -1,5 +1,5 @@
-Changing PowerDNS configuration
-===============================
+PowerDNS configuration
+======================
 The sysrepo datastore can be manipulated in several ways.
 In a production environment, there would be a NSO using the `NETCONF <https://en.wikipedia.org/wiki/NETCONF>`__ or `RESTCONF <https://tools.ietf.org/html/rfc8040>`__ protocol to manipulate the YANG datastore on the target device.
 For :program:`pdns-sysrepo` a program like `Netopeer2 <https://github.com/CESNET/Netopeer2>`__ could act as a NETCONF server and manipulate the sysrepo datastores.
@@ -51,26 +51,3 @@ A configuration in JSON format for the PowerDNS Authoritative Server could look 
 
 This can be edited, saved after which sysrepo will apply the changes.
 Or it won't apply the changes if the configuration does not conform to the YANG model.
-
-Adding and Removing Zone
-^^^^^^^^^^^^^^^^^^^^^^^^
-The Yang model has a leaf-list at ``/pdns-server:pdns-server/zones`` that can be manipulated to create and remove zones, e.g:
-
-.. code-block:: json
-
-  {
-    "pdns-server:pdns-server": {
-      "zones": [
-        {
-          "name": "foo.example.net.",
-          "class": "IN",
-          "zonetype": "master"
-        }
-      ],
-    }
-  }
-
-Would create a zone named "foo.example.net".
-
-.. note::
-  :program:`pdns-sysrepo` will reject changes to zones if the API is disabled.

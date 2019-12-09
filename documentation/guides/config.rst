@@ -14,6 +14,9 @@ dbus permissions
 In order to be able to restart the PowerDNS service, the user under which :program:`pdns-sysrepo` runs needs to have permission to do this.
 Within D-Bus, `Polkit <https://en.wikipedia.org/wiki/Polkit>`__ is used for authorizing actions.
 
+.. note::
+  As of version 0.1.0, :program:`pdns-sysrepo` runs as root. This will change in a future version.
+
 After installing, a polkit rules file is installed in ``/usr/share/polkit-1/rules.d/pdns.rules``:
 
 .. literalinclude:: ../../polkit/10-pdns.rules

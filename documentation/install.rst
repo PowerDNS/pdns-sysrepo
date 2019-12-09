@@ -10,6 +10,8 @@ Requirements
 :program:`pdns-sysrepo` is written in C++17 and requires a fairly modern \*nix operating system.
 Specifically, it targets Ubuntu Bionic.
 
+It supports PowerDNS Authoritative Server 4.3.
+
 Installing from packages
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. note::
@@ -70,7 +72,7 @@ Install YANG modules
 ^^^^^^^^^^^^^^^^^^^^
 This project comes with several YANG modules.
 In the source code tarball or git repository, these are stored in ``yang/``.
-When installing packages, these files are available in ``/usr/share/pdns-sysrepo/*.yang``.
+When installing packages, these files are available in ``$PREFIX/share/pdns-sysrepo/*.yang``.
 
 These modules need to be installed into sysrepo before they can be used.
 The :program:`sysrepoctl` tool can be used::

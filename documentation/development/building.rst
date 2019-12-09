@@ -18,11 +18,11 @@ This list has the rest of the dependencies, including the package names for Debi
 * `boost filesystem <https://www.boost.org/doc/libs/1_71_0/libs/filesystem/doc/index.htm>`__
 * `boost program options <https://www.boost.org/doc/libs/1_71_0/doc/html/program_options.html>`__
 * `libsystemd <https://freedesktop.org/wiki/Software/systemd/>`__ version 221 or higher
-* `libyang-cpp <https://github.com/CESNET/libyang>`__ version 1.0.0 or higher
+* `libyang-cpp <https://github.com/CESNET/libyang>`__ version 1.0-r5 or higher
 * `mstch <https://github.com/no1msd/mstch>`__
 * `sdbusplus <https://github.com/openbmc/sdbusplus>`__
 * `spdlog <https://github.com/gabime/spdlog>`__ version 1.0.0 or higher
-* `sysrepo <https://www.sysrepo.org/>`__ version 1.2.0 or higher
+* `sysrepo <https://www.sysrepo.org/>`__ version 1.3.13 or higher
 * `yaml-cpp <https://github.com/jbeder/yaml-cpp>`__ version 0.5.0 or higher
 * `cpprestsdk <https://github.com/Microsoft/cpprestsdk>`__
 
@@ -137,3 +137,13 @@ HTML documentation can now be found in the ``doc/html`` directory of the git rep
 Installing YANG modules
 -----------------------
 See :ref:`yang-module-install`.
+
+Running the unit-tests
+----------------------
+First, ensure :program:`pdns-sysrepo` was configured with ``-Dbuild-tests=true``, then in the ``build`` directory, run the tests::
+
+  ninja test
+
+Running the end-to-end tests
+----------------------------
+See :doc:`end-to-end-tests`.

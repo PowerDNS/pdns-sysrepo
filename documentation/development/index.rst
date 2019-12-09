@@ -8,3 +8,4 @@ This chapter is mostly needed for those working on the :program:`pdns-sysrepo` c
   building
   sysrepo-gotchas
   release
+  end-to-end-tests

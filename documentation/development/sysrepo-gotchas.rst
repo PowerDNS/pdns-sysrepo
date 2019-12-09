@@ -1,5 +1,9 @@
 sysrepo gotchas
 ===============
+.. note::
+
+  This behaviour has not been observed starting with :program:`sysrepo` 1.3.16
+
 Sysrepo uses fifo's and ``/dev/shm`` for communication between its components.
 It can happen that sometimes things go south and data is not committed because an application that has a subscription has not exited properly.
 

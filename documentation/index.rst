@@ -33,13 +33,15 @@ In pseudo code :program:`pdns-sysrepo` does the following:
 
 * Read own configuration
 * Read PowerDNS configuration from sysrepo's running datastore
-* Write PowerDNS configuration file
+* Write PowerDNS configuration file and restarts service
 * Register callbacks for configuration changes
 * Notify systemd that it has started
-* Wait for callbacks to be called (loop)
+* Wait for callbacks to be called
    * On configuration change
-   * Write new PowerDNS configuration file
-   * Send IPC to systemd to restart PowerDNS Service
+      * Write new PowerDNS configuration file
+      * Send IPC to systemd to restart PowerDNS Service
+   * On zone change
+      * Use API to set the zone's config
 
 .. toctree::
    :maxdepth: 2
@@ -48,5 +50,8 @@ In pseudo code :program:`pdns-sysrepo` does the following:
    install
    guides/config
    guides/config-changes
+   guides/zones
+   yang-model
    development/index
    changelog
+   future
