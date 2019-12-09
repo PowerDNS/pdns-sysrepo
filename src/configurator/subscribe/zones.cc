@@ -94,6 +94,11 @@ void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
       throw std::runtime_error("Unable to find the name of a changed zone!");
     }
     string zoneName = make_shared<libyang::Data_Node_Leaf_List>(namenode)->value_str();
+    if (std::find(zonesRemoved.begin(), zonesRemoved.end(), zoneName) != zonesRemoved.end()) {
+      // No need to do things to a zone that is removed
+      change = session->get_change_tree_next(iter);
+      continue;
+    }
     pdns_api_model::Zone z = zonesModified[zoneName];
     auto leaf = make_shared<libyang::Data_Node_Leaf_List>(change->node());
     string leafName = leaf->schema()->name();
