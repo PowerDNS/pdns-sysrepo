@@ -43,7 +43,7 @@ public:
    * @param node  A node rooted at '/pdns-server:pdns-server/', used to
    *              extract the PowerDNS configuration
    */
-  PdnsServerConfig(const libyang::S_Data_Node &node);
+  PdnsServerConfig(const libyang::S_Data_Node &node, const sysrepo::S_Session &session = nullptr);
 
   /**
    * @brief Write a pdns.conf-style file to fpath
@@ -101,6 +101,11 @@ private:
       ComboAddress address;
   };
 
+  struct axfrAcl {
+    string name;
+    vector<string> addresses; // TODO migrate to iputil::NetMask
+  };
+
   struct backend {
     string name;
     string backendtype;
@@ -122,5 +127,7 @@ private:
   vector<backend> backends;
   bool master{false};
   bool slave{false};
+
+  vector<axfrAcl> allowAxfrIps;
 };
 } // namespace pdns_conf
