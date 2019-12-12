@@ -4,3 +4,9 @@
 [submodule "test/httpmockserver"]
 	path = test/httpmockserver
 	url = https://github.com/seznam/httpmockserver.git
+[submodule "subprojects/pistache"]
+	path = subprojects/pistache
+	url = https://github.com/oktal/pistache.git
+[submodule "subprojects/json"]
+	path = subprojects/json
+	url = https://github.com/nlohmann/json.git

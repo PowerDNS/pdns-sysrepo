@@ -22,12 +22,14 @@
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 #include <systemd/sd-daemon.h>
+#include <pistache/net.h>
 
 #include "sr_wrapper/session.hh"
 #include "configurator/subscribe.hh"
 #include "configurator/configurator.hh"
 #include "config/config.hh"
 #include "config.h"
+#include "remote-backend/remote-backend.hh"
 
 using std::set;
 using std::cout;
@@ -116,6 +118,12 @@ int main(int argc, char* argv[]) {
       spdlog::trace("signalhandlers registered, notifying systemd we're ready");
 
       sd_notify(0, "READY=1");
+      spdlog::info("Starting remote backend webserver");
+      
+      Pistache::Address a = "127.0.0.1:9100";
+      auto rb = pdns_sysrepo::remote_backend::RemoteBackend(sSess, a);
+      rb.start();
+
       spdlog::info("Startup complete");
 
       while (!doExit) {

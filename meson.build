@@ -17,6 +17,13 @@ pdns_sysrepo = files('src/configurator/configurator.cc', 'src/config/config.cc',
   'src/configurator/util.hh', 'src/configurator/util.cc'
   )
 
+pdns_sysrepo_remote_backend = files(
+  'src/remote-backend/list.cc', 
+  'src/remote-backend/lookup.cc',
+  'src/remote-backend/httpfunc.cc',
+  'src/remote-backend/find-zone.cc'
+)
+
 sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.3.13')
 libyang_cpp_dep = dependency('libyang-cpp')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
@@ -30,6 +37,9 @@ if not spdlog_dep.found() or spdlog_dep.version().version_compare('<1.4.0')
   spdlog_proj = subproject('spdlog-1.4.2', default_options: ['enable_examples=false'])
   spdlog_dep = spdlog_proj.get_variable('spdlog_dep')
 endif
+
+json_proj = subproject('json')
+json_dep = json_proj.get_variable('nlohmann_json_dep')
 
 fmt_dep = dependency('fmt', required: false)
 if not fmt_dep.found()
@@ -46,14 +56,40 @@ pdns_api_cpp_proj = subproject('pdns-api-cpp')
 pdns_api_cpp_dep = pdns_api_cpp_proj.get_variable('pdns_api_cpp_dep')
 pdns_api_cpp_incdir = pdns_api_cpp_proj.get_variable('pdns_api_cpp_incdir')
 
+pistache_sources = files(
+'subprojects/pistache/src/server/endpoint.cc',
+'subprojects/pistache/src/server/router.cc',
+'subprojects/pistache/src/server/listener.cc',
+'subprojects/pistache/src/common/description.cc',
+'subprojects/pistache/src/common/timer_pool.cc',
+'subprojects/pistache/src/common/utils.cc',
+'subprojects/pistache/src/common/os.cc',
+'subprojects/pistache/src/common/transport.cc',
+'subprojects/pistache/src/common/net.cc',
+'subprojects/pistache/src/common/reactor.cc',
+'subprojects/pistache/src/common/mime.cc',
+'subprojects/pistache/src/common/http_headers.cc',
+'subprojects/pistache/src/common/stream.cc',
+'subprojects/pistache/src/common/http.cc',
+'subprojects/pistache/src/common/tcp.cc',
+'subprojects/pistache/src/common/http_defs.cc',
+'subprojects/pistache/src/common/peer.cc',
+'subprojects/pistache/src/common/http_header.cc',
+'subprojects/pistache/src/common/cookie.cc')
+
+pistache_include = include_directories('subprojects/pistache/include')
+
+pistache_dep = declare_dependency(sources: pistache_sources,
+  include_directories: [pistache_include])
+
 version_h = configure_file(input : 'src/config.h.in',
                output : 'config.h',
                configuration : conf_data)
 
 executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
-  sr_wrapper, pdns_sysrepo, version_h,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep],
-  include_directories: [pdns_api_cpp_incdir, include_directories('src')],
+  sr_wrapper, pdns_sysrepo, pdns_sysrepo_remote_backend, version_h,
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep, pistache_dep, json_dep],
+  include_directories: [pdns_api_cpp_incdir, include_directories('src'), pistache_include],
   install: true)
 
 # Generate a systemd unit file
