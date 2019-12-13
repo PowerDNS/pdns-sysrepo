@@ -51,3 +51,35 @@ A configuration in JSON format for the PowerDNS Authoritative Server could look 
 
 This can be edited, saved after which sysrepo will apply the changes.
 Or it won't apply the changes if the configuration does not conform to the YANG model.
+
+Setting AXFR ACLs
+-----------------
+The `allow-axfr-ips <https://doc.powerdns.com/authoritative/settings.html#allow-axfr-ips>`__ setting of the PowerDNS Authoritative Server that has the netmasks that may AXFR zones from the zones is located in the YANG model at ``/pdns-server:pdns-server/allow-axfr``.
+This leaf-list contains leafrefs to ACL entries stored at ``/pdns-server:axfr-access-control-list``.
+That list has a ``name`` and one or more networks.
+To, for instance, add the loopback IP addresses as allowed addresses, apply the following edit:
+
+.. code-block:: json
+
+  {
+    "pdns-server:axfr-access-control-list": [
+      {
+        "name": "Loopback",
+        "network": [
+          {
+            "name": "v4",
+            "ip-prefix": "127.0.0.0/8"
+          },
+          {
+            "name": "v6",
+            "ip-prefix": "::1/128"
+          }
+        ]
+      }
+    ],
+    "pdns-server:pdns-server": {
+      "allow-axfr": [
+        "Loopback"
+      ]
+    }
+  }

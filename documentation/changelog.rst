@@ -3,7 +3,15 @@ Changelog
 
 Release 0.1.1
 -------------
+Released 2019-12-13
 
+New Features
+^^^^^^^^^^^^
+- Add global AXFR ACL
+
+Bug Fixes
+^^^^^^^^^
+- "/pdns-server:zones/class" was marked mandatory and was given a default without testing, making it un-importable. This is fixed.
 
 Release 0.1.0
 -------------
