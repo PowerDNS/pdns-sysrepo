@@ -69,6 +69,9 @@ void testAllBasicsExcept(const string &config, const string &e) {
   if (e != "webserver-loglevel") {
     ASSERT_THAT(config, HasSubstr("webserver-loglevel = normal\n"));
   }
+  if (e != "allow-axfr-ips") {
+    ASSERT_THAT(config, HasSubstr("allow-axfr-ips =\n"));
+  }
 }
 
 TEST(config_test, empty_config) {

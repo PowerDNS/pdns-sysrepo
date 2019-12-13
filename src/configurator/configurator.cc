@@ -22,6 +22,7 @@
 #include <boost/filesystem.hpp>
 #include <mstch/mstch.hpp>
 #include <spdlog/spdlog.h>
+#include <sysrepo-cpp/Session.hpp>
 
 #include "configurator.hh"
 #include "util.hh"
@@ -40,6 +41,11 @@ local-address += {{ address }} # {{ name }}
 {{ /local-address }}
 master = {{ master }}
 slave = {{ slave }}
+
+allow-axfr-ips =
+{{ #allow-axfr-ips }}
+allow-axfr-ips += {{ . }}
+{{ /allow-axfr-ips }}
 
 launch =
 {{ #launch }}
@@ -61,7 +67,7 @@ api = {{ api }}
 api-key = {{ api-key }}
 )";
 
-PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
+PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysrepo::S_Session &session) {
   // spdlog::debug("root node name={} schema_type={} path={}", node->schema()->name(), libyangNodeType2String(node->schema()->nodetype()), node->schema()->path());
 
   libyang::S_Data_Node_Leaf_List leaf;
@@ -181,6 +187,24 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node) {
         }
       }
     } while(child = child->next());
+    // XXX This is a new and better way of grabbing the config
+    for (auto const n : node->find_path("/pdns-server:pdns-server/pdns-server:allow-axfr")->data()) {
+      if (n->schema()->nodetype() == LYS_LEAFLIST && session != nullptr) {
+        axfrAcl a;
+        auto leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+        // spdlog::trace("ACL node path={} name={} value={}", leaf->path(), leaf->schema()->name(), leaf->value_str());
+        a.name = leaf->value_str();
+        auto aclNode = session->get_subtree(fmt::format("/pdns-server:axfr-access-control-list[name='{}']", leaf->value_str()).c_str());
+        if (aclNode) {
+          for (auto const networkNode : aclNode->find_path("/pdns-server:axfr-access-control-list/pdns-server:network/pdns-server:ip-prefix")->data()) {
+            auto networkLeaf = make_shared<libyang::Data_Node_Leaf_List>(networkNode);
+            a.addresses.push_back(networkLeaf->value_str());
+            spdlog::trace("Have ACL leafref target path={} name={} type={} value={}", networkNode->path(), networkNode->schema()->name(), util::libyangNodeType2String(networkNode->schema()->nodetype()), networkLeaf->value_str());
+          }
+        }
+        allowAxfrIps.push_back(a);
+      }
+    }
   }
 }
 
@@ -239,6 +263,13 @@ string PdnsServerConfig::getConfig() {
     webserverAllowFrom.push_back(a);
   }
 
+  mstch::array allowAxfr;
+  for (const auto& a : allowAxfrIps) {
+    for (const auto& addr : a.addresses) {
+      allowAxfr.push_back(addr);
+    }
+  }
+
   mstch::map ctx{
     {"master", bool2str(master)},
     {"slave", bool2str(slave)},
@@ -251,7 +282,8 @@ string PdnsServerConfig::getConfig() {
     {"webserver-loglevel", webserver.loglevel},
     {"webserver-allow-from", webserverAllowFrom},
     {"api", bool2str(webserver.api)},
-    {"api-key", webserver.api_key}
+    {"api-key", webserver.api_key},
+    {"allow-axfr-ips", allowAxfr}
   };
 
   spdlog::trace("Generated config:\n{}", mstch::render(pdns_conf_template, ctx));

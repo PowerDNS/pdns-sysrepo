@@ -41,6 +41,11 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2019-12-10 {
+        description
+          "Add allow-axfr ACL option";
+    }
+
     revision 2019-12-04 {
         description
           "Add the LMDB backend as a configuration option";
@@ -121,6 +126,15 @@ module pdns-server {
             enum "slave";
             enum "native";
         }
+    }
+
+    typedef acl-ref {
+        type leafref {
+            path "/pdns-server:axfr-access-control-list/pdns-server:name";
+        }
+        description
+          "This type is used for referring to a configured access control
+           list.";
     }
 
     /*
@@ -276,6 +290,31 @@ module pdns-server {
     /*
      * Configuration data
      */
+    list axfr-access-control-list {
+      key "name";
+      description
+        "Access control lists.";
+      leaf name {
+        type string;
+      }
+      list network {
+        key "name";
+        unique "ip-prefix";
+        description
+          "Identification of a network.";
+        leaf name {
+          type string;
+        }
+        leaf ip-prefix {
+          type inet:ip-prefix;
+          mandatory "true";
+          description
+            "IPv4 or IPv6 prefix in the usual ADDRESS/LENGTH
+             notation.";
+        }
+      }
+    }
+
     container pdns-server {
         description
           "Configuration of the PowerDNS Authoritative Server";
@@ -306,6 +345,12 @@ module pdns-server {
                This means checking zone validity and retrieving when out of date.";
             type boolean;
             default false;
+        }
+
+        leaf-list allow-axfr {
+          description
+              "Access Control Lists applied globally. Addresses in this list are always allowed to transfer all zones";
+          type acl-ref;
         }
 
         container webserver {
