@@ -20,9 +20,10 @@ public:
     d_session(session),
     d_endpoint(std::make_shared<Http::Endpoint>(addr)) {
     Rest::Routes::Get(d_router, "/dns/lookup/:recordname/:type", Rest::Routes::bind(&RemoteBackend::lookup, this));
+    Rest::Routes::Get(d_router, "/dns/getAllDomains", Rest::Routes::bind(&RemoteBackend::getAllDomains, this));
     Rest::Routes::NotFound(d_router, Rest::Routes::bind(&RemoteBackend::notFound, this));
 
-    auto opts = Http::Endpoint::options().threads(4);
+    auto opts = Http::Endpoint::options().threads(1);
     d_endpoint->init(opts);
   };
 
@@ -44,10 +45,22 @@ protected:
   /**
    * @brief Implements the lookup endpoint
    * 
+   * https://doc.powerdns.com/authoritative/backends/remote.html#lookup
+   * 
    * @param request 
    * @param response 
    */
   void lookup(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the getAllDomains endpoint
+   * 
+   * https://doc.powerdns.com/authoritative/backends/remote.html#getalldomains
+   * 
+   * @param request 
+   * @param response 
+   */
+  void getAllDomains(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
    * @brief Sends a 404 with {"result": false}
@@ -81,6 +94,24 @@ protected:
    * @param ret
    */
   void sendResponse(Http::ResponseWriter& response, const nlohmann::json& ret);
+
+  /**
+   * @brief Returns a JSON object for DomainInfo
+   * 
+   * e.g:
+   * { "id": -1,
+   *   "zone":"unit.test.",
+   *   "masters": ["10.0.0.1"],
+   *   "serial":2,
+   *   "kind":"native"}
+   * 
+   * All values should be provided by the caller
+   * 
+   * @param zone 
+   * @param kind 
+   * @return nlohmann::json 
+   */
+  nlohmann::json makeDomainInfo(const std::string &zone, const std::string &kind);
 
   sysrepo::S_Session d_session;
   std::shared_ptr<Http::Endpoint> d_endpoint;

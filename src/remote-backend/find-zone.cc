@@ -28,12 +28,17 @@ string RemoteBackend::findBestZone(const string& qname) {
   auto labels = split(qname, ".");
   string ret = qname;
 
-  auto tree = d_session->get_subtree("/pdns-server:zones");
-
   // haha, no root support
   while (!labels.empty()) {
-    if (tree->find_path(fmt::format("/pdns-server:zones[name='{}']", ret).c_str())->number() > 0) {
-      return ret;
+    try {
+      // auto tree = d_session->get_subtree(fmt::format("/pdns-server:zones/zones[name='{}']", ret).c_str());
+      auto data = d_session->get_items(fmt::format("/pdns-server:zones/zones[name='{}']", ret).c_str());
+      if (data->val_cnt() > 0) {
+        return ret;
+      }
+    }
+    catch (const sysrepo::sysrepo_exception& e) {
+      // Do nothing
     }
     labels.erase(labels.begin());
     ret = boost::algorithm::join(labels, ".") + ".";

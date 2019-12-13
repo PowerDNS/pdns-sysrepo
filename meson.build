@@ -21,6 +21,8 @@ pdns_sysrepo_remote_backend = files(
   'src/remote-backend/list.cc', 
   'src/remote-backend/lookup.cc',
   'src/remote-backend/httpfunc.cc',
+  'src/remote-backend/getAllDomains.cc',
+  'src/remote-backend/json-helpers.cc',
   'src/remote-backend/find-zone.cc'
 )
 
