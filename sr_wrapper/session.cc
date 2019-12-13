@@ -30,12 +30,12 @@ libyang::S_Data_Node Session::getConfigTree(uint32_t timeout_ms) {
 }
 
 vector<string> Session::getZoneMasters(const string &zone, uint32_t timeout_ms) {
-  string path = fmt::format("/pdns-server:zones[name='{}']/pdns-server:masters", zone);
+  string path = fmt::format("/pdns-server:zones/pdns-server:zones[name='{}']/pdns-server:masters", zone);
   spdlog::trace("getZoneMasters({}), path={}", zone, path);
 
   vector<string> ret;
   try {
-    auto mastersSet = get_subtree("/pdns-server:zones", timeout_ms)->find_path(path.c_str());
+    auto mastersSet = get_subtree("/pdns-server:zones/pdns-server:zones", timeout_ms)->find_path(path.c_str());
     for (auto const& n : mastersSet->data()) {
       if (n->schema()->nodetype() == LYS_LEAFLIST) {
         auto l = make_shared<libyang::Data_Node_Leaf_List>(n);

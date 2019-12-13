@@ -554,16 +554,18 @@ module pdns-server {
       }
     }
 
-    list zones {
-        description
-          "All zones configured on this server";
+    container zones {
+        list zones {
+            description
+              "All zones configured on this server";
 
-        uses zone {
-            refine class {
-                default "IN";
+            uses zone {
+                refine class {
+                    default "IN";
+                }
             }
+            key "name";
         }
-        key "name";
     }
 
     container zones-state {
