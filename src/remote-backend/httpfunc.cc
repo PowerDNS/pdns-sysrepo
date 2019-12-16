@@ -24,4 +24,24 @@ void RemoteBackend::notFound(const Rest::Request &request, Http::ResponseWriter 
   sendError(response, string(), Http::Code::Not_Found);
 }
 
+std::string RemoteBackend::urlDecode(std::string& eString) {
+  // from http://www.cplusplus.com/forum/general/94849/
+  std::string ret;
+  char ch;
+  size_t i;
+  unsigned int j;
+  for (i = 0; i < eString.length(); i++) {
+    if (int(eString[i]) == 37) {
+      sscanf(eString.substr(i + 1, 2).c_str(), "%x", &j);
+      ch = static_cast<char>(j);
+      ret += ch;
+      i = i + 2;
+    }
+    else {
+      ret += eString[i];
+    }
+  }
+  return (ret);
+}
+
 } // namespace pdns_sysrepo::remote_backend

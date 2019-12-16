@@ -352,94 +352,102 @@ module pdns-server {
                           "IPv4 address.";
                     }
                 }
-                  
-            /*
-             * uses dnszc:rdata-fields {
-             *     refine "rdata-content" {
-             *         mandatory "true";
-             *     }
-             *     refine "rdata-content/SOA/SOA" {
-             *         must "derived-from-or-self(../../type, 'ianadns:SOA')";
-             *     }
-             *     refine "rdata-content/A/A" {
-             *         must "derived-from-or-self(../../type, 'ianadns:A')";
-             *     }
-             *     refine "rdata-content/CNAME/CNAME" {
-             *         must "derived-from-or-self(../../type, 'ianadns:CNAME')";
-             *     }
-             *     refine "rdata-content/HINFO/HINFO" {
-             *         must "derived-from-or-self(../../type, 'ianadns:HINFO')";
-             *     }
-             *     refine "rdata-content/MB/MB" {
-             *         must "derived-from-or-self(../../type, 'ianadns:MB')";
-             *     }
-             *     refine "rdata-content/MD/MD" {
-             *         must "derived-from-or-self(../../type, 'ianadns:MD')";
-             *     }
-             *     refine "rdata-content/MF/MF" {
-             *         must "derived-from-or-self(../../type, 'ianadns:MF')";
-             *     }
-             *     refine "rdata-content/MG/MG" {
-             *         must "derived-from-or-self(../../type, 'ianadns:MG')";
-             *     }
-             *     refine "rdata-content/MINFO/MINFO" {
-             *         must "derived-from-or-self(../../type, 'ianadns:MINFO')";
-             *     }
-             *     refine "rdata-content/MR/MR" {
-             *         must "derived-from-or-self(../../type, 'ianadns:MR')";
-             *     }
-             *     refine "rdata-content/MX/MX" {
-             *         must "derived-from-or-self(../../type, 'ianadns:MX')";
-             *     }
-             *     refine "rdata-content/NS/NS" {
-             *         must "derived-from-or-self(../../type, 'ianadns:NS')";
-             *     }
-             *     refine "rdata-content/NULL/NULL" {
-             *         must "derived-from-or-self(../../type, 'ianadns:NULL')";
-             *     }
-             *     refine "rdata-content/PTR/PTR" {
-             *         must "derived-from-or-self(../../type, 'ianadns:PTR')";
-             *     }
-             *     refine "rdata-content/TXT/TXT" {
-             *         must "derived-from-or-self(../../type, 'ianadns:TXT')";
-             *     }
-             *     refine "rdata-content/WKS/WKS" {
-             *         must "derived-from-or-self(../../type, 'ianadns:WKS')";
-             *     }
-             *     refine "rdata-content/AAAA/AAAA" {
-             *         must "derived-from-or-self(../../type, 'ianadns:AAAA')";
-             *     }
-             *     refine "rdata-content/DNSKEY/DNSKEY" {
-             *         must "derived-from-or-self(../../type, 'ianadns:DNSKEY')";
-             *     }
-             *     refine "rdata-content/NSEC/NSEC" {
-             *         must "derived-from-or-self(../../type, 'ianadns:NSEC')";
-             *     }
-             *     refine "rdata-content/DS/DS" {
-             *         must "derived-from-or-self(../../type, 'ianadns:DS')";
-             *     }
-             *     refine "rdata-content/NSEC3/NSEC3" {
-             *         must "derived-from-or-self(../../type, 'ianadns:NSEC3')";
-             *     }
-             *     refine "rdata-content/NSEC3PARAM/NSEC3PARAM" {
-             *         must "derived-from-or-self(../../type, "
-             *                + "'ianadns:NSEC3PARAM')";
-             *     }
-             *     refine "rdata-content/TLSA/TLSA" {
-             *         must "derived-from-or-self(../../type, 'ianadns:TLSA')";
-             *     }
-             *     refine "rdata-content/IPSECKEY/IPSECKEY" {
-             *         must "derived-from-or-self(../../type, "
-             *                + "'ianadns:IPSECKEY')";
-             *     }
-             *     refine "rdata-content/DNAME/DNAME" {
-             *         must "derived-from-or-self(../../type, 'ianadns:DNAME')";
-             *     }
-             *     refine "rdata-content/SSHFP/SSHFP" {
-             *         must "derived-from-or-self(../../type, 'ianadns:SSHFP')";
-             *     }
-             * }
-             */
+                container CNAME {
+                    when "../../type = 'CNAME'";
+                    description
+                      "RDATA content for 'CNAME' Resource Record.";
+                    reference
+                      "RFC 1035: Domain Names - Implementation and
+                       Specification.";
+                    leaf cname {
+                        type inet:domain-name;
+                        mandatory "true";
+                        description
+                          "Canonical or primary name for the owner.";
+                    }
+                }
+                container MX {
+                    when "../../type = 'MX'";
+                    description
+                      "RDATA content for 'MX' Resource Record.";
+                    reference
+                      "RFC 1035: Domain Names - Implementation and
+                       Specification.";
+                    list mail-exchanger {
+                      key "preference exchange";
+                        leaf preference {
+                            type uint16;
+                            mandatory "true";
+                            description
+                              "Preference given to this RR among others at the same
+                               owner. Lower values are preferred.";
+                        }
+                        leaf exchange {
+                            type inet:domain-name;
+                            mandatory "true";
+                            description
+                              "Host willing to act as a mail exchange for the owner
+                               name.";
+                        }
+                    }
+                }
+                container NS {
+                    when "../../type = 'NS'";
+                    description
+                      "RDATA content for 'NS' Resource Record.";
+                    reference
+                      "RFC 1035: Domain Names - Implementation and
+                       Specification.";
+                    leaf-list nsdname {
+                        type inet:domain-name;
+                        min-elements 1;
+                        description
+                            "Host which should be authoritative for the specified
+                           domain.";
+                    }
+                }
+                container PTR {
+                    when "../../type = 'PTR'";
+                    description
+                      "RDATA content for 'PTR' Resource Record.";
+                    reference
+                      "RFC 1035: Domain Names - Implementation and
+                       Specification.";
+                    leaf ptrdname {
+                        type inet:domain-name;
+                        mandatory "true";
+                        description
+                          "A pointer to some location in the domain name space.";
+                    }
+                }
+                container TXT {
+                    when "../../type = 'TXT'";
+                    description
+                      "RDATA content for 'TXT' Resource Record.";
+                    reference
+                      "RFC 1035: Domain Names - Implementation and
+                       Specification.";
+                    leaf txt-data {
+                        type dnszc:ascii-string;
+                        mandatory "true";
+                        description
+                          "Descriptive text whose semantics depends on the domain
+                           where it is found.";
+                    }
+                }
+                container AAAA {
+                    when "../../type = 'AAAA'";
+                    description
+                      "RDATA content for 'AAAA' Resource Record.";
+                    reference
+                      "RFC 3596: DNS Extensions to Support IP Version 6";
+                    leaf address {
+                        type inet:ipv6-address-no-zone;
+                        mandatory "true";
+                        description
+                          "IPv6 address.";
+                    }
+                }
             }
         }
     }

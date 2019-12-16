@@ -16,8 +16,8 @@ using std::string;
 class RemoteBackend
 {
 public:
-  RemoteBackend(sysrepo::S_Session& session, const Pistache::Address& addr) :
-    d_session(session),
+  RemoteBackend(sysrepo::S_Connection& connection, const Pistache::Address& addr) :
+    d_connection(connection),
     d_endpoint(std::make_shared<Http::Endpoint>(addr)) {
     Rest::Routes::Get(d_router, "/dns/lookup/:recordname/:type", Rest::Routes::bind(&RemoteBackend::lookup, this));
     Rest::Routes::Get(d_router, "/dns/getAllDomains", Rest::Routes::bind(&RemoteBackend::getAllDomains, this));
@@ -113,7 +113,37 @@ protected:
    */
   nlohmann::json makeDomainInfo(const std::string &zone, const std::string &kind);
 
-  sysrepo::S_Session d_session;
+
+  /**
+   * @brief Returns a JSON object for a record
+   * 
+   * @param name 
+   * @param rtype 
+   * @param content 
+   * @param ttl 
+   * @return nlohmann::json 
+   */
+  nlohmann::json makeRecord(const std::string& name, const std::string& rtype, const std::string& content, const uint16_t ttl);
+
+  /**
+   * @brief Get a new Sysrepo session
+   * 
+   * @return sysrepo::S_Session 
+   */
+  sysrepo::S_Session getSession() {
+    sysrepo::S_Session ret(new sysrepo::Session(d_connection, SR_DS_RUNNING));
+    return ret;
+  }
+
+  /**
+   * @brief Decodes a url-encoded string
+   * 
+   * @param eString 
+   * @return std::string 
+   */
+  std::string urlDecode(std::string &eString);
+
+  sysrepo::S_Connection d_connection;
   std::shared_ptr<Http::Endpoint> d_endpoint;
   Rest::Router d_router;
   const Http::Mime::MediaType s_application_json_mediatype{Http::Mime::MediaType::fromString("application/json")};

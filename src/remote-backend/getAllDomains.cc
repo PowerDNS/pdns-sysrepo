@@ -6,13 +6,14 @@ namespace pdns_sysrepo::remote_backend
 {
 void RemoteBackend::getAllDomains(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
   nlohmann::json ret = {{"result", nlohmann::json::array()}};
+  auto session = getSession();
 
   libyang::S_Data_Node tree;
   try {
-    tree = d_session->get_subtree("/pdns-server:zones");
+    tree = session->get_subtree("/pdns-server:zones/zones");
   } catch(const sysrepo::sysrepo_exception &e) {
     spdlog::warn("RemoteBackend::getAllDomains: Unable to retrieve zones");
-    auto errors = d_session->get_error();
+    auto errors = session->get_error();
     for (size_t i = 0; i < errors->error_cnt(); i++) {
       string xpath = errors->xpath(i) == nullptr ? "" : errors->xpath(i);
       string message = errors->message(i) == nullptr ? "" : errors->message(i);
@@ -30,7 +31,6 @@ void RemoteBackend::getAllDomains(const Pistache::Rest::Request& request, Http::
     auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(node);
     string leafName(leaf->schema()->name());
     spdlog::trace("path={} name={} value={}", leaf->path(), leaf->schema()->name(), leaf->value_str());
-
 
     if (leafName == "name") {
       if (!zoneName.empty()) {

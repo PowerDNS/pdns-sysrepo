@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
       spdlog::info("Starting remote backend webserver");
       
       Pistache::Address a = "127.0.0.1:9100";
-      auto rb = pdns_sysrepo::remote_backend::RemoteBackend(sSess, a);
+      auto rb = pdns_sysrepo::remote_backend::RemoteBackend(conn, a);
       rb.start();
 
       spdlog::info("Startup complete");

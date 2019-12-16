@@ -27,15 +27,19 @@ string RemoteBackend::findBestZone(const string& qname) {
   // I miss dnsname.cc :(
   auto labels = split(qname, ".");
   string ret = qname;
+  auto session = getSession();
 
   // haha, no root support
   while (!labels.empty()) {
     try {
-      // auto tree = d_session->get_subtree(fmt::format("/pdns-server:zones/zones[name='{}']", ret).c_str());
-      auto data = d_session->get_items(fmt::format("/pdns-server:zones/zones[name='{}']", ret).c_str());
+      string xpath = fmt::format("/pdns-server:zones/zones[name='{}']", ret);
+      spdlog::trace("Attempting to find zone '{}' xpath={}", ret, xpath);
+      auto data = session->get_items(xpath.c_str());
       if (data->val_cnt() > 0) {
+        spdlog::trace("Found zone '{}'", ret);
         return ret;
       }
+      spdlog::trace("not found");
     }
     catch (const sysrepo::sysrepo_exception& e) {
       // Do nothing
