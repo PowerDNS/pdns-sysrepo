@@ -41,6 +41,11 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-01-06 {
+        description
+          "Add pdns-sysrepo configuration";
+    }
+
     revision 2019-12-10 {
         description
           "Add allow-axfr ACL option";
@@ -287,6 +292,41 @@ module pdns-server {
         }
     }
 
+    grouping pdns-sysrepo {
+      container pdns-service {
+        leaf name {
+          description
+                  "The name of the PowerDNS Systemd service";
+          type string {
+            pattern
+                      "[-a-zA-Z0-9_@]+.service";
+          }
+        }
+        leaf config-file {
+          type string; // TODO use a filepath-style type
+        }
+      }
+
+      container logging {
+        leaf level {
+          description "The amount of logging to do";
+          type enumeration {
+            enum "off";
+            enum "critical";
+            enum "error";
+            enum "warning";
+            enum "info";
+            enum "debug";
+            enum "trace";
+          }
+        }
+        leaf timestamp {
+          description "Whether to timestamp the logs";
+          type boolean;
+        }
+      }
+    }
+
     /*
      * Configuration data
      */
@@ -381,6 +421,23 @@ module pdns-server {
             }
             uses backend;
         }
+      }
+
+    container pdns-sysrepo {
+      uses pdns-sysrepo {
+          refine pdns-service/name {
+              default "pdns.service";
+          }
+          refine pdns-service/config-file {
+              default "/etc/powerdns/pdns.conf";
+          }
+          refine logging/level {
+              default "info";
+          }
+          refine logging/timestamp {
+              default false;
+          }
+      }
     }
 
     list zones {

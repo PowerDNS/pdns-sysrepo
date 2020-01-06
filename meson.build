@@ -11,7 +11,7 @@ conf_data.set('sysconfdir', get_option('sysconfdir'))
 conf_data.set('version', meson.project_version())
 
 sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
-pdns_sysrepo = files('src/configurator/configurator.cc', 'src/configurator/config.cc',
+pdns_sysrepo = files('src/configurator/configurator.cc', 'src/config/config.cc',
   'src/configurator/subscribe.cc', 'src/configurator/subscribe/zones.cc', 'src/configurator/subscribe/service.cc',
   'src/configurator/subscribe/helpers.cc', 'src/configurator/subscribe/pdns-config.cc',
   'src/configurator/util.hh', 'src/configurator/util.cc'
@@ -20,7 +20,6 @@ pdns_sysrepo = files('src/configurator/configurator.cc', 'src/configurator/confi
 sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.3.13')
 libyang_cpp_dep = dependency('libyang-cpp')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
-yaml_dep = dependency('yaml-cpp')
 libsystemd_dep = dependency('libsystemd')
 ## This will need to be shipped to the customer though...
 sdbusplus_dep = dependency('sdbusplus')
@@ -53,7 +52,7 @@ version_h = configure_file(input : 'src/config.h.in',
 
 executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
   sr_wrapper, pdns_sysrepo, version_h,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, yaml_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep],
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep],
   include_directories: [pdns_api_cpp_incdir],
   install: true)
 
@@ -66,7 +65,6 @@ configure_file(input : 'pdns-sysrepo.service.in',
                install_dir: systemd_dep.get_pkgconfig_variable('systemdsystemunitdir'))
 
 install_data('polkit/10-pdns.rules', install_dir: get_option('datadir') + '/polkit-1/rules.d')
-install_data('pdns-sysrepo.example.yaml', install_dir: get_option('sysconfdir') + '/pdns-sysrepo')
 install_data('yang/pdns-server.yang', 'yang/ietf-inet-types@2013-07-15.yang', 'yang/iana-dns-class-rr-type@2019-06-27.yang',
               install_dir: get_option('datadir') + '/pdns-sysrepo')
 

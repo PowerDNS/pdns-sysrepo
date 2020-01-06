@@ -26,14 +26,12 @@
 #include "sr_wrapper/session.hh"
 #include "configurator/subscribe.hh"
 #include "configurator/configurator.hh"
-#include "configurator/config.hh"
+#include "config/config.hh"
 #include "config.h"
 
 using std::set;
 using std::cout;
 namespace po = boost::program_options;
-
-static const set<string> logLevels{"trace", "debug", "info", "warning", "error", "critical", "off"};
 
 static bool doExit = false;
 
@@ -47,14 +45,10 @@ static void siginthandler(int signum) {
 
 int main(int argc, char* argv[]) {
   po::options_description opts("Options");
-  string logLevelHelp = fmt::format("The loglevel of the program, possible values are {}", fmt::join(logLevels, ", "));
 
   opts.add_options()
     ("help,h", "Output a help message")
-    ("config,c", po::value<string>()->default_value(PDNSSYSREPOCONFDIR"/pdns-sysrepo.yaml"), "Configuration file to load.")
-    ("loglevel,l", po::value<string>()->default_value("info"), logLevelHelp.c_str())
-    ("version,v", "Show the version")
-    ("log-timestamps", po::value<bool>()->default_value(true), "Add timestamps to the logs");
+    ("version,v", "Show the version");
 
   po::variables_map vm;
   try {
@@ -76,6 +70,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
+  /*
   spdlog::set_pattern("%l - %v");
   if (vm.count("log-timestamps")) {
     if (vm["log-timestamps"].as<bool>()) {
@@ -89,17 +84,37 @@ int main(int argc, char* argv[]) {
   }
   spdlog::set_level(spdlog::level::from_str(vm["loglevel"].as<string>()));
   spdlog::info("Level set to {}", vm["loglevel"].as<string>());
+  */
 
   try {
+    /*
     auto myConfig = pdns_conf::Config(vm["config"].as<string>());
 
     spdlog::debug("Starting connection to sysrepo");
+    */
     sysrepo::S_Connection conn(new sysrepo::Connection());
 
+    /*
     spdlog::debug("Starting session");
+    */
     auto sess = sr::Session(conn);
 
     try {
+      /* get our own settings first */
+      auto configSession(make_shared<sysrepo::Session>(sess));
+      auto configSubscription = make_shared<sysrepo::Subscribe>(configSession);
+      auto myConfig = make_shared<pdns_sysrepo::config::Config>();
+      configSubscription->module_change_subscribe("pdns-server", myConfig, "/pdns-server:pdns-sysrepo", nullptr, 0, SR_SUBSCR_ENABLED);
+      for (size_t tries = 0; tries < 10 && !myConfig->finished(); tries++) {
+        sleep(1);
+      }
+      if (!myConfig->finished()) {
+        throw std::runtime_error("Unable to retrieve my own configuration from sysrepo");
+      }
+      if (myConfig->failed()) {
+        throw std::runtime_error("Errors while processing initial config for pdns-sysrepo");
+      }
+
       /* This is passed to both the ServerConfigCB and the ZoneCB.
          As the have the same reference, the ServerConfigCB can update the pdns_api::ApiClient with the
          correct config, allowing both the ZoneCB and the ServerConfigCB to work with the API
@@ -109,7 +124,7 @@ int main(int argc, char* argv[]) {
       spdlog::debug("Registering config change callbacks");
       sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
       auto s = sysrepo::Subscribe(sSess);
-      auto cb = pdns_conf::getServerConfigCB(myConfig.getPdnsConfigFilename(), myConfig.getServiceName(), apiClient);
+      auto cb = pdns_conf::getServerConfigCB(myConfig->getPdnsConfigFilename(), myConfig->getServiceName(), apiClient);
       s.module_change_subscribe("pdns-server", cb, nullptr, nullptr, 0, SR_SUBSCR_ENABLED);
 
       auto zoneSubscribe = sysrepo::Subscribe(sSess);

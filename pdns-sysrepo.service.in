@@ -4,7 +4,7 @@ Before=pdns.service
 
 [Service]
 Type=notify
-ExecStart=@prefix@/@bindir@/pdns-sysrepo --log-timestamps no
+ExecStart=@prefix@/@bindir@/pdns-sysrepo
 User=root
 Group=root
 

@@ -15,25 +15,15 @@
  */
 #pragma once
 #include <string>
+#include <sysrepo-cpp/Session.hpp>
 
 using std::string;
 
-namespace pdns_conf
+namespace pdns_sysrepo::config
 {
-class Config
+class Config : public sysrepo::Callback
 {
 public:
-  /**
-   * @brief Construct a new Config object
-   * 
-   * This Config object contains the configuration of the pdns-sysrepo
-   * progam.
-   * 
-   * @param fpath  The path to the YAML configuration file to read
-   * @throw std::runtime_error  When the file cannot be read or parsed
-   */
-  Config(string fpath);
-
   /**
    * @brief Get the path to the PowerDNS Authoritative Server config file
    * 
@@ -48,9 +38,40 @@ public:
    */
   string getServiceName() { return d_pdns_service; };
 
+  int module_change(sysrepo::S_Session session, const char* module_name,
+    const char* xpath, sr_event_t event,
+    uint32_t request_id, void* private_data) override;
+
+  bool failed() {
+    return d_failed;
+  }
+
+  bool finished() {
+    return d_initial_done;
+  }
+
 private:
-  string d_config_path;
-  string d_pdns_service = "pdns.service";
-  string d_pdns_conf = "/etc/powerdns/pdns.conf.d/sysrepo.conf";
+  void setLoglevel(const string& level);
+
+  /**
+   * @brief Get the option named opt
+   * 
+   * @param opt 
+   * @param session 
+   * @return string 
+   */
+  string getOption(const string &opt, sysrepo::S_Session &session);
+  string d_pdns_service;
+  string d_pdns_conf;
+
+  /**
+   * @brief Indicates that the initial load failed
+   */
+  bool d_failed = false;
+
+  /**
+   * @brief Indicates that the SR_EV_ENABLE was received and properly processed
+   */
+  bool d_initial_done = false;
 };
 } // namespace pdns_conf
