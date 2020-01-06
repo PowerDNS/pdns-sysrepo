@@ -52,6 +52,7 @@ public:
 
 private:
   void setLoglevel(const string& level);
+  void setLogFormat(const bool& timestamped);
 
   /**
    * @brief Get the option named opt
@@ -73,5 +74,10 @@ private:
    * @brief Indicates that the SR_EV_ENABLE was received and properly processed
    */
   bool d_initial_done = false;
+
+  /**
+   * @brief Ensures the first SR_EV_DONE is skipped
+   */
+  bool d_skip_done = true;
 };
 } // namespace pdns_conf
