@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Release 0.2.0
+-------------
+Unreleased
+
+New Features
+^^^^^^^^^^^^
+- :program:`pdns-sysrepo` is now configured using sysrepo, dropping the yaml configuration and commandline switches
+
 Release 0.1.1
 -------------
 Released 2019-12-13

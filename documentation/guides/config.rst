@@ -1,12 +1,33 @@
 Configuring :program:`pdns-sysrepo`
 ===================================
-The software reads a YAML configuration file on startup.
-By default, this file is ``/etc/pdns-sysrepo/pdns-sysrepo.yaml``, but this can be changed using the ``-c`` command line argument.
+This software is configured with sysrepo under the ``/pdns-server:pdns-sysrepo/`` tree.
+As this is in the YANG datastore, these settings can be changed at runtime.
 
-These are the default settings and their descriptions:
+This tree has 2 containers, ``pdns-service`` and ``logging``.
 
-.. literalinclude:: ../../pdns-sysrepo.example.yaml
-   :language: yaml
+Configuring logging
+-------------------
+There are two settings that can be configured, the loglevel and the whether or not to log timestamps.
+
+The loglevel (at ``/pdns-server:pdns-sysrepo/logging/level``) is an enum with the following options:
+
+:off: No logging whatsoever
+:critical: Only critical errors are logged
+:error: Only errors are logged, errors usually lead to program termination
+:warning: Logs errors and warnings. A warning indicates something failed that does not terminate the program
+:info: Logs all of the above plus some information about what :program:`pdns-sysrepo` is doing, this is the default
+:debug: Also logs a lot of information could come in handy when bugs are encountered
+:trace: The most verbose of all logs, mostly used for developers
+
+:program:`pdns-sysrepo` can optionally log timestamps (handy when stdout is not sent to a logger) with the boolean at ``/pdns-server:pdns-sysrepo/logging/timestamp``.
+
+
+Configuring the PowerDNS Service information
+--------------------------------------------
+To know where to write the PowerDNS configuration, :program:`pdns-sysrepo` reads ``/pdns-server:pdns-sysrepo/pdns-service/config-file``.
+The default is ``/etc/powerdns/pdns.conf``, which should work for most Debian-based installations.
+
+As :program:`pdns-sysrepo` might need to restart the PowerDNS Authoritative Server to apply certain settings, it reads the name of the systemd service from ``/pdns-server:pdns-sysrepo/pdns-service/name``.
 
 dbus permissions
 ----------------
