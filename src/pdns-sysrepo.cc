@@ -70,33 +70,9 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  /*
-  spdlog::set_pattern("%l - %v");
-  if (vm.count("log-timestamps")) {
-    if (vm["log-timestamps"].as<bool>()) {
-      spdlog::set_pattern("%Y-%m-%d %H:%M:%S.%f - %l - %v");
-    }
-  }
-
-  if (logLevels.count(vm["loglevel"].as<string>()) == 0) {
-    spdlog::error("Unknown loglevel {}", vm["loglevel"].as<string>());
-    return 1;
-  }
-  spdlog::set_level(spdlog::level::from_str(vm["loglevel"].as<string>()));
-  spdlog::info("Level set to {}", vm["loglevel"].as<string>());
-  */
-
   try {
-    /*
-    auto myConfig = pdns_conf::Config(vm["config"].as<string>());
-
-    spdlog::debug("Starting connection to sysrepo");
-    */
     sysrepo::S_Connection conn(new sysrepo::Connection());
 
-    /*
-    spdlog::debug("Starting session");
-    */
     auto sess = sr::Session(conn);
 
     try {
