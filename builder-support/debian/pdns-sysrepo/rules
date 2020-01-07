@@ -12,10 +12,6 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 # package maintainers to append LDFLAGS
 #export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 
-override_dh_auto_install:
-	dh_auto_install
-	mv debian/pdns-sysrepo/etc/pdns-sysrepo/pdns-sysrepo.example.yaml debian/pdns-sysrepo/etc/pdns-sysrepo/pdns-sysrepo.yaml
-
 override_dh_installsystemd:
 	dh_installsystemd --no-enable --no-start
 
