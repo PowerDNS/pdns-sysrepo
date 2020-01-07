@@ -53,7 +53,7 @@ version_h = configure_file(input : 'src/config.h.in',
 executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
   sr_wrapper, pdns_sysrepo, version_h,
   dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep],
-  include_directories: [pdns_api_cpp_incdir],
+  include_directories: [pdns_api_cpp_incdir, include_directories('src')],
   install: true)
 
 # Generate a systemd unit file

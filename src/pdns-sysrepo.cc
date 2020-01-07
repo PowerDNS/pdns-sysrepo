@@ -114,6 +114,7 @@ int main(int argc, char* argv[]) {
       if (myConfig->failed()) {
         throw std::runtime_error("Errors while processing initial config for pdns-sysrepo");
       }
+      spdlog::debug("Configuration complete, starting callbacks for pdns-server");
 
       /* This is passed to both the ServerConfigCB and the ZoneCB.
          As the have the same reference, the ServerConfigCB can update the pdns_api::ApiClient with the
@@ -124,7 +125,7 @@ int main(int argc, char* argv[]) {
       spdlog::debug("Registering config change callbacks");
       sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
       auto s = sysrepo::Subscribe(sSess);
-      auto cb = pdns_conf::getServerConfigCB(myConfig->getPdnsConfigFilename(), myConfig->getServiceName(), apiClient);
+      auto cb = pdns_conf::getServerConfigCB(myConfig, apiClient);
       s.module_change_subscribe("pdns-server", cb, nullptr, nullptr, 0, SR_SUBSCR_ENABLED);
 
       auto zoneSubscribe = sysrepo::Subscribe(sSess);
@@ -155,6 +156,10 @@ int main(int argc, char* argv[]) {
       }
       throw;
     }
+  }
+  catch (const sysrepo::sysrepo_exception& e) {
+    spdlog::error("Had an error from sysrepo: {}", e.what());
+    return 1;
   }
   catch (const std::exception& e) {
     spdlog::error("Fatal error: {}", e.what());

@@ -25,6 +25,7 @@
 
 #include "ApiClient.h"
 #include "model/Zone.h"
+#include "config/config.hh"
 
 using std::map;
 using std::shared_ptr;
@@ -80,10 +81,10 @@ public:
  * 
  * @param privData  Data that the functions can use
  */
-  ServerConfigCB(const map<string, string>& privData, shared_ptr<pdns_api::ApiClient> &apiClient) :
+  ServerConfigCB(shared_ptr<pdns_sysrepo::config::Config> &config, shared_ptr<pdns_api::ApiClient> &apiClient) :
     sysrepo::Callback(),
     d_apiClient(apiClient),
-    privData(privData)
+    d_config(config)
     {};
   ~ServerConfigCB(){};
 
@@ -139,9 +140,11 @@ protected:
   shared_ptr<pdns_api::ApiClient> d_apiClient;
 
   /**
-   * @brief Private data that this class can use
+   * @brief Holder for the pdns-sysrepo config
+   * 
+   * Used to look up the file path and service name
    */
-  map<string, string> privData;
+  shared_ptr<pdns_sysrepo::config::Config> d_config;
 
   /**
    * @brief Checks if pdns.conf requires updating
@@ -196,12 +199,11 @@ protected:
 /**
  * @brief Get a shared pointer to a ServerConfigCB object
  * 
- * @param fpath                 The path to the PowerDNS Authoritative Server
- *                              configuration file
- * @param serviceName           Name of the PowerDNS service
+ * @param config                A shared_ptr to the pdns-sysrepo config holder
+ * @param apiClient             A shared_ptr to an API Client
  * @return std::shared_ptr<ServerConfigCB> 
  */
-std::shared_ptr<ServerConfigCB> getServerConfigCB(const string& fpath, const string& serviceName, shared_ptr<pdns_api::ApiClient> &apiClient);
+std::shared_ptr<ServerConfigCB> getServerConfigCB(shared_ptr<pdns_sysrepo::config::Config> &config, shared_ptr<pdns_api::ApiClient> &apiClient);
 
 /**
  * @brief Get a new ZoneCB object wrapped in a shared_ptr
