@@ -18,7 +18,7 @@ zones_test_src = files('zones/zone-add-delete.cc',
   '../src/configurator/subscribe/zones.cc',
   '../src/configurator/subscribe/service.cc',
   '../src/configurator/util.cc',
-  '../src/configurator/config.cc',
+  '../src/config/config.cc',
   '../src/configurator/configurator.cc',
   '../sr_wrapper/session.cc'
   )
@@ -35,7 +35,7 @@ if microhttp_dep.found()
   zones_test = executable('zones-test',
   sources: zones_test_src,
   include_directories: [src_include, httpmockserver_include, pdns_api_cpp_incdir],
-  dependencies: [spdlog_dep, sysrepo_cpp_dep, libyang_cpp_dep, boost_deps, mstch_dep, gtest_dep, httpmockserver_dep, pdns_api_cpp_dep, sdbusplus_dep, yaml_dep])
+  dependencies: [spdlog_dep, sysrepo_cpp_dep, libyang_cpp_dep, boost_deps, mstch_dep, gtest_dep, httpmockserver_dep, pdns_api_cpp_dep, sdbusplus_dep])
   test('zones', zones_test, args: [meson.source_root() + '/yang'])
 endif
 
