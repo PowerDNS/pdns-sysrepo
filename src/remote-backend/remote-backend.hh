@@ -1,3 +1,4 @@
+#include <spdlog/spdlog.h>
 #include <sysrepo-cpp/Session.hpp>
 #include <pistache/endpoint.h>
 #include <pistache/router.h>
@@ -23,22 +24,22 @@ public:
     Rest::Routes::Get(d_router, "/dns/getAllDomains", Rest::Routes::bind(&RemoteBackend::getAllDomains, this));
     Rest::Routes::NotFound(d_router, Rest::Routes::bind(&RemoteBackend::notFound, this));
 
-    auto opts = Http::Endpoint::options().threads(1);
+    auto opts = Http::Endpoint::options().threads(4).flags(Pistache::Tcp::Options::ReuseAddr);
     d_endpoint->init(opts);
   };
 
   ~RemoteBackend() {
-    d_endpoint->shutdown();
+    try {
+      d_endpoint->shutdown();
+    } catch (const std::exception &e) {
+      spdlog::warn("Exception in RemoteBackend destructor: {}", e.what());
+    }
   };
 
   void start() {
     d_endpoint->setHandler(d_router.handler());
     // This ensures we actually return
     d_endpoint->serveThreaded();
-  };
-
-  void stop() {
-    d_endpoint->shutdown();
   };
 
 protected:

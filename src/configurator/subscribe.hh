@@ -80,6 +80,8 @@ public:
  * Please use pdns_conf::getServerConfigCB to create an instance.
  * 
  * @param privData  Data that the functions can use
+ * @param apiClient  apiClient for the PowerDNS API. Set this to a nullptr to indicate
+ *                   that PowerDNS will connect to pdns-sysrepo's remote backend.
  */
   ServerConfigCB(shared_ptr<pdns_sysrepo::config::Config> &config, shared_ptr<pdns_api::ApiClient> &apiClient) :
     sysrepo::Callback(),

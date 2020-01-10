@@ -67,7 +67,7 @@ api = {{ api }}
 api-key = {{ api-key }}
 )";
 
-PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysrepo::S_Session &session) {
+PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysrepo::S_Session &session, const bool doRemoteBackendOnly) {
   // spdlog::debug("root node name={} schema_type={} path={}", node->schema()->name(), libyangNodeType2String(node->schema()->nodetype()), node->schema()->path());
 
   libyang::S_Data_Node_Leaf_List leaf;
@@ -130,7 +130,7 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
         listenAddresses.push_back(la);
       }
 
-      if (nodename == "backend") {
+      if (nodename == "backend" && !doRemoteBackendOnly) {
         backend b;
         for (const auto &n: child->tree_dfs()) {
           if(n->schema()->nodetype() == LYS_LEAF) {
@@ -205,6 +205,13 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
         allowAxfrIps.push_back(a);
       }
     }
+  }
+  if (doRemoteBackendOnly) {
+    backend b;
+    b.backendtype = "remote";
+    b.name = "pdns_sysrepo";
+    b.options.push_back({"connection-string", "http:url=http://localhost:9100/dns"});
+    backends.push_back(b);
   }
 }
 

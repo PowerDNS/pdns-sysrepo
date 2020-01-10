@@ -42,8 +42,10 @@ public:
    * 
    * @param node  A node rooted at '/pdns-server:pdns-server/', used to
    *              extract the PowerDNS configuration
+   * @param session  A sysrepo session that is used to retrieve the config
+   * @param doRemoteBackendOnly  Configure a single remote backend to connect to pdns-sysrepo
    */
-  PdnsServerConfig(const libyang::S_Data_Node &node, const sysrepo::S_Session &session = nullptr);
+  PdnsServerConfig(const libyang::S_Data_Node &node, const sysrepo::S_Session &session = nullptr, const bool doRemoteBackendOnly = false);
 
   /**
    * @brief Write a pdns.conf-style file to fpath

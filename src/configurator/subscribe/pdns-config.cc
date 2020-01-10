@@ -28,7 +28,7 @@ void ServerConfigCB::changeConfigUpdate(sysrepo::S_Session& session, const uint3
     auto sess = static_pointer_cast<sr::Session>(session);
 
     // The session already has the new datastore values
-    PdnsServerConfig c(sess->getConfigTree(), session);
+    PdnsServerConfig c(sess->getConfigTree(), session, (d_apiClient == nullptr));
     c.writeToFile(fpath);
   }
 
