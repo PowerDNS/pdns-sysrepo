@@ -100,30 +100,32 @@ int main(int argc, char* argv[]) {
       */
       auto apiClient = make_shared<pdns_api::ApiClient>();
 
-      spdlog::debug("Registering config change callbacks");
+      spdlog::debug("Registering config change callback");
       sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
       auto s = sysrepo::Subscribe(sSess);
       auto cb = pdns_conf::getServerConfigCB(myConfig, apiClient);
       s.module_change_subscribe("pdns-server", cb, nullptr, nullptr, 0, SR_SUBSCR_ENABLED);
+      spdlog::debug("Registered config change callback");
 
+      spdlog::debug("Registering zone operational data callback");
       auto zoneSubscribe = sysrepo::Subscribe(sSess);
-      spdlog::debug("done, registring operational zone CB");
       auto zoneCB = pdns_conf::getZoneCB(apiClient);
       zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
-
-      spdlog::trace("callbacks registered, registring signal handlers");
-
-      signal(SIGINT, siginthandler);
-      signal(SIGSTOP, siginthandler);
-      spdlog::trace("signalhandlers registered, notifying systemd we're ready");
-
-      sd_notify(0, "READY=1");
-      spdlog::info("Starting remote backend webserver");
+      spdlog::debug("Registered zone operational data callback");
       
+      spdlog::trace("Starting remote-backend webserver");
       Pistache::Address a = "127.0.0.1:9100";
       auto rb = pdns_sysrepo::remote_backend::RemoteBackend(conn, a);
       rb.start();
+      spdlog::trace("Started remote-backend webserver");
 
+      spdlog::trace("Registering signal handlers");
+      signal(SIGINT, siginthandler);
+      signal(SIGSTOP, siginthandler);
+      spdlog::trace("Registered signal handlers");
+
+      spdlog::trace("Notifying systemd we've started up");
+      sd_notify(0, "READY=1");
       spdlog::info("Startup complete");
 
       while (!doExit) {
