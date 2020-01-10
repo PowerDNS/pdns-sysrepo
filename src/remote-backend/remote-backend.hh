@@ -22,6 +22,7 @@ public:
     d_endpoint(std::make_shared<Http::Endpoint>(addr)) {
     Rest::Routes::Get(d_router, "/dns/lookup/:recordname/:type", Rest::Routes::bind(&RemoteBackend::lookup, this));
     Rest::Routes::Get(d_router, "/dns/getAllDomains", Rest::Routes::bind(&RemoteBackend::getAllDomains, this));
+    Rest::Routes::Get(d_router, "/dns/list/:id/:zone", Rest::Routes::bind(&RemoteBackend::list, this));
     Rest::Routes::NotFound(d_router, Rest::Routes::bind(&RemoteBackend::notFound, this));
 
     auto opts = Http::Endpoint::options().threads(4).flags(Pistache::Tcp::Options::ReuseAddr);
@@ -62,6 +63,16 @@ protected:
    * @param response 
    */
   void getAllDomains(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the list endpoint
+   * 
+   * https://doc.powerdns.com/authoritative/backends/remote.html#list
+   * 
+   * @param request 
+   * @param response 
+   */
+  void list(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
    * @brief Sends a 404 with {"result": false}
@@ -125,6 +136,21 @@ protected:
    * @return nlohmann::json 
    */
   nlohmann::json makeRecord(const std::string& name, const std::string& rtype, const std::string& content, const uint16_t ttl);
+
+  /**
+   * @brief Retrieve an Array of records from an RRSet Node
+   * 
+   * Takes a node rooted at '/pdns-server:zones/zones[name]/rrset[owner][type]' and returns a json array like:
+   * 
+   * [
+   *   {"qtype":"A", "qname":"www.example.com", "content":"203.0.113.2", "ttl": 60},
+   *   {"qtype":"A", "qname":"www.example.com", "content":"192.0.2.2", "ttl": 60}
+   * ]
+   * 
+   * @param node 
+   * @return nlohmann::json::array_t 
+   */
+  nlohmann::json::array_t getRecordsFromRRSetNode(const libyang::S_Data_Node &node);
 
   /**
    * @brief Get a new Sysrepo session
