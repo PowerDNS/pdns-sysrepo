@@ -1,0 +1,79 @@
+{
+  "pdns-server:axfr-access-control-list": [
+    {
+      "name": "localhost",
+      "network": [
+        {
+          "name": "v4",
+          "ip-prefix": "127.0.0.0/8"
+        }
+      ]
+    }
+  ],
+  "pdns-server:pdns-server": {
+    "listen-addresses": [
+      {
+        "name": "main",
+        "ip-address": "127.0.0.1",
+        "port": 5300
+      }
+    ],
+    "master": true,
+    "slave": true,
+    "webserver": {
+      "api-key": "mySecretKey"
+    },
+    "allow-axfr": [
+      "localhost"
+    ]
+  },
+  "pdns-server:zones": {
+    "zones": [
+      {
+        "name": "example.com.",
+        "zonetype": "native",
+        "rrset": [
+          {
+            "owner": "www.example.com.",
+            "type": "AAAA",
+            "ttl": 600,
+            "rdata": {
+              "AAAA": {
+                "address": "2001:db8::1"
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "A",
+            "ttl": 3600,
+            "rdata": {
+              "A": {
+                "address": [
+                  "192.0.2.1",
+                  "192.0.2.3"
+                ]
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "SOA",
+            "ttl": 3600,
+            "rdata": {
+              "SOA": {
+                "mname": "ns1.example.nl.",
+                "rname": "hostmaster.example.nl.",
+                "serial": 1,
+                "refresh": 2,
+                "retry": 3,
+                "expire": 4,
+                "minimum": 5
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
