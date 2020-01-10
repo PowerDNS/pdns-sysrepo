@@ -92,6 +92,21 @@ int main(int argc, char* argv[]) {
       if (myConfig->failed()) {
         throw std::runtime_error("Errors while processing initial config for pdns-sysrepo");
       }
+
+      bool rrsetManagement = false;
+      spdlog::trace("Testing the state of the rrset-management feature");
+      auto lyContext = sess.get_context();
+      auto pdnsServerModule = lyContext->get_module("pdns-server");
+      if (pdnsServerModule == nullptr) {
+        throw std::runtime_error("The pdns-server module is not imported in sysrepo");
+      }
+      auto rrsetMgmtStatus = pdnsServerModule->feature_state("rrset-management");
+      if (rrsetMgmtStatus == -1) {
+        throw std::runtime_error("Unable to determine the status of the rrset-management feature");
+      }
+      rrsetManagement = rrsetMgmtStatus == 1;
+      spdlog::trace("rrset-management is {}abled", rrsetManagement ? "en" : "dis");
+
       spdlog::debug("Configuration complete, starting callbacks for pdns-server");
 
       /* This is passed to both the ServerConfigCB and the ZoneCB.
