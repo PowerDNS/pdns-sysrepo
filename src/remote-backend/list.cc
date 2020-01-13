@@ -2,6 +2,7 @@
 
 namespace pdns_sysrepo::remote_backend {
 void RemoteBackend::list(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
+  logRequest(request);
   auto zoneName = request.param(":zone").as<std::string>();
   zoneName = urlDecode(zoneName);
 
@@ -27,6 +28,6 @@ void RemoteBackend::list(const Pistache::Rest::Request& request, Http::ResponseW
   }
   nlohmann::json ret = {{"result", allRecords}};
 
-  sendResponse(response, ret);
+  sendResponse(request, response, ret);
 }
 }

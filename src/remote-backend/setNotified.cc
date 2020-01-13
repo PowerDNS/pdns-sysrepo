@@ -3,6 +3,7 @@
 namespace pdns_sysrepo::remote_backend
 {
 void RemoteBackend::setNotified(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
+  logRequest(request);
   uint32_t zoneId = request.param(":id").as<uint32_t>();
 
   // Pistache has no parser for form data......
@@ -14,6 +15,6 @@ void RemoteBackend::setNotified(const Pistache::Rest::Request& request, Http::Re
 
   d_notifiedMasters[zoneId] = serial;
 
-  sendResponse(response, nlohmann::json({{"result", true}}));
+  sendResponse(request, response, nlohmann::json({{"result", true}}));
 }
 } // namespace pdns_sysrepo::remote_backend

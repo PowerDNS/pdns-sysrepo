@@ -3,6 +3,7 @@
 namespace pdns_sysrepo::remote_backend
 {
 void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
+  logRequest(request);
   auto session = getSession();
   auto zones = session->get_subtree("/pdns-server:zones/zones");
   nlohmann::json::array_t allZones;
@@ -45,6 +46,6 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
     }
   }
   nlohmann::json ret = {{"result", allZones}};
-  sendResponse(response, ret);
+  sendResponse(request, response, ret);
 }
 } // namespace pdns_sysrepo::remote_backend

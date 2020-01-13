@@ -5,6 +5,7 @@
 namespace pdns_sysrepo::remote_backend
 {
 void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter response) {
+  logRequest(request);
   auto recordname = request.param(":recordname").as<std::string>();
   recordname = urlDecode(recordname);
   auto recordtype = request.param(":type").as<std::string>();
@@ -13,11 +14,11 @@ void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter re
   try {
     zoneName = findBestZone(recordname);
   } catch (const std::out_of_range &e) {
-    sendError(response, e.what());
+    sendError(request, response, e.what());
     return;
   }
   if (zoneName.empty()) {
-    sendError(response, "No zone for qname");
+    sendError(request, response, "No zone for qname");
   }
 
   auto session = getSession();
@@ -41,6 +42,6 @@ void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter re
     );
   }
   nlohmann::json ret = {{"result", allRecords}};
-  sendResponse(response, ret);
+  sendResponse(request, response, ret);
 }
 } // namespace pdns_sysrepo::remote_backend

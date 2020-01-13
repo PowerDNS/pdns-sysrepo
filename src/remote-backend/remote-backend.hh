@@ -120,7 +120,7 @@ protected:
    * @param error
    * @param code
    */
-  void sendError(Http::ResponseWriter& response, const std::string& error, const Http::Code &code = Http::Code::Internal_Server_Error);
+  void sendError(const Pistache::Rest::Request& request, Http::ResponseWriter& response, const std::string& error, const Http::Code &code = Http::Code::Internal_Server_Error);
 
   /**
    * @brief Send an HTTP 200 response with ret
@@ -128,7 +128,7 @@ protected:
    * @param response 
    * @param ret
    */
-  void sendResponse(Http::ResponseWriter& response, const nlohmann::json& ret);
+  void sendResponse(const Pistache::Rest::Request& request, Http::ResponseWriter& response, const nlohmann::json& ret);
 
   /**
    * @brief Returns a JSON object for DomainInfo
@@ -224,6 +224,9 @@ protected:
    * The map is keyed with the domain_id 
    */
   std::map<uint32_t, uint32_t> d_notifiedMasters;
+
+  void logRequest(const Pistache::Rest::Request &request);
+  void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
 
   sysrepo::S_Connection d_connection;
   std::shared_ptr<Http::Endpoint> d_endpoint;

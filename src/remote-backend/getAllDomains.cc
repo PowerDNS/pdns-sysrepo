@@ -5,6 +5,7 @@
 namespace pdns_sysrepo::remote_backend
 {
 void RemoteBackend::getAllDomains(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
+  logRequest(request);
   nlohmann::json ret = {{"result", nlohmann::json::array()}};
   auto session = getSession();
 
@@ -19,7 +20,7 @@ void RemoteBackend::getAllDomains(const Pistache::Rest::Request& request, Http::
       string message = errors->message(i) == nullptr ? "" : errors->message(i);
       spdlog::warn("Session error xpath={}: {}", xpath, message);
     }
-    sendError(response, "Unable to retrieve data");
+    sendError(request, response, "Unable to retrieve data");
     return;
   }
 
@@ -45,6 +46,6 @@ void RemoteBackend::getAllDomains(const Pistache::Rest::Request& request, Http::
   if (!zoneName.empty()) {
     ret["result"].push_back(makeDomainInfo(zoneName, kind));
   }
-  sendResponse(response, ret);
+  sendResponse(request, response, ret);
 }
 } // namespace pdns_sysrepo::remote_backend
