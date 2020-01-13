@@ -4,7 +4,7 @@ namespace pdns_sysrepo::remote_backend
 {
 nlohmann::json RemoteBackend::makeDomainInfo(const std::string& zone, const std::string& kind) {
     nlohmann::json ret;
-    ret["id"] = -1;
+    ret["id"] = getDomainID(zone);
     ret["zone"] = zone;
     ret["kind"] = kind;
     ret["serial"] = 0;
