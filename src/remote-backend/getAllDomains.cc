@@ -39,7 +39,7 @@ void RemoteBackend::getAllDomains(const Pistache::Rest::Request& request, Http::
       }
       zoneName = leaf->value_str();
     }
-    if (leafName == "kind") {
+    if (leafName == "zonetype") {
       kind = leaf->value_str();
     }
   }
