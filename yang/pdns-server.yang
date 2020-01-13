@@ -56,7 +56,7 @@ module pdns-server {
 
     revision 2019-12-13 {
         description
-          "Add RRSet configuration";
+          "Add RRSet configuration, hidden behind an rrset-management feature flag";
     }
 
     revision 2019-12-10 {
@@ -82,6 +82,10 @@ module pdns-server {
     revision 2019-10-25 {
         description
           "Initial revision, not for public consumption yet";
+    }
+
+    feature rrset-management {
+      description "Enable to allow updating RRSets in the YANG datastore";
     }
 
     typedef backendtype {
@@ -265,6 +269,7 @@ module pdns-server {
         }
 
         list rrset {
+            if-feature "rrset-management";
             when "../zonetype = 'master' or ../zonetype = 'native'";
             // Nearly a straight up copy from
             // https://gitlab.labs.nic.cz/jetconf/jetconf-knot/blob/master/yang-modules/dns-zones-state@2017-01-12.yang
@@ -608,6 +613,8 @@ module pdns-server {
         }
 
         list backend {
+            if-feature "not rrset-management";
+
             description
               "All backends that should be launched on startup, with their config";
 
@@ -655,6 +662,8 @@ module pdns-server {
     }
 
     container zones-state {
+        if-feature "rrset-management";
+        
         config false;
         description
           "Operational state of zones";
