@@ -24,7 +24,10 @@ pdns_sysrepo_remote_backend = files(
   'src/remote-backend/getAllDomains.cc',
   'src/remote-backend/json-helpers.cc',
   'src/remote-backend/find-zone.cc',
-  'src/remote-backend/sysrepo-helpers.cc'
+  'src/remote-backend/sysrepo-helpers.cc',
+  'src/remote-backend/getUpdatedMasters.cc',
+  'src/remote-backend/domain-id.cc',
+  'src/remote-backend/setNotified.cc'
 )
 
 sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.3.13')

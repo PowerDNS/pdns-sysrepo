@@ -1,3 +1,4 @@
+#include <boost/bimap.hpp>
 #include <spdlog/spdlog.h>
 #include <sysrepo-cpp/Session.hpp>
 #include <pistache/endpoint.h>
@@ -23,6 +24,8 @@ public:
     Rest::Routes::Get(d_router, "/dns/lookup/:recordname/:type", Rest::Routes::bind(&RemoteBackend::lookup, this));
     Rest::Routes::Get(d_router, "/dns/getAllDomains", Rest::Routes::bind(&RemoteBackend::getAllDomains, this));
     Rest::Routes::Get(d_router, "/dns/list/:id/:zone", Rest::Routes::bind(&RemoteBackend::list, this));
+    Rest::Routes::Get(d_router, "/dns/getUpdatedMasters", Rest::Routes::bind(&RemoteBackend::getUpdatedMasters, this));
+    Rest::Routes::Patch(d_router, "/dns/setNotified/:id", Rest::Routes::bind(&RemoteBackend::setNotified, this));
     Rest::Routes::NotFound(d_router, Rest::Routes::bind(&RemoteBackend::notFound, this));
 
     auto opts = Http::Endpoint::options().threads(4).flags(Pistache::Tcp::Options::ReuseAddr);
@@ -73,6 +76,26 @@ protected:
    * @param response 
    */
   void list(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the getUpdatedMasters endpoint
+   * 
+   * https://doc.powerdns.com/authoritative/backends/remote.html#getupdatedmasters
+   * 
+   * @param request 
+   * @param response 
+   */
+  void getUpdatedMasters(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the setNotified endpoint
+   * 
+   * https://doc.powerdns.com/authoritative/backends/remote.html#setNotified
+   * 
+   * @param request 
+   * @param response 
+   */
+  void setNotified(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
    * @brief Sends a 404 with {"result": false}
@@ -169,6 +192,38 @@ protected:
    * @return std::string 
    */
   std::string urlDecode(std::string &eString);
+
+  /**
+   * @brief DomainIDs assigned to zones
+   * 
+   * These are only valid during the runtime of this program
+   * 
+   */
+  boost::bimap<std::string, uint32_t> d_domainIds;
+
+  /**
+   * @brief Get the ID for a domain
+   * 
+   * @param domain 
+   * @return uint32_t 
+   */
+  uint32_t getDomainID(const std::string& domain);
+
+  /**
+   * @brief Get the domain belong to an id
+   * 
+   * @param id 
+   * @return std::string 
+   * @throw std::out_of_range when the id is not found
+   */
+  std::string getDomainFromId(const uint32_t id);
+
+  /**
+   * @brief Contains the serial notified for domains
+   * 
+   * The map is keyed with the domain_id 
+   */
+  std::map<uint32_t, uint32_t> d_notifiedMasters;
 
   sysrepo::S_Connection d_connection;
   std::shared_ptr<Http::Endpoint> d_endpoint;
