@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pieter Lexis <pieter.lexis@powerdns.com>
+ * Copyright 2019-2020 Pieter Lexis <pieter.lexis@powerdns.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
