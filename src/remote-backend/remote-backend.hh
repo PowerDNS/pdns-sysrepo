@@ -18,33 +18,15 @@ using std::string;
 class RemoteBackend
 {
 public:
-  RemoteBackend(sysrepo::S_Connection& connection, const Pistache::Address& addr) :
-    d_connection(connection),
-    d_endpoint(std::make_shared<Http::Endpoint>(addr)) {
-    Rest::Routes::Get(d_router, "/dns/lookup/:recordname/:type", Rest::Routes::bind(&RemoteBackend::lookup, this));
-    Rest::Routes::Get(d_router, "/dns/getAllDomains", Rest::Routes::bind(&RemoteBackend::getAllDomains, this));
-    Rest::Routes::Get(d_router, "/dns/list/:id/:zone", Rest::Routes::bind(&RemoteBackend::list, this));
-    Rest::Routes::Get(d_router, "/dns/getUpdatedMasters", Rest::Routes::bind(&RemoteBackend::getUpdatedMasters, this));
-    Rest::Routes::Patch(d_router, "/dns/setNotified/:id", Rest::Routes::bind(&RemoteBackend::setNotified, this));
-    Rest::Routes::NotFound(d_router, Rest::Routes::bind(&RemoteBackend::notFound, this));
+  RemoteBackend(sysrepo::S_Connection& connection, const Pistache::Address& addr);
+  ~RemoteBackend();
 
-    auto opts = Http::Endpoint::options().threads(4).flags(Pistache::Tcp::Options::ReuseAddr);
-    d_endpoint->init(opts);
-  };
-
-  ~RemoteBackend() {
-    try {
-      d_endpoint->shutdown();
-    } catch (const std::exception &e) {
-      spdlog::warn("Exception in RemoteBackend destructor: {}", e.what());
-    }
-  };
-
-  void start() {
-    d_endpoint->setHandler(d_router.handler());
-    // This ensures we actually return
-    d_endpoint->serveThreaded();
-  };
+  /**
+   * @brief Starts the Remote Backend
+   * 
+   * Must be called for the backend to do something useful
+   */
+  void start();
 
 protected:
   /**
