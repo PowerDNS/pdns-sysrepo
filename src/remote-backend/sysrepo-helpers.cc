@@ -81,4 +81,26 @@ namespace pdns_sysrepo::remote_backend {
     }
     return ret;
   }
+
+  libyang::S_Data_Node RemoteBackend::getZoneTree(sysrepo::S_Session session) {
+    if (!session) {
+      session = getSession();
+    }
+    return session->get_subtree("/pdns-server:zones/zones");
+  }
+
+  sessionErrors RemoteBackend::getErrorsFromSession(const sysrepo::S_Session& session) {
+    if (!session) {
+      throw std::logic_error("Session is a nullptr");
+    }
+
+    sessionErrors ret;
+    auto errors = session->get_error();
+    for (size_t i = 0; i < errors->error_cnt(); i++) {
+      string xpath = errors->xpath(i) == nullptr ? "" : errors->xpath(i);
+      string message = errors->message(i) == nullptr ? "" : errors->message(i);
+      ret.push_back(std::make_pair(xpath, message));
+    }
+    return ret;
+  }
 }

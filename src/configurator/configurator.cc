@@ -47,6 +47,11 @@ allow-axfr-ips =
 allow-axfr-ips += {{ . }}
 {{ /allow-axfr-ips }}
 
+also-notify = 
+{{ #also-notify }}
+also-notify += {{ . }}
+{{ /also-notify }}
+
 launch =
 {{ #launch }}
 launch += {{ backendtype }}:{{ name }}
@@ -205,12 +210,32 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
         allowAxfrIps.push_back(a);
       }
     }
+    for (auto const n : node->find_path("/pdns-server:pdns-server/pdns-server:also-notify")->data()) {
+      if (n->schema()->nodetype() == LYS_LEAFLIST && session != nullptr) {
+        axfrAcl a;
+        auto leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+        a.name = leaf->value_str();
+        auto alsoNotifyNode = session->get_subtree(fmt::format("/pdns-server:notify-endpoint[name='{}']", leaf->value_str()).c_str());
+        if (alsoNotifyNode) {
+          for (auto const addressNode : alsoNotifyNode->find_path("/pdns-server:notify-endpoint/address")->data()) {
+            auto n = addressNode->child()->next(); // /pdns-server/notify-endpoint/address/ip-address
+            auto addrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+            n = n->next();
+            auto portLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+            iputils::ComboAddress address(addrLeaf->value_str(), portLeaf->value()->uint16());
+            a.addresses.push_back(address.toStringWithPort());
+          }
+        }
+        alsoNotifyIps.push_back(a);
+      }
+    }
   }
   if (doRemoteBackendOnly) {
     backend b;
     b.backendtype = "remote";
     b.name = "pdns_sysrepo";
     b.options.push_back({"connection-string", "http:url=http://localhost:9100/dns"});
+    b.options.push_back({"dnssec", "yes"});
     backends.push_back(b);
   }
 }
@@ -277,6 +302,13 @@ string PdnsServerConfig::getConfig() {
     }
   }
 
+  mstch::array alsoNotify;
+  for (const auto& a : alsoNotifyIps) {
+    for (const auto& addr : a.addresses) {
+      alsoNotify.push_back(addr);
+    }
+  }
+
   mstch::map ctx{
     {"master", bool2str(master)},
     {"slave", bool2str(slave)},
@@ -290,7 +322,8 @@ string PdnsServerConfig::getConfig() {
     {"webserver-allow-from", webserverAllowFrom},
     {"api", bool2str(webserver.api)},
     {"api-key", webserver.api_key},
-    {"allow-axfr-ips", allowAxfr}
+    {"allow-axfr-ips", allowAxfr},
+    {"also-notify", alsoNotify}
   };
 
   spdlog::trace("Generated config:\n{}", mstch::render(pdns_conf_template, ctx));

@@ -49,6 +49,15 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-01-14 {
+      description
+            "
+           Several new features:
+           
+            * Added also-notify global option and as per-zone setting
+            ";
+    }
+
     revision 2020-01-06 {
         description
           "Add pdns-sysrepo configuration";
@@ -159,6 +168,13 @@ module pdns-server {
            list.";
     }
 
+    typedef notify-ref {
+      type leafref {
+        path "/pdns-server:notify-endpoint/pdns-server:name";
+      }
+      description "This type is used to reference configured notify endpoints";
+    }
+
     /*
      * Groupings
      */
@@ -266,6 +282,14 @@ module pdns-server {
             type inet:ip-address;
             when "../zonetype = 'slave'";
             min-elements 1;
+        }
+
+        leaf-list also-notify {
+          if-feature "rrset-management";
+          when "../zonetype = 'master'";
+          description
+            "List of remote endpoints to send NOTIFY packets";
+          type notify-ref;
         }
 
         list rrset {
@@ -560,6 +584,30 @@ module pdns-server {
         }
     }
 
+    list notify-endpoint {
+      key "name";
+      description
+        "Endpoints that could be notified about zone updates";
+      leaf name {
+        type string;
+      }
+      list address {
+        key "name";
+        unique "ip-address port";
+
+        description "Address to notify";
+        leaf name {
+          type string;
+        }        
+
+        uses endpoint {
+          refine port {
+            default 53;
+          }
+        }
+      }
+    }
+
     container pdns-server {
         description
           "Configuration of the PowerDNS Authoritative Server";
@@ -596,6 +644,12 @@ module pdns-server {
             description
               "Access Control Lists applied globally. Addresses in this list are always allowed to transfer all zones";
             type acl-ref;
+        }
+
+        leaf-list also-notify {
+          description
+            "List of remote endpoints to send NOTIFY packets for all master zones";
+          type notify-ref;
         }
 
         container webserver {

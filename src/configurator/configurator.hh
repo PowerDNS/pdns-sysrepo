@@ -131,5 +131,6 @@ private:
   bool slave{false};
 
   vector<axfrAcl> allowAxfrIps;
+  vector<axfrAcl> alsoNotifyIps;
 };
 } // namespace pdns_conf

@@ -30,11 +30,8 @@ void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter re
   try {
     zoneName = findBestZone(recordname);
   } catch (const std::out_of_range &e) {
-    sendError(request, response, e.what());
+    sendResponse(request, response, nlohmann::json({{"result", nlohmann::json::array()}}));
     return;
-  }
-  if (zoneName.empty()) {
-    sendError(request, response, "No zone for qname");
   }
 
   auto session = getSession();

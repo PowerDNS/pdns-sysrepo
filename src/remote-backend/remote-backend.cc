@@ -26,6 +26,7 @@ RemoteBackend::RemoteBackend(sysrepo::S_Connection& connection, const Pistache::
   Rest::Routes::Get(d_router, "/dns/list/:id/:zone", Rest::Routes::bind(&RemoteBackend::list, this));
   Rest::Routes::Get(d_router, "/dns/getUpdatedMasters", Rest::Routes::bind(&RemoteBackend::getUpdatedMasters, this));
   Rest::Routes::Patch(d_router, "/dns/setNotified/:id", Rest::Routes::bind(&RemoteBackend::setNotified, this));
+  Rest::Routes::Get(d_router, "/dns/getDomainMetadata/:zone/:kind", Rest::Routes::bind(&RemoteBackend::getDomainMetadata, this));
   Rest::Routes::NotFound(d_router, Rest::Routes::bind(&RemoteBackend::notFound, this));
 
   auto opts = Http::Endpoint::options().threads(4).flags(Pistache::Tcp::Options::ReuseAddr);

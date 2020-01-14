@@ -27,6 +27,13 @@
 namespace pdns_sysrepo::remote_backend
 {
 
+/**
+ * @brief type to shuttle syrepo session errors around
+ * 
+ * The pair is {xpath, error_message} 
+ */
+typedef std::vector<std::pair<std::string, std::string>> sessionErrors;
+
 namespace Http = Pistache::Http;
 namespace Rest = Pistache::Rest;
 using std::string;
@@ -94,6 +101,16 @@ protected:
    * @param response 
    */
   void setNotified(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the getDomainMetadata endpoint
+   * 
+   * https://doc.powerdns.com/authoritative/backends/remote.html#getDomainMetadata
+   * 
+   * @param request 
+   * @param response 
+   */
+  void getDomainMetadata(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
    * @brief Sends a 404 with {"result": false}
@@ -182,6 +199,25 @@ protected:
     sysrepo::S_Session ret(new sysrepo::Session(d_connection, SR_DS_RUNNING));
     return ret;
   }
+
+  /**
+   * @brief Returns the datatree rooted at `/pdns-server:zones/zones` or an error
+   * 
+   * @param sysrepo::S_Session  optional sysrepo session to use
+   * @return libyang::S_Data_Node 
+   * @throw sysrepo::sysrepo_exception when a sysrepo error occurs
+   */
+  libyang::S_Data_Node getZoneTree(sysrepo::S_Session session = nullptr);
+
+  /**
+   * @brief Get the Errors from the sysrepo session
+   * 
+   * @param session 
+   * @return sessionErrors 
+   * @throw logic_error when session is a nullptr
+   * @throw sysrepo_exception when the errors can't be retrieved
+   */
+  sessionErrors getErrorsFromSession(const sysrepo::S_Session& session);
 
   /**
    * @brief Decodes a url-encoded string
