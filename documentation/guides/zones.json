@@ -1,4 +1,25 @@
 {
+  "pdns-server:notify-endpoint": [
+    {
+      "name": "bla2",
+      "address": [
+        {
+          "name": "foo",
+          "ip-address": "192.0.2.200"
+        }
+      ]
+    },
+    {
+      "name": "bla",
+      "address": [
+        {
+          "name": "v4-4",
+          "ip-address": "192.0.2.3",
+          "port": 1500
+        }
+      ]
+    }
+  ],
   "pdns-server:axfr-access-control-list": [
     {
       "name": "localhost",
@@ -23,15 +44,21 @@
     "webserver": {
       "api-key": "mySecretKey"
     },
-    "allow-axfr": [
-      "localhost"
+    "also-notify": [
+      "bla"
     ]
   },
   "pdns-server:zones": {
     "zones": [
       {
         "name": "example.com.",
-        "zonetype": "native",
+        "also-notify": [
+          "bla2"
+        ],
+        "allow-axfr": [
+          "localhost"
+        ],
+        "zonetype": "master",
         "rrset": [
           {
             "owner": "www.example.com.",
@@ -40,6 +67,18 @@
             "rdata": {
               "AAAA": {
                 "address": "2001:db8::1"
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "NS",
+            "ttl": 3600,
+            "rdata": {
+              "NS": {
+                "nsdname": [
+                  "pdns-public-ns1.powerdns.com."
+                ]
               }
             }
           },
@@ -64,7 +103,7 @@
               "SOA": {
                 "mname": "ns1.example.nl.",
                 "rname": "hostmaster.example.nl.",
-                "serial": 1,
+                "serial": 3,
                 "refresh": 2,
                 "retry": 3,
                 "expire": 4,
