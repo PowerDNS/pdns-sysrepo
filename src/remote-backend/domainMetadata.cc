@@ -20,7 +20,7 @@
 namespace pdns_sysrepo::remote_backend
 {
 void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
-  static const std::set<string> allowedMetadata = {"ALSO-NOTIFY"};
+  static const std::set<string> allowedMetadata = {"ALSO-NOTIFY", "ALLOW-AXFR-FROM"};
   logRequest(request);
   auto zone = request.param(":zone").as<string>();
   zone = urlDecode(zone);
@@ -92,6 +92,22 @@ void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Ht
     }
   }
 
+  if (kind == "ALLOW-AXFR-FROM") {
+    try {
+      auto xpath = fmt::format("/pdns-server:zones/zones[name='{}']", zone);
+      auto node = session->get_subtree(xpath.c_str());
+      spdlog::trace("node path={}", node->path());
+      auto allowAxfrXPath = fmt::format("/pdns-server:zones/allow-axfr", zone);
+      for (auto const& allowAxfrNode : node->find_path(allowAxfrXPath.c_str())->data()) {
+        auto allowAxfrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(allowAxfrNode);
+        auto aclRef = allowAxfrLeaf->value_str();
+        spdlog::trace("name={}", aclRef);
+        auto aclXPath = fmt::format("/pdns-server:axfr-access-control-list[name='{}']", aclRef);
+        spdlog::trace("new xpath={}", aclXPath);
+        auto aclNode = session->get_subtree(aclXPath.c_str());
+        for (auto const& aclAddressNode : aclNode->find_path("/pdns-server:axfr-access-control-list/network/ip-prefix")->data()) {
+          auto aclAddressLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(aclAddressNode);
+          metadata.push_back(aclAddressLeaf->value_str());
         }
       }
     }
