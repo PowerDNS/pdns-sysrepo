@@ -58,52 +58,33 @@ void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Ht
     sendError(request, response, e.what());
     return;
   }
-  if (kind == "ALSO-NOTIFY") {
-    try {
-      auto xpath = fmt::format("/pdns-server:zones/zones[name='{}']", zone);
-      auto node = session->get_subtree(xpath.c_str());
-      spdlog::trace("node path={}", node->path());
+
+  auto zonesNodeXPath = fmt::format("/pdns-server:zones/zones[name='{}']", zone);
+  auto zoneNode = session->get_subtree(zonesNodeXPath.c_str());
+
+  try {
+    if (kind == "ALSO-NOTIFY") {
       auto alsoNotifyXPath = fmt::format("/pdns-server:zones/also-notify", zone);
-      for (auto const& alsoNotifyNode : node->find_path(alsoNotifyXPath.c_str())->data()) {
+      for (auto const& alsoNotifyNode : zoneNode->find_path(alsoNotifyXPath.c_str())->data()) {
         auto alsoNotifyleaf = std::make_shared<libyang::Data_Node_Leaf_List>(alsoNotifyNode);
-        auto notifyRef = alsoNotifyleaf->value_str();
-        spdlog::trace("name={}", notifyRef);
-        auto notifyXPath = fmt::format("/pdns-server:notify-endpoint[name='{}']", notifyRef);
-        spdlog::trace("new xpath={}", notifyXPath);
+        auto notifyXPath = fmt::format("/pdns-server:notify-endpoint[name='{}']", alsoNotifyleaf->value_str());
         auto notifyNode = session->get_subtree(notifyXPath.c_str());
         for (auto const& notifyAddrNode : notifyNode->find_path("/pdns-server:notify-endpoint/address")->data()) {
-          auto n = notifyAddrNode->child()->next(); // /pdns-server/notify-endpoint/address/ip-address
+          auto n = notifyAddrNode->child()->next(); // /pdns-server/notify-endpoint[name]/address[name]/ip-address
           auto addrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-          n = n->next();
+          n = n->next(); // /pdns-server:notify-endpoint[name]/address[name]/port
           auto portLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
           iputils::ComboAddress a(addrLeaf->value_str(), portLeaf->value()->uint16());
           metadata.push_back(a.toStringWithPort());
         }
       }
     }
-    catch (const sysrepo::sysrepo_exception& e) {
-      auto errors = getErrorsFromSession(session);
-      spdlog::error("remote-backend - getDomainMetadata - {}", e.what());
-      for (auto const& error : errors) {
-        spdlog::error("remote-backend - getDomainMetadata -     xpath={} message=", error.first, error.second);
-      }
-      sendError(request, response, e.what());
-      return;
-    }
-  }
 
-  if (kind == "ALLOW-AXFR-FROM") {
-    try {
-      auto xpath = fmt::format("/pdns-server:zones/zones[name='{}']", zone);
-      auto node = session->get_subtree(xpath.c_str());
-      spdlog::trace("node path={}", node->path());
+    if (kind == "ALLOW-AXFR-FROM") {
       auto allowAxfrXPath = fmt::format("/pdns-server:zones/allow-axfr", zone);
-      for (auto const& allowAxfrNode : node->find_path(allowAxfrXPath.c_str())->data()) {
+      for (auto const& allowAxfrNode : zoneNode->find_path(allowAxfrXPath.c_str())->data()) {
         auto allowAxfrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(allowAxfrNode);
-        auto aclRef = allowAxfrLeaf->value_str();
-        spdlog::trace("name={}", aclRef);
-        auto aclXPath = fmt::format("/pdns-server:axfr-access-control-list[name='{}']", aclRef);
-        spdlog::trace("new xpath={}", aclXPath);
+        auto aclXPath = fmt::format("/pdns-server:axfr-access-control-list[name='{}']", allowAxfrLeaf->value_str());
         auto aclNode = session->get_subtree(aclXPath.c_str());
         for (auto const& aclAddressNode : aclNode->find_path("/pdns-server:axfr-access-control-list/network/ip-prefix")->data()) {
           auto aclAddressLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(aclAddressNode);
@@ -111,15 +92,15 @@ void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Ht
         }
       }
     }
-    catch (const sysrepo::sysrepo_exception& e) {
-      auto errors = getErrorsFromSession(session);
-      spdlog::error("remote-backend - getDomainMetadata - {}", e.what());
-      for (auto const& error : errors) {
-        spdlog::error("remote-backend - getDomainMetadata -     xpath={} message=", error.first, error.second);
-      }
-      sendError(request, response, e.what());
-      return;
+  }
+  catch (const sysrepo::sysrepo_exception& e) {
+    auto errors = getErrorsFromSession(session);
+    spdlog::error("remote-backend - getDomainMetadata - {} zone={} metadata_kind={}", e.what(), zone, kind);
+    for (auto const& error : errors) {
+      spdlog::error("remote-backend - getDomainMetadata -     xpath={} message=", error.first, error.second);
     }
+    sendError(request, response, e.what());
+    return;
   }
 
   sendResponse(request, response, nlohmann::json({{"result", metadata}}));
