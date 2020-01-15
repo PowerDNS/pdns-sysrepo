@@ -22,6 +22,18 @@ void RemoteBackend::list(const Pistache::Rest::Request& request, Http::ResponseW
   auto zoneName = request.param(":zone").as<std::string>();
   zoneName = urlDecode(zoneName);
 
+  try {
+    auto foundZone = findBestZone(zoneName);
+    if (foundZone != zoneName) {
+      throw std::runtime_error(fmt::format("Zone '{}' not found (best match is '{})", zoneName, foundZone));
+    }
+  } catch(const std::exception &e) {
+    nlohmann::json::array_t log;
+    log.push_back(e.what());
+    sendResponse(request, response, nlohmann::json({{"result", nlohmann::json::array_t()}, {"log", log}}));
+    return;
+  }
+
   nlohmann::json::array_t allRecords;
 
   auto session = getSession();

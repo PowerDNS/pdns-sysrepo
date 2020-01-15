@@ -23,7 +23,7 @@ uint32_t getNewId(const boost::bimap<std::string, uint32_t> &map) {
     return 1;
   }
   uint32_t highest = map.left.rbegin()->second;
-  return highest++;
+  return (highest+1);
 }
 
 uint32_t RemoteBackend::getDomainID(const std::string& domain) {

@@ -15,10 +15,8 @@
  */
 
 #include <boost/algorithm/string/join.hpp>
-#include <fmt/format.h>
 
 #include "remote-backend.hh"
-#include <spdlog/spdlog.h>
 
 namespace pdns_sysrepo::remote_backend {
 

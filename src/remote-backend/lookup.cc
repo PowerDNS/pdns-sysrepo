@@ -30,7 +30,9 @@ void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter re
   try {
     zoneName = findBestZone(recordname);
   } catch (const std::out_of_range &e) {
-    sendResponse(request, response, nlohmann::json({{"result", nlohmann::json::array()}}));
+    nlohmann::json::array_t err;
+    err.push_back(e.what());
+    sendResponse(request, response, nlohmann::json({{"result", nlohmann::json::array()}, {"log", err}}));
     return;
   }
 

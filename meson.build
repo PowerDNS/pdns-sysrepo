@@ -95,7 +95,7 @@ version_h = configure_file(input : 'src/config.h.in',
                output : 'config.h',
                configuration : conf_data)
 
-executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
+pdns_sysrepo_bin = executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
   sr_wrapper, pdns_sysrepo, pdns_sysrepo_remote_backend, version_h,
   dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep, pistache_dep, json_dep],
   include_directories: [pdns_api_cpp_incdir, include_directories('src'), pistache_include],

@@ -27,7 +27,7 @@ void RemoteBackend::getAllDomains(const Pistache::Rest::Request& request, Http::
 
   libyang::S_Data_Node tree;
   try {
-    tree = session->get_subtree("/pdns-server:zones/zones");
+    tree = session->get_subtree("/pdns-server:zones");
   } catch(const sysrepo::sysrepo_exception &e) {
     spdlog::warn("RemoteBackend::getAllDomains: Unable to retrieve zones");
     auto errors = session->get_error();

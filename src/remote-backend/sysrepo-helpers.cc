@@ -86,7 +86,7 @@ namespace pdns_sysrepo::remote_backend {
     if (!session) {
       session = getSession();
     }
-    return session->get_subtree("/pdns-server:zones/zones");
+    return session->get_subtree("/pdns-server:zones");
   }
 
   sessionErrors RemoteBackend::getErrorsFromSession(const sysrepo::S_Session& session) {

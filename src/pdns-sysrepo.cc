@@ -147,6 +147,7 @@ int main(int argc, char* argv[]) {
       spdlog::trace("Registering signal handlers");
       signal(SIGINT, siginthandler);
       signal(SIGSTOP, siginthandler);
+      signal(SIGTERM, siginthandler);
       spdlog::trace("Registered signal handlers");
 
       spdlog::trace("Notifying systemd we've started up");

@@ -1,0 +1,28 @@
+[unix_http_server]
+file=%(here)s/s.sock   ; the path to the socket file
+
+[supervisord]
+logfile=%(here)s/supervisord.log ; main log file; default $CWD/supervisord.log
+logfile_maxbytes=50MB        ; max main logfile bytes b4 rotation; default 50MB
+logfile_backups=10           ; # of main logfile backups; 0 means none, default 10
+loglevel=info                ; log level; default info; others: debug,warn,trace
+pidfile=%(here)s/supervisord.pid ; supervisord pidfile; default supervisord.pid
+nodaemon=false                ; start in foreground if true; default false
+minfds=1024                  ; min. avail startup file descriptors; default 1024
+minprocs=200                 ; min. avail process descriptors;default 200
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+; The supervisorctl section configures how supervisorctl will connect to
+; supervisord.  configure it match the settings in either the unix_http_server
+; or inet_http_server section.
+
+[supervisorctl]
+serverurl=unix://%(here)s/s.sock
+
+[program:pdns-sysrepo]
+command=@pdns_sysrepo@
+stdout_logfile=%(here)s/pdns-sysrepo.log
+autorestart=false
+startsecs=3

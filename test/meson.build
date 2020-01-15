@@ -40,3 +40,4 @@ if microhttp_dep.found()
 endif
 
 test('configurator', config_test, args: [meson.source_root() + '/yang'])
+subdir('remote-backend')

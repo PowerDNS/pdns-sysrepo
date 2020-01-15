@@ -21,9 +21,9 @@ namespace pdns_sysrepo::remote_backend
 void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
   logRequest(request);
   auto session = getSession();
-  auto zones = session->get_subtree("/pdns-server:zones/zones");
+  auto zones = session->get_subtree("/pdns-server:zones");
   nlohmann::json::array_t allZones;
-  for (auto const& zone : zones->tree_for()) {
+  for (auto const& zone : zones->child()->tree_for()) {
     auto zoneNode = zone->child(); //  This is /pdns-server:zones/zones[name]/name
     nlohmann::json domainInfo;
     string zoneName;
@@ -34,8 +34,7 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
     }
 
     auto zonetypeXPath = fmt::format("/pdns-server:zones/zones['{}']/zonetype", zoneName);
-    auto zonetypeLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(session->get_subtree(zonetypeXPath.c_str()));
-    spdlog::trace("zone type={}", zonetypeLeaf->value_str());
+    auto zonetypeLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zone->find_path(zonetypeXPath.c_str())->data().at(0));
     if (std::string(zonetypeLeaf->value_str()) != "master") {
       continue;
     }
@@ -46,7 +45,7 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
     domainInfo["id"] = domainId;
 
     auto serialXPath = fmt::format("/pdns-server:zones/zones['{}']/rrset[owner='{}'][type='SOA']/rdata/SOA/serial", zoneName, zoneName);
-    auto zoneSOASerialNode = session->get_subtree(serialXPath.c_str());
+    auto zoneSOASerialNode = zone->find_path(serialXPath.c_str())->data().at(0);
     auto zoneSOASerial = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOASerialNode)->value()->uintu32();
     domainInfo["serial"] = zoneSOASerial;
 
