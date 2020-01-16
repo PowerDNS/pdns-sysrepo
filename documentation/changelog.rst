@@ -3,12 +3,15 @@ Changelog
 
 Release 0.2.0
 -------------
-Unreleased
+Released 2020-01-16
 
 New Features
 ^^^^^^^^^^^^
 - :program:`pdns-sysrepo` is now configured using sysrepo, dropping the yaml configuration and commandline switches
 - Zone data in master and natives zones can be read from sysrepo
+  - Per-zone AXFR ACLs
+  - Per-zone ALSO-NOTIFY settings
+- Global also-notify setting
 
 Release 0.1.1
 -------------

@@ -23,12 +23,11 @@ This list has the rest of the dependencies, including the package names for Debi
 * `sdbusplus <https://github.com/openbmc/sdbusplus>`__
 * `spdlog <https://github.com/gabime/spdlog>`__ version 1.0.0 or higher
 * `sysrepo <https://www.sysrepo.org/>`__ version 1.3.13 or higher
-* `yaml-cpp <https://github.com/jbeder/yaml-cpp>`__ version 0.5.0 or higher
 * `cpprestsdk <https://github.com/Microsoft/cpprestsdk>`__
 
 To install the distribution provided dependencies on a Debian system::
 
-  apt install -y libboost-filesystem-dev libboost-system-dev libboost-program-options-dev libsystemd-dev libmstch-dev libspdlog-dev libyaml-cpp-dev libcpprest-dev
+  apt install -y libboost-filesystem-dev libboost-system-dev libboost-program-options-dev libsystemd-dev libmstch-dev libspdlog-dev libcpprest-dev
 
 Furthermore, some other build requirements should be installed::
 
