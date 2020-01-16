@@ -7,13 +7,17 @@ doc_files = files(
   'guides/config-changes.rst',
   'guides/config.rst',
   'index.rst',
-  'install.rst'
+  'install.rst',
+  'zones/index.rst',
+  'zones/rrset-management-off.rst',
+  'zones/rrset-management-on.rst'
 )
 
 custom_target('documentation',
   input: doc_files,
   output: 'documentation',
   command : [sphinxbuild,
+            '-q',
             '-b', 'html',
             meson.current_source_dir(),
             '@OUTPUT@'],

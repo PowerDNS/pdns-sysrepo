@@ -26,6 +26,8 @@ commands:
             libtool \
             meson \
             pkg-config \
+            python3-pip \
+            supervisor \
             swig \
             systemd
 
@@ -101,13 +103,36 @@ jobs:
       - build-libyang
       - build-sysrepo
       - build-sdbusplus
+      - run:
+          command: pip3 install requests nose
       - run: git submodule init && git submodule update
       - run: meson -Dbuild-tests=true build
       - run:
           command: ninja -j5 -v
           workdir: ~/project/build
       - run:
-          command: ninja -v test
+          command: sysrepoctl -i yang/ietf-yang-types@2013-07-15.yang
+          workdir: ~/project
+      - run:
+          command: sysrepoctl -i yang/ietf-inet-types@2013-07-15.yang
+          workdir: ~/project
+      - run:
+          command: sysrepoctl -i yang/iana-dns-parameters@2016-08-03.yang
+          workdir: ~/project
+      - run:
+          command: sysrepoctl -i yang/iana-dns-class-rr-type@2019-06-27.yang
+          workdir: ~/project
+      - run:
+          command: sysrepoctl -i yang/dns-zone-common@2017-01-12.yang
+          workdir: ~/project
+      - run:
+          command: sysrepoctl -i yang/pdns-server.yang
+          workdir: ~/project
+      - run:
+          command: sysrepoctl -c pdns-server -e rrset-management
+          workdir: ~/project
+      - run:
+          command: ninja -v test || cat meson-logs/testlog.txt
           workdir: ~/project/build
 
   test-model:

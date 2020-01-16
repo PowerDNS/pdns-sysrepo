@@ -1,5 +1,5 @@
-Zone management
-===============
+RRSet management disabled
+=========================
 :program:`pdns-sysrepo` can manage zones in the PowerDNS Authoritative server.
 For this to work, the `API <https://doc.powerdns.com/authoritative/http-api/>`__ must be enabled.
 Edit the PowerDNS configuration (using :program:`sysrepocfg`) to enable it:

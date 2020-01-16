@@ -11,23 +11,30 @@ It acts as an "indirect" plugin to sysrepo to configure PowerDNS.
 Writing the configuration file for the PowerDNS Authoritative Server and restarting the service to load this configuration if needed.
 For correct startup configuration, the PowerDNS service is made to depend on :program:`pdns-sysrepo`, meaning that PowerDNS is only started after :program:`pdns-sysrepo` has successfully started up.
 
+For zone management there are two modes (set with the ``rrset-management`` YANG feature):
+only zones can be managed (``rrset-management = off``) or the full zone data can be managed.
+
 Conceptually, the whole system looks like this::
 
-                           +--------- DNS Server -----------------------+
-                           |                                            |
-  [NSO] <= NETCONF => [Netopeer] <=> [sysrepo] <=> [pdns-sysrepo] <-\   |
-                           |                        ^       |        |  |
-                           |                  calls |       | writes |  |
-                           |                        v       |        |  |
-                           |          /-------[systemd]     v        |  |
-                           |         | restarts       <config file>  |  |
-                           |         |                  ^            |  |
-                           |         |      /----------/             |  |
-                           |         |     /   reads                 |  |
-                           |         |    /                         /   |
-                           |         v   /  /----------------------/    |
-                           |         v  /   v       API calls           |
-                           +-----[pdns_server]--------------------------+
+                           +--------- DNS Server ------------------------+
+                           |                                             |
+  [NSO] <= NETCONF => [Netopeer] <=> [sysrepo] <=> [   pdns-sysrepo   ]  |
+                           |                        ^    |         | ^   |
+                           |                  calls |    | writes  | |   |
+                           |                        v    |         | |   |
+                           |          /-------[systemd]  v         | |   |
+                           |         | restarts     <config file>  | |   |
+                           |         |                  ^          | |   |
+                           |         |      /----------/           | |   |
+                           |         |     /   reads               | |   |
+                           |         |    /                       /  |   |
+                           |         |   /  /--------------------/   |   |
+                           |         |  /   |       API calls        |   |
+                           |         |  |   |                        |   |
+                           |         |  |   |       RemoteBackend   /    |
+                           |         |  |   |   /------------------/     |
+                           |         v  v   v  /                         |
+                           +-----[  pdns_server  ]-----------------------+
 
 In pseudo code :program:`pdns-sysrepo` does the following:
 
@@ -40,7 +47,7 @@ In pseudo code :program:`pdns-sysrepo` does the following:
    * On configuration change
       * Write new PowerDNS configuration file
       * Send IPC to systemd to restart PowerDNS Service
-   * On zone change
+   * On zone change (when rrsets are not managed by the NSO)
       * Use API to set the zone's config
 
 .. toctree::
@@ -50,7 +57,7 @@ In pseudo code :program:`pdns-sysrepo` does the following:
    install
    guides/config
    guides/config-changes
-   guides/zones
+   zones/index
    yang-model
    development/index
    changelog

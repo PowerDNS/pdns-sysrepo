@@ -1,0 +1,193 @@
+{
+  "pdns-server:notify-endpoint": [
+    {
+      "name": "example-200",
+      "address": [
+        {
+          "name": "host 200",
+          "ip-address": "192.0.2.200"
+        },
+        {
+          "name": "host 200 on v6",
+          "ip-address": "2001:db8::53:1"
+        }
+      ]
+    },
+    {
+      "name": "example-3",
+      "address": [
+        {
+          "name": "host 3",
+          "ip-address": "192.0.2.3",
+          "port": 1500
+        }
+      ]
+    }
+  ],
+  "pdns-server:axfr-access-control-list": [
+    {
+      "name": "localhost",
+      "network": [
+        {
+          "name": "v6",
+          "ip-prefix": "::1/128"
+        },
+        {
+          "name": "v4",
+          "ip-prefix": "127.0.0.0/8"
+        }
+      ]
+    }
+  ],
+  "pdns-server:pdns-sysrepo": {
+    "pdns-service": {
+      "name": "pdns-sysrepo-test.service",
+      "config-file": "@pdns-config-file@"
+    },
+    "logging": {
+      "level": "trace",
+      "timestamp": true
+    }
+  },
+  "pdns-server:pdns-server": {
+    "listen-addresses": [
+      {
+        "name": "main",
+        "ip-address": "127.0.0.1",
+        "port": 5300
+      }
+    ]
+  },
+  "pdns-server:zones": {
+    "zones": [
+      {
+        "name": "testdomain.example.",
+        "also-notify": [
+          "example-3"
+        ],
+        "allow-axfr": [
+          "localhost"
+        ],
+        "zonetype": "master",
+        "rrset": [
+          {
+            "owner": "ipv6.testdomain.example.",
+            "type": "AAAA",
+            "ttl": 600,
+            "rdata": {
+              "AAAA": {
+                "address": "2001:db8::12:AB:1"
+              }
+            }
+          },
+          {
+            "owner": "testdomain.example.",
+            "type": "NS",
+            "ttl": 3600,
+            "rdata": {
+              "NS": {
+                "nsdname": [
+                  "ns5.delegation.example.",
+                  "ns6.delegation.example."
+                ]
+              }
+            }
+          },
+          {
+            "owner": "testdomain.example.",
+            "type": "A",
+            "ttl": 3600,
+            "rdata": {
+              "A": {
+                "address": [
+                  "192.0.2.1",
+                  "192.0.2.3"
+                ]
+              }
+            }
+          },
+          {
+            "owner": "testdomain.example.",
+            "type": "SOA",
+            "ttl": 3600,
+            "rdata": {
+              "SOA": {
+                "mname": "ns5.delegation.example.",
+                "rname": "hostmaster.example.nl.",
+                "serial": 2020011501,
+                "refresh": 10800,
+                "retry": 3600,
+                "expire": 604800,
+                "minimum": 3600
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "example.com.",
+        "also-notify": [
+          "example-200"
+        ],
+        "allow-axfr": [
+          "localhost"
+        ],
+        "zonetype": "master",
+        "rrset": [
+          {
+            "owner": "www.example.com.",
+            "type": "AAAA",
+            "ttl": 600,
+            "rdata": {
+              "AAAA": {
+                "address": "2001:db8::1"
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "NS",
+            "ttl": 3600,
+            "rdata": {
+              "NS": {
+                "nsdname": [
+                  "ns1.delegation.example.",
+                  "ns2.delegation.example."
+                ]
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "A",
+            "ttl": 3600,
+            "rdata": {
+              "A": {
+                "address": [
+                  "192.0.2.1",
+                  "192.0.2.3"
+                ]
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "SOA",
+            "ttl": 3600,
+            "rdata": {
+              "SOA": {
+                "mname": "ns1.example.nl.",
+                "rname": "hostmaster.example.nl.",
+                "serial": 2020011501,
+                "refresh": 10800,
+                "retry": 3600,
+                "expire": 604800,
+                "minimum": 3600
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

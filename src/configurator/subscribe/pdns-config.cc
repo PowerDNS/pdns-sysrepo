@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Pieter Lexis <pieter.lexis@powerdns.com>
+ * Copyright Pieter Lexis <pieter.lexis@powerdns.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ void ServerConfigCB::changeConfigUpdate(sysrepo::S_Session& session, const uint3
     auto sess = static_pointer_cast<sr::Session>(session);
 
     // The session already has the new datastore values
-    PdnsServerConfig c(sess->getConfigTree(), session);
+    PdnsServerConfig c(sess->getConfigTree(), session, (d_apiClient == nullptr));
     c.writeToFile(fpath);
   }
 

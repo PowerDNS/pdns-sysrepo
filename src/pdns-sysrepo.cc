@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Pieter Lexis <pieter.lexis@powerdns.com>
+ * Copyright Pieter Lexis <pieter.lexis@powerdns.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 #include <systemd/sd-daemon.h>
+#include <pistache/net.h>
 
 #include "sr_wrapper/session.hh"
 #include "configurator/subscribe.hh"
 #include "configurator/configurator.hh"
 #include "config/config.hh"
 #include "config.h"
+#include "remote-backend/remote-backend.hh"
 
 using std::set;
 using std::cout;
@@ -90,31 +92,65 @@ int main(int argc, char* argv[]) {
       if (myConfig->failed()) {
         throw std::runtime_error("Errors while processing initial config for pdns-sysrepo");
       }
+
+      bool rrsetManagement = false;
+      {
+        spdlog::trace("Testing the state of the rrset-management feature");
+        auto lyContext = sess.get_context();
+        auto pdnsServerModule = lyContext->get_module("pdns-server");
+        if (pdnsServerModule == nullptr) {
+          throw std::runtime_error("The pdns-server module is not imported in sysrepo");
+        }
+        auto rrsetMgmtStatus = pdnsServerModule->feature_state("rrset-management");
+        if (rrsetMgmtStatus == -1) {
+          throw std::runtime_error("Unable to determine the status of the rrset-management feature");
+        }
+        rrsetManagement = rrsetMgmtStatus == 1;
+      }
+      spdlog::trace("rrset-management is {}abled", rrsetManagement ? "en" : "dis");
+
       spdlog::debug("Configuration complete, starting callbacks for pdns-server");
 
-      /* This is passed to both the ServerConfigCB and the ZoneCB.
+      std::shared_ptr<pdns_api::ApiClient> apiClient;
+      if (!rrsetManagement) {
+        /* This is passed to both the ServerConfigCB and the ZoneCB.
          As the have the same reference, the ServerConfigCB can update the pdns_api::ApiClient with the
          correct config, allowing both the ZoneCB and the ServerConfigCB to work with the API
-      */
-      auto apiClient = make_shared<pdns_api::ApiClient>();
+        */
+        apiClient = make_shared<pdns_api::ApiClient>();
+      }
 
-      spdlog::debug("Registering config change callbacks");
+      spdlog::debug("Registering config change callback");
       sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
       auto s = sysrepo::Subscribe(sSess);
       auto cb = pdns_conf::getServerConfigCB(myConfig, apiClient);
       s.module_change_subscribe("pdns-server", cb, nullptr, nullptr, 0, SR_SUBSCR_ENABLED);
+      spdlog::debug("Registered config change callback");
 
-      auto zoneSubscribe = sysrepo::Subscribe(sSess);
-      spdlog::debug("done, registring operational zone CB");
-      auto zoneCB = pdns_conf::getZoneCB(apiClient);
-      zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
+      if (!rrsetManagement) {
+        spdlog::debug("Registering zone operational data callback");
+        auto zoneSubscribe = sysrepo::Subscribe(sSess);
+        auto zoneCB = pdns_conf::getZoneCB(apiClient);
+        zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
+        spdlog::debug("Registered zone operational data callback");
+      }
+      
+      std::shared_ptr<pdns_sysrepo::remote_backend::RemoteBackend> rb;
+      if (rrsetManagement) {
+        spdlog::trace("Starting remote-backend webserver");
+        Pistache::Address a = "127.0.0.1:9100";
+        rb = make_shared<pdns_sysrepo::remote_backend::RemoteBackend>(conn, a);
+        rb->start();
+        spdlog::trace("Started remote-backend webserver");
+      }
 
-      spdlog::trace("callbacks registered, registring signal handlers");
-
+      spdlog::trace("Registering signal handlers");
       signal(SIGINT, siginthandler);
       signal(SIGSTOP, siginthandler);
-      spdlog::trace("signalhandlers registered, notifying systemd we're ready");
+      signal(SIGTERM, siginthandler);
+      spdlog::trace("Registered signal handlers");
 
+      spdlog::trace("Notifying systemd we've started up");
       sd_notify(0, "READY=1");
       spdlog::info("Startup complete");
 
@@ -124,6 +160,9 @@ int main(int argc, char* argv[]) {
 
       spdlog::info("Exit requested");
       sd_notify(0, "STOPPING=1");
+      if (rb != nullptr) {
+        rb.reset();
+      }
     }
     catch (const sysrepo::sysrepo_exception& e) {
       auto errs = sess.get_error();

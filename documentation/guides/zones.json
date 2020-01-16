@@ -1,0 +1,118 @@
+{
+  "pdns-server:notify-endpoint": [
+    {
+      "name": "bla2",
+      "address": [
+        {
+          "name": "foo",
+          "ip-address": "192.0.2.200"
+        }
+      ]
+    },
+    {
+      "name": "bla",
+      "address": [
+        {
+          "name": "v4-4",
+          "ip-address": "192.0.2.3",
+          "port": 1500
+        }
+      ]
+    }
+  ],
+  "pdns-server:axfr-access-control-list": [
+    {
+      "name": "localhost",
+      "network": [
+        {
+          "name": "v4",
+          "ip-prefix": "127.0.0.0/8"
+        }
+      ]
+    }
+  ],
+  "pdns-server:pdns-server": {
+    "listen-addresses": [
+      {
+        "name": "main",
+        "ip-address": "127.0.0.1",
+        "port": 5300
+      }
+    ],
+    "master": true,
+    "slave": true,
+    "webserver": {
+      "api-key": "mySecretKey"
+    },
+    "also-notify": [
+      "bla"
+    ]
+  },
+  "pdns-server:zones": {
+    "zones": [
+      {
+        "name": "example.com.",
+        "also-notify": [
+          "bla2"
+        ],
+        "allow-axfr": [
+          "localhost"
+        ],
+        "zonetype": "master",
+        "rrset": [
+          {
+            "owner": "www.example.com.",
+            "type": "AAAA",
+            "ttl": 600,
+            "rdata": {
+              "AAAA": {
+                "address": "2001:db8::1"
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "NS",
+            "ttl": 3600,
+            "rdata": {
+              "NS": {
+                "nsdname": [
+                  "pdns-public-ns1.powerdns.com."
+                ]
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "A",
+            "ttl": 3600,
+            "rdata": {
+              "A": {
+                "address": [
+                  "192.0.2.1",
+                  "192.0.2.3"
+                ]
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
+            "type": "SOA",
+            "ttl": 3600,
+            "rdata": {
+              "SOA": {
+                "mname": "ns1.example.nl.",
+                "rname": "hostmaster.example.nl.",
+                "serial": 3,
+                "refresh": 2,
+                "retry": 3,
+                "expire": 4,
+                "minimum": 5
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
