@@ -8,6 +8,7 @@ Unreleased
 New Features
 ^^^^^^^^^^^^
 - :program:`pdns-sysrepo` is now configured using sysrepo, dropping the yaml configuration and commandline switches
+- Zone data in master and natives zones can be read from sysrepo
 
 Release 0.1.1
 -------------
