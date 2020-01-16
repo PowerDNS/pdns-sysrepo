@@ -45,6 +45,7 @@ void RemoteBackend::notFound(const Rest::Request &request, Http::ResponseWriter 
 std::string RemoteBackend::urlDecode(std::string& eString) {
   // from http://www.cplusplus.com/forum/general/94849/
   std::string ret;
+  ret.reserve(eString.length());
   char ch;
   size_t i;
   unsigned int j;
