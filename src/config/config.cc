@@ -77,25 +77,22 @@ int Config::module_change(sysrepo::S_Session session, const char* module_name,
     }
     try {
       auto changeIter = session->get_changes_iter("/pdns-server:pdns-sysrepo//*");
-      auto change = session->get_change_tree_next(changeIter);
-      while (change) {
+      sysrepo::S_Tree_Change change;
+      while (change = session->get_change_tree_next(changeIter)) {
         if (change->node()->schema()->nodetype() == LYS_LEAF) {
           auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(change->node());
           spdlog::trace("pdns-sysrepo config change path={} value={}", leaf->path(), leaf->value_str());
-          if (change->node()->path() == "/pdns-server:pdns-sysrepo/pdns-service/config-file") {
+          string path(change->node()->path());
+          if (path == "/pdns-server:pdns-sysrepo/pdns-service/config-file") {
             d_pdns_conf = leaf->value_str();
-          }
-          if (change->node()->path() == "/pdns-server:pdns-sysrepo/pdns-service/name") {
+          } else if (path == "/pdns-server:pdns-sysrepo/pdns-service/name") {
             d_pdns_service = leaf->value_str();
-          }
-          if (change->node()->path() == "/pdns-server:pdns-sysrepo/logging/level") {
+          } else if (path == "/pdns-server:pdns-sysrepo/logging/level") {
             setLoglevel(leaf->value_str());
-          }
-          if (change->node()->path() == "/pdns-server:pdns-sysrepo/logging/timestamp") {
+          } else if (path == "/pdns-server:pdns-sysrepo/logging/timestamp") {
             setLogFormat(leaf->value()->bln());
           }
         }
-        change = session->get_change_tree_next(changeIter);
       }
     }
     catch(const sysrepo::sysrepo_exception &e) {

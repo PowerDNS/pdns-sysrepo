@@ -94,6 +94,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       }
       catch (const exception& e) {
         spdlog::warn("Unable to move {} to {}: {}", fpath, d_config->getPdnsConfigFilename(), e.what());
+        fs::remove(fpath);
         return SR_ERR_OPERATION_FAILED;
       }
 
