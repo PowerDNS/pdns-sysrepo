@@ -24,7 +24,6 @@ commands:
             libsystemd-dev \
             libsystemd-dev \
             libtool \
-            libyaml-cpp-dev \
             meson \
             pkg-config \
             swig \
@@ -34,7 +33,9 @@ commands:
     description: "Builds libyang"
     steps:
       - run: |
-          git clone -q --branch devel https://github.com/CESNET/libyang.git ~/libyang && \
+          git clone -q https://github.com/CESNET/libyang.git ~/libyang && \
+          cd ~/libyang && \
+          git checkout v1.0.109 && \
           mkdir ~/libyang/build
       - run:
           command: |
@@ -55,7 +56,9 @@ commands:
     description: "Builds sysrepo"
     steps:
       - run: |
-          git clone -q --branch devel https://github.com/sysrepo/sysrepo.git ~/sysrepo && \
+          git clone -q https://github.com/sysrepo/sysrepo.git ~/sysrepo && \
+          cd ~/sysrepo && \
+          git checkout v1.3.21 && \
           mkdir ~/sysrepo/build
       - run:
           command: |

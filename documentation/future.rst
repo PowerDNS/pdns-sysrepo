@@ -9,7 +9,6 @@ There are several plans on future work for :program:`pdns-sysrepo`.
 
 0.2.0
 -----
-* Configure :program:`pdns-sysrepo` using sysrepo
 * Transparently handle zones with and without trailing dot consistently
 * Configure RRSets on Native and Master domains
 * Add AXFR ACLs

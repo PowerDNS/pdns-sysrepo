@@ -21,15 +21,15 @@
 #include "configurator.hh"
 #include "util.hh"
 #include "sr_wrapper/session.hh"
+#include "config/config.hh"
 
 namespace fs = boost::filesystem;
 
 namespace pdns_conf
 {
-std::shared_ptr<ServerConfigCB> getServerConfigCB(const string& fpath, const string &serviceName, shared_ptr<pdns_api::ApiClient> &apiClient) {
+std::shared_ptr<ServerConfigCB> getServerConfigCB(shared_ptr<pdns_sysrepo::config::Config> &config, shared_ptr<pdns_api::ApiClient> &apiClient) {
   auto cb = make_shared<ServerConfigCB>(ServerConfigCB(
-    {{"fpath", fpath},
-      {"service", serviceName}},
+    config,
     apiClient));
   return cb;
 }
@@ -40,7 +40,7 @@ std::shared_ptr<ZoneCB> getZoneCB(shared_ptr<pdns_api::ApiClient> &apiClient) {
 }
 
 string ServerConfigCB::tmpFile(const uint32_t request_id) {
-  return privData["fpath"] + "-tmp-" + to_string(request_id);
+  return d_config->getPdnsConfigFilename() + "-tmp-" + to_string(request_id);
 }
 
 int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module_name,
@@ -89,11 +89,12 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       auto fpath = tmpFile(request_id);
 
       try {
-        spdlog::debug("Moving {} to {}", fpath, privData["fpath"]);
-        fs::rename(fpath, privData["fpath"]);
+        spdlog::debug("Moving {} to {}", fpath, d_config->getPdnsConfigFilename());
+        fs::rename(fpath, d_config->getPdnsConfigFilename());
       }
       catch (const exception& e) {
-        spdlog::warn("Unable to move {} to {}: {}", fpath, privData["fpath"], e.what());
+        spdlog::warn("Unable to move {} to {}: {}", fpath, d_config->getPdnsConfigFilename(), e.what());
+        fs::remove(fpath);
         return SR_ERR_OPERATION_FAILED;
       }
 
@@ -106,8 +107,8 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
         return SR_ERR_OPERATION_FAILED;
       }
 
-      if (!privData["service"].empty()) {
-        restartService(privData["service"]);
+      if (!d_config->getServiceName().empty()) {
+        restartService(d_config->getServiceName());
       }
 
       if (apiConfigChanged) {

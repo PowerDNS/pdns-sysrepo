@@ -10,13 +10,15 @@ static httpmock::TestEnvironment<httpmock::MockServerHolder>* mock_server_env = 
 static std::shared_ptr<pdns_api::ApiClient> apiClient;
 
 TEST(zone_test, modify_zonetype) {
-  auto cb = TestServerConfigCB({{}}, apiClient);
+  std::shared_ptr<pdns_sysrepo::config::Config> config;
+  auto cb = TestServerConfigCB(config, apiClient);
   cb.modifyZoneType("example.com.", "master");
   ASSERT_NO_THROW(cb.doDoneZoneModify());
 }
 
 TEST(zone_test, add_zone) {
-  auto cb = TestServerConfigCB({{}}, apiClient);
+  std::shared_ptr<pdns_sysrepo::config::Config> config;
+  auto cb = TestServerConfigCB(config, apiClient);
   cb.addZone("create.example.com.", "master");
   ASSERT_NO_THROW(cb.doDoneZoneAddAndDelete());
 }
