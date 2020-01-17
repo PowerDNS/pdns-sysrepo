@@ -49,6 +49,10 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-01-17 {
+      description "Allows more than one piece of rdata for types that support it.";
+    }
+
     revision 2020-01-14 {
       description
             "
@@ -451,9 +455,9 @@ module pdns-server {
                     reference
                       "RFC 1035: Domain Names - Implementation and
                        Specification.";
-                    leaf ptrdname {
+                    leaf-list ptrdname {
                         type inet:domain-name;
-                        mandatory "true";
+                        min-elements 1;
                         description
                           "A pointer to some location in the domain name space.";
                     }
@@ -465,9 +469,9 @@ module pdns-server {
                     reference
                       "RFC 1035: Domain Names - Implementation and
                        Specification.";
-                    leaf txt-data {
+                    leaf-list txt-data {
                         type dnszc:ascii-string;
-                        mandatory "true";
+                        min-elements 1;
                         description
                           "Descriptive text whose semantics depends on the domain
                            where it is found.";
@@ -479,9 +483,9 @@ module pdns-server {
                       "RDATA content for 'AAAA' Resource Record.";
                     reference
                       "RFC 3596: DNS Extensions to Support IP Version 6";
-                    leaf address {
+                    leaf-list address {
                         type inet:ipv6-address-no-zone;
-                        mandatory "true";
+                        min-elements 1;
                         description
                           "IPv6 address.";
                     }
