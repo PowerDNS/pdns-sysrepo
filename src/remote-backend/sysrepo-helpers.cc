@@ -83,10 +83,15 @@ namespace pdns_sysrepo::remote_backend {
   }
 
   libyang::S_Data_Node RemoteBackend::getZoneTree(sysrepo::S_Session session) {
+    static const string zonesRootPath = "/pdns-server:zones";
     if (!session) {
       session = getSession();
     }
-    return session->get_subtree("/pdns-server:zones");
+    auto ret = session->get_subtree(zonesRootPath.c_str());
+    if (!ret) {
+      throw std::range_error(fmt::format("{} not found in sysrepo", zonesRootPath));
+    }
+    return ret;
   }
 
   sessionErrors RemoteBackend::getErrorsFromSession(const sysrepo::S_Session& session) {
