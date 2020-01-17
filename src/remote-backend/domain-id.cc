@@ -22,7 +22,7 @@ uint32_t getNewId(const boost::bimap<std::string, uint32_t> &map) {
   if (map.empty()) {
     return 1;
   }
-  uint32_t highest = map.left.rbegin()->second;
+  uint32_t highest = map.right.rbegin()->first;
   return (highest+1);
 }
 
