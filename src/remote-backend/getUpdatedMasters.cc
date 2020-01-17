@@ -21,9 +21,23 @@ namespace pdns_sysrepo::remote_backend
 void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
   logRequest(request);
   auto session = getSession();
-  auto zones = session->get_subtree("/pdns-server:zones");
+  libyang::S_Data_Node zonesNode;
+  nlohmann::json::array_t json_log;
+  try {
+    zonesNode = getZoneTree(session);
+  } catch(const std::exception& e) {
+    json_log.push_back(e.what());
+    sendResponse(request, response, nlohmann::json({{"result", false}, {"log", json_log}}));
+    return;
+  }
+  zonesNode = zonesNode->child();
+  if (!zonesNode) {
+    json_log.push_back("No zones defined");
+    sendResponse(request, response, nlohmann::json({{"result", false}, {"log", json_log}}));
+    return;
+  }
   nlohmann::json::array_t allZones;
-  for (auto const& zone : zones->child()->tree_for()) {
+  for (auto const& zone : zonesNode->tree_for()) {
     auto zoneNode = zone->child(); //  This is /pdns-server:zones/zones[name]/name
     nlohmann::json domainInfo;
     string zoneName;

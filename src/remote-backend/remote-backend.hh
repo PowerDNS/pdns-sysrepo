@@ -201,11 +201,12 @@ protected:
   }
 
   /**
-   * @brief Returns the datatree rooted at `/pdns-server:zones/zones` or an error
+   * @brief Returns the datatree rooted at `/pdns-server:zones` or an error
    * 
    * @param sysrepo::S_Session  optional sysrepo session to use
    * @return libyang::S_Data_Node 
    * @throw sysrepo::sysrepo_exception when a sysrepo error occurs
+   * @throw std::range_error when the tree node does not exists
    */
   libyang::S_Data_Node getZoneTree(sysrepo::S_Session session = nullptr);
 
