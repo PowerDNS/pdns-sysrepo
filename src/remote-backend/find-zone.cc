@@ -44,7 +44,10 @@ string RemoteBackend::findBestZone(const string& qname) {
       // Do nothing
     }
     labels.erase(labels.begin());
-    ret = boost::algorithm::join(labels, ".") + ".";
+    ret = boost::algorithm::join(labels, ".");
+    if (ret.empty()) {
+      ret = ".";
+    }
   }
   throw std::out_of_range(fmt::format("No zone found for qname {}", qname));
 }
