@@ -47,7 +47,7 @@ if not spdlog_dep.found() or spdlog_dep.version().version_compare('<1.4.0')
   spdlog_dep = spdlog_proj.get_variable('spdlog_dep')
 endif
 
-json_proj = subproject('json')
+json_proj = subproject('nlohmann-json')
 json_dep = json_proj.get_variable('nlohmann_json_dep')
 
 fmt_dep = dependency('fmt', required: false)
