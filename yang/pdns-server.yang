@@ -725,7 +725,7 @@ module pdns-server {
     }
 
     container zones-state {
-        if-feature "rrset-management";
+        if-feature "not rrset-management";
         
         config false;
         description
