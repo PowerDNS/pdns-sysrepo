@@ -76,7 +76,9 @@
             "ttl": 600,
             "rdata": {
               "AAAA": {
-                "address": "2001:db8::12:AB:1"
+                "address": [
+                  "2001:db8::12:AB:1"
+                ]
               }
             }
           },
@@ -140,7 +142,9 @@
             "ttl": 600,
             "rdata": {
               "AAAA": {
-                "address": "2001:db8::1"
+                "address": [
+                  "2001:db8::1"
+                ]
               }
             }
           },
