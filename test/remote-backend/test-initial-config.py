@@ -52,7 +52,8 @@ class TestRemoteBackend:
 
     def test_getAllDomains(self):
         data = requests.get(self.url + 'getAllDomains').json()
-        assert(len(data['result']) == 2)
+        assert(len(data['result']) == 3)
+        assert len(set(x['id'] for x in data['result'])) == 3, 'domain IDs are not unique'
 
     def test_getDomainMetadata_ALSONOTIFY(self):
         data = requests.get(self.url + 'getDomainMetadata/example.com./ALSO-NOTIFY').json()
@@ -79,7 +80,7 @@ class TestRemoteBackend:
     def test_getUpdatedMasters_setNotified(self):
         data = requests.get(self.url + 'getUpdatedMasters').json()
         print(data)
-        assert(len(data['result']) == 2)
+        assert(len(data['result']) == 3)
         zone_id = data['result'][0]['id']
         serial = data['result'][0]['serial']
 
@@ -91,6 +92,6 @@ class TestRemoteBackend:
         # Check that the backend knows we did
         data = requests.get(self.url + 'getUpdatedMasters').json()
         print(data)
-        assert(len(data['result']) == 1)
+        assert(len(data['result']) == 2)
         other_zone_id = data['result'][0]['id']
         assert(zone_id != other_zone_id)
