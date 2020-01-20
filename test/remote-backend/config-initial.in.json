@@ -191,6 +191,41 @@
             }
           }
         ]
+      },
+      {
+        "name": "zzz.example.com.",
+        "zonetype": "master",
+        "rrset": [
+          {
+            "owner": "zzz.example.com.",
+            "type": "SOA",
+            "ttl": 3600,
+            "rdata": {
+              "SOA": {
+                "mname": "ns1.example.nl.",
+                "rname": "hostmaster.example.nl.",
+                "serial": 2020011501,
+                "refresh": 10800,
+                "retry": 3600,
+                "expire": 604800,
+                "minimum": 3600
+              }
+            }
+          },
+          {
+            "owner": "zzz.example.com.",
+            "type": "NS",
+            "ttl": 3600,
+            "rdata": {
+              "NS": {
+                "nsdname": [
+                  "ns1.delegation.example.",
+                  "ns2.delegation.example."
+                ]
+              }
+            }
+          }
+        ]
       }
     ]
   }
