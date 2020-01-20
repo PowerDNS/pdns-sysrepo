@@ -1,4 +1,8 @@
 gtest_dep = dependency('gtest')
+gmock_h = meson.get_compiler('cpp').has_header('gmock/gmock.h')
+if not gmock_h
+  error('gmock/gmock.h not found')
+endif
 gmock_dep = dependency('gmock')
 
 # we need to rethink this..
