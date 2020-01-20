@@ -22,20 +22,17 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
   logRequest(request);
   auto session = getSession();
   libyang::S_Data_Node zonesNode;
-  nlohmann::json::array_t json_log;
   try {
     zonesNode = getZoneTree(session);
+    zonesNode = zonesNode->child();
+    if (!zonesNode) {
+      throw std::out_of_range("No zones defined");
+    }
   } catch(const std::exception& e) {
-    json_log.push_back(e.what());
-    sendResponse(request, response, nlohmann::json({{"result", false}, {"log", json_log}}));
+    sendResponse(request, response, nlohmann::json({{"result", false}, {"log", nlohmann::json::array({e.what()})}}));
     return;
   }
-  zonesNode = zonesNode->child();
-  if (!zonesNode) {
-    json_log.push_back("No zones defined");
-    sendResponse(request, response, nlohmann::json({{"result", false}, {"log", json_log}}));
-    return;
-  }
+
   nlohmann::json::array_t allZones;
   for (auto const& zone : zonesNode->tree_for()) {
     auto zoneNode = zone->child(); //  This is /pdns-server:zones/zones[name]/name
@@ -47,8 +44,9 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
       zoneName = leaf->value_str();
     }
 
-    auto zonetypeXPath = fmt::format("/pdns-server:zones/zones['{}']/zonetype", zoneName);
+    auto zonetypeXPath = fmt::format("/pdns-server:zones/zones[name='{}']/zonetype", zoneName);
     auto zonetypeLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zone->find_path(zonetypeXPath.c_str())->data().at(0));
+    spdlog::trace("RemoteBackend::getUpdatedMasters - zonetypeLeaf path={} value={}", zonetypeLeaf->path(), zonetypeLeaf->value_str());
     if (std::string(zonetypeLeaf->value_str()) != "master") {
       continue;
     }
@@ -58,7 +56,7 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
     auto domainId = getDomainID(zoneName);
     domainInfo["id"] = domainId;
 
-    auto serialXPath = fmt::format("/pdns-server:zones/zones['{}']/rrset[owner='{}'][type='SOA']/rdata/SOA/serial", zoneName, zoneName);
+    auto serialXPath = fmt::format("/pdns-server:zones/zones[name='{}']/rrset[owner='{}'][type='SOA']/rdata/SOA/serial", zoneName, zoneName);
     auto zoneSOASerialNode = zone->find_path(serialXPath.c_str())->data().at(0);
     auto zoneSOASerial = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOASerialNode)->value()->uint32();
     domainInfo["serial"] = zoneSOASerial;

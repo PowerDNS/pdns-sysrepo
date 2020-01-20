@@ -59,17 +59,17 @@ void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Ht
     return;
   }
 
-  auto zonesNodeXPath = fmt::format("/pdns-server:zones/zones[name='{}']", zone);
-  auto zoneNode = session->get_subtree(zonesNodeXPath.c_str());
-
+  spdlog::trace("kind {}", kind);
   try {
     if (kind == "ALSO-NOTIFY") {
-      auto alsoNotifyXPath = fmt::format("/pdns-server:zones/also-notify", zone);
-      for (auto const& alsoNotifyNode : zoneNode->find_path(alsoNotifyXPath.c_str())->data()) {
+      auto alsoNotifyXPath = fmt::format("/pdns-server:zones/zones[name='{}']/also-notify", zone);
+      for (auto const& alsoNotifyNode : tree->find_path(alsoNotifyXPath.c_str())->data()) {
         auto alsoNotifyleaf = std::make_shared<libyang::Data_Node_Leaf_List>(alsoNotifyNode);
         auto notifyXPath = fmt::format("/pdns-server:notify-endpoint[name='{}']", alsoNotifyleaf->value_str());
         auto notifyNode = session->get_subtree(notifyXPath.c_str());
+        spdlog::trace("RemoteBackend::getDomainMetadata - notifyNode path={}", notifyNode->path());
         for (auto const& notifyAddrNode : notifyNode->find_path("/pdns-server:notify-endpoint/address")->data()) {
+          spdlog::trace("RemoteBackend::getDomainMetadata - notifyAddrNode path={}", notifyAddrNode->path());
           auto n = notifyAddrNode->child()->next(); // /pdns-server/notify-endpoint[name]/address[name]/ip-address
           auto addrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
           n = n->next(); // /pdns-server:notify-endpoint[name]/address[name]/port
@@ -81,8 +81,8 @@ void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Ht
     }
 
     if (kind == "ALLOW-AXFR-FROM") {
-      auto allowAxfrXPath = fmt::format("/pdns-server:zones/allow-axfr", zone);
-      for (auto const& allowAxfrNode : zoneNode->find_path(allowAxfrXPath.c_str())->data()) {
+      auto allowAxfrXPath = fmt::format("/pdns-server:zones/zones[name='{}']/allow-axfr", zone);
+      for (auto const& allowAxfrNode : tree->find_path(allowAxfrXPath.c_str())->data()) {
         auto allowAxfrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(allowAxfrNode);
         auto aclXPath = fmt::format("/pdns-server:axfr-access-control-list[name='{}']", allowAxfrLeaf->value_str());
         auto aclNode = session->get_subtree(aclXPath.c_str());
