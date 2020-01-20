@@ -37,10 +37,6 @@ module pdns-server {
         prefix dnszc;
     }
 
-    import iana-dns-parameters {
-        prefix "ianadns";
-    }
-
     organization
       "PowerDNS.COM BV";
     contact
