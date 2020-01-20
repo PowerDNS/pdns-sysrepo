@@ -113,6 +113,14 @@ protected:
   void getDomainMetadata(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
+   * @brief Implements the getUnfreshSlaveInfos endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void getUnfreshSlaveInfos(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
    * @brief Sends a 404 with {"result": false}
    * 
    * @param request 
@@ -259,6 +267,12 @@ protected:
    * The map is keyed with the domain_id 
    */
   std::map<uint32_t, uint32_t> d_notifiedMasters;
+
+  /**
+   * @brief Contains the time when slave zones were last marked as fresh
+   * 
+   */
+  std::map<uint32_t, time_t> d_slaveFreshnessChecks;
 
   void logRequest(const Pistache::Rest::Request &request);
   void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
