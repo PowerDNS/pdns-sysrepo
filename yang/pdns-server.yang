@@ -214,6 +214,13 @@ module pdns-server {
       }
     }
 
+    typedef master-ref {
+      type leafref {
+        path "/pdns-server:master-endpoint/pdns-server:name";
+      }
+      description "This type is used to reference master servers";
+    }
+
     /*
      * Groupings
      */
@@ -508,7 +515,7 @@ module pdns-server {
         leaf-list masters {
             description
               "Master servers for this zone";
-            type inet:ip-address;
+            type master-ref;
             when "../zonetype = 'slave'";
             min-elements 1;
         }
@@ -660,6 +667,30 @@ module pdns-server {
         unique "ip-address port";
 
         description "Address to notify";
+        leaf name {
+          type string;
+        }        
+
+        uses endpoint {
+          refine port {
+            default 53;
+          }
+        }
+      }
+    }
+
+    list master-endpoint {
+      key "name";
+      description
+        "Endpoints that can act as a master for slave zones";
+      leaf name {
+        type string;
+      }
+      list address {
+        key "name";
+        unique "ip-address port";
+
+        description "Address that are a master";
         leaf name {
           type string;
         }        
