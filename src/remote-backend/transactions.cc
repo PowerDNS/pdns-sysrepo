@@ -64,7 +64,21 @@ namespace pdns_sysrepo::remote_backend
       return;
     }
     // TODO Pushing to sysrepo here
+    auto records = it->second->getFedRecords();
+    for (auto const &i : records) {
+      spdlog::trace("Have record qname={} qtype={} ttl={} content='{}'", i.qname, i.qtype, i.ttl, i.content);
+    }
     d_transactions.erase(it);
     sendResponse(request, response, nlohmann::json({{"result", true}}));
+  }
+
+  void RemoteBackend::Transaction::feedRecord(const string& qname, const string& qtype, const string& content, const uint32_t ttl) {
+    FedRecord f;
+    f.qname = qname;
+    f.qtype = qtype;
+    f.content = content;
+    f.ttl = ttl;
+    const std::lock_guard<std::mutex> lock(d_lock);
+    d_records.push_back(f);
   }
 }

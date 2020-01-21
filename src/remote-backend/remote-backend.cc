@@ -33,6 +33,7 @@ RemoteBackend::RemoteBackend(sysrepo::S_Connection& connection, const Pistache::
   Rest::Routes::Post(d_router, "/dns/startTransaction/:id/:zone/:txid", Rest::Routes::bind(&RemoteBackend::startTransaction, this));
   Rest::Routes::Post(d_router, "/dns/commitTransaction/:txid", Rest::Routes::bind(&RemoteBackend::commitTransaction, this));
   Rest::Routes::Post(d_router, "/dns/abortTransaction/:txid", Rest::Routes::bind(&RemoteBackend::abortTransaction, this));
+  Rest::Routes::Patch(d_router, "/dns/feedRecord/:txid", Rest::Routes::bind(&RemoteBackend::feedRecord, this));
   Rest::Routes::NotFound(d_router, Rest::Routes::bind(&RemoteBackend::notFound, this));
 
   auto opts = Http::Endpoint::options().threads(4).flags(Pistache::Tcp::Options::ReuseAddr);

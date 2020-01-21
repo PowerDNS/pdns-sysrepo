@@ -163,6 +163,14 @@ protected:
   void commitTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
+   * @brief Implements the feedRecord endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void feedRecord(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
    * @brief Sends a 404 with {"result": false}
    * 
    * @param request 
@@ -327,7 +335,7 @@ protected:
   void logRequest(const Pistache::Rest::Request &request);
   void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
 
-  struct FedRecords {
+  struct FedRecord {
     std::string qname;
     std::string content;
     std::string qtype;
@@ -343,12 +351,15 @@ protected:
     };
     ~Transaction() {};
 
+    void feedRecord(const string &qname, const string &qtype, const string &content, const uint32_t ttl);
+    std::vector<FedRecord> getFedRecords() { return d_records; };
+
     private:
     uint32_t d_txId;
     uint32_t d_domainId;
     std::string d_domainName;
     std::mutex d_lock;
-    std::vector<FedRecords> d_records;
+    std::vector<FedRecord> d_records;
     time_t d_timesStarted;
   };
 
