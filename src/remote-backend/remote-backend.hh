@@ -137,6 +137,32 @@ protected:
   void setFresh(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
+   * @brief Implements the startTransaction endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void startTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the abortTransaction endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void abortTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the commitTransaction endpoint
+   * 
+   * This stores the zone data from the transaction in sysrepo
+   * 
+   * @param request 
+   * @param response 
+   */
+  void commitTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
    * @brief Sends a 404 with {"result": false}
    * 
    * @param request 
@@ -300,6 +326,36 @@ protected:
 
   void logRequest(const Pistache::Rest::Request &request);
   void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
+
+  struct FedRecords {
+    std::string qname;
+    std::string content;
+    std::string qtype;
+    uint32_t ttl;
+  };
+
+  class Transaction
+  {
+    public:
+    Transaction(const uint32_t txId, const uint32_t domainId, const string &domainName) :
+    d_txId(txId), d_domainId(domainId), d_domainName(domainName)  {
+      d_timesStarted = time(nullptr);
+    };
+    ~Transaction() {};
+
+    private:
+    uint32_t d_txId;
+    uint32_t d_domainId;
+    std::string d_domainName;
+    std::mutex d_lock;
+    std::vector<FedRecords> d_records;
+    time_t d_timesStarted;
+  };
+
+  /**
+   * @brief Maps open transactions by id to Transaction objects
+   */
+  std::map<uint32_t, std::shared_ptr<Transaction> > d_transactions;
 
   sysrepo::S_Connection d_connection;
   std::shared_ptr<Http::Endpoint> d_endpoint;
