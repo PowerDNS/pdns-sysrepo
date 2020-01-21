@@ -39,7 +39,6 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
   nlohmann::json::array_t allZones;
   for (auto const& zone : zonesNode->tree_for()) {
     auto zoneNode = zone->child(); // /pdns-server:zones/zones[name]/name
-    nlohmann::json domainInfo;
     string zoneName;
 
     auto zoneNameLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zoneNode);
@@ -51,29 +50,7 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
       continue;
     }
 
-    domainInfo["zone"] = zoneName;
-    domainInfo["kind"] = "slave";
-
-    auto domainId = getDomainID(zoneName);
-    domainInfo["id"] = domainId;
-
-    nlohmann::json::array_t masters;
-    auto zoneMastersXPath = fmt::format("/pdns-server:zones/zones[name='{}']/masters", zoneName);
-    auto zoneMastersNode = zoneNode->find_path(zoneMastersXPath.c_str());
-    for (auto const &zoneMasterNode : zoneMastersNode->data()) {
-      auto masterNameLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zoneMasterNode);
-      auto masterXPath = fmt::format("/pdns-server:master-endpoint[name='{}']", masterNameLeaf->value_str());
-      auto masterNode = session->get_subtree(masterXPath.c_str());
-      for (auto const &masterAddressNode : masterNode->find_path("/pdns-server:master-endpoint/address")->data()) {
-        auto n = masterAddressNode->child()->next(); // /pdns-server/master-endpoint[name]/address[name]/ip-address
-        auto addrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-        n = n->next(); // /pdns-server:master-endpoint[name]/address[name]/port
-        auto portLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-        iputils::ComboAddress a(addrLeaf->value_str(), portLeaf->value()->uint16());
-        masters.push_back(a.toStringWithPort());
-      }
-    }
-    domainInfo["masters"] = masters;
+    auto domainInfo = getDomainInfoFor(zoneName);
 
     auto refreshXPath = fmt::format("/pdns-server:zones/zones[name='{}']/rrset-state[owner='{}'][type='SOA']/rdata/SOA/refresh", zoneName, zoneName);
     libyang::S_Data_Node zoneSOARefreshNode;
@@ -87,7 +64,9 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
     }
 
     auto zoneSOARefresh = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOARefreshNode)->value()->uintu32();
+
     uint32_t lastCheck = 0;
+    uint32_t domainId = domainInfo["id"];
     auto freshnessCheckedIt = d_slaveFreshnessChecks.find(domainId);
     if (freshnessCheckedIt != d_slaveFreshnessChecks.end()) {
       lastCheck = freshnessCheckedIt->second;
