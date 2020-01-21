@@ -121,6 +121,14 @@ protected:
   void getUnfreshSlaveInfos(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
+   * @brief Implements the getDomainInfo endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void getDomainInfo(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
    * @brief Sends a 404 with {"result": false}
    * 
    * @param request 
@@ -197,6 +205,14 @@ protected:
    * @return nlohmann::json::array_t 
    */
   nlohmann::json::array_t getRecordsFromRRSetNode(const libyang::S_Data_Node &node);
+
+  /**
+   * @brief Get the DomainInfoFor for one domain
+   * 
+   * @param domain 
+   * @return nlohmann::json 
+   */
+  nlohmann::json getDomainInfoFor(const string& domain);
 
   /**
    * @brief Get a new Sysrepo session
