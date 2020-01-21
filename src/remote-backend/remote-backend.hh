@@ -129,6 +129,14 @@ protected:
   void getDomainInfo(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
+   * @brief Implements the setFresh endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void setFresh(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
    * @brief Sends a 404 with {"result": false}
    * 
    * @param request 
