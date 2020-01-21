@@ -18,8 +18,8 @@
 
 namespace pdns_sysrepo::remote_backend {
   void RemoteBackend::logRequest(const Pistache::Rest::Request &request){
-    spdlog::debug("remote-backend - Had request - method={} resource={} remote={}:{}",
-      Pistache::Http::methodString(request.method()), request.resource(), request.address().host(), request.address().port());
+    spdlog::debug("remote-backend - Had request - method={} resource={} remote={}:{} body='{}'",
+      Pistache::Http::methodString(request.method()), request.resource(), request.address().host(), request.address().port(), request.body());
   }
 
   void RemoteBackend::logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret){

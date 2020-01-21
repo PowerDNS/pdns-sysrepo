@@ -39,6 +39,7 @@ void RemoteBackend::sendResponse(const Rest::Request& request, Http::ResponseWri
 }
 
 void RemoteBackend::notFound(const Rest::Request &request, Http::ResponseWriter response) {
+  logRequest(request);
   sendError(request, response, string(), Http::Code::Not_Found);
 }
 
