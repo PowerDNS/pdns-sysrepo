@@ -1,6 +1,21 @@
 Changelog
 =========
 
+Release 0.2.1
+-------------
+Released 2020-01-22
+
+Bug fixes
+^^^^^^^^^
+- Fix an issue when finding zones
+- Fix a crash in getUpdatedMasters when no zones are defined
+- Ensure domain-id creation is always incremented
+
+YANG Model updates
+^^^^^^^^^^^^^^^^^^
+- Fix the zones-state container presence for the rrset-management feature
+- Allow more than one piece in RDATA for relevant rrtypes
+
 Release 0.2.0
 -------------
 Released 2020-01-16
