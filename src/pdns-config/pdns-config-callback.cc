@@ -108,7 +108,7 @@ int PdnsConfigCB::module_change(sysrepo::S_Session session, const char* module_n
         return SR_ERR_OPERATION_FAILED;
       }
 
-      if (!d_config->getServiceName().empty()) {
+      if (!d_config->getDoServiceRestart()) {
         restartService(d_config->getServiceName());
       }
 

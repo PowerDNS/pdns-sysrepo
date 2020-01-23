@@ -38,6 +38,14 @@ public:
    */
   string getServiceName() { return d_pdns_service; };
 
+  /**
+   * @brief Whether or not the PowerDNS service should be restarted
+   * 
+   * @return true 
+   * @return false 
+   */
+  bool getDoServiceRestart() { return d_pdns_restart; };
+
   int module_change(sysrepo::S_Session session, const char* module_name,
     const char* xpath, sr_event_t event,
     uint32_t request_id, void* private_data) override;
@@ -64,6 +72,12 @@ private:
   string getOption(const string &opt, sysrepo::S_Session &session);
   string d_pdns_service;
   string d_pdns_conf;
+
+  /**
+   * @brief Whether or not the PowerDNS service should be restarted on config changes
+   * 
+   */
+  bool d_pdns_restart;
 
   /**
    * @brief Indicates that the initial load failed
