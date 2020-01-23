@@ -71,6 +71,18 @@
         "zonetype": "master",
         "rrset": [
           {
+            "owner": "*.wildcard.testdomain.example.",
+            "type": "AAAA",
+            "ttl": 600,
+            "rdata": {
+              "AAAA": {
+                "address": [
+                  "2001:db8::12:AB:1"
+                ]
+              }
+            }
+          },
+          {
             "owner": "ipv6.testdomain.example.",
             "type": "AAAA",
             "ttl": 600,

@@ -49,6 +49,12 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-01-23 {
+      description 
+      "* Stop accepting dns names without a trailing dot
+       * Add the possibility for wildcard RRs";
+    }
+
     revision 2020-01-17 {
       description "Allows more than one piece of rdata for types that support it.";
     }
@@ -180,6 +186,34 @@ module pdns-server {
       description "This type is used to reference configured notify endpoints";
     }
 
+    typedef owner-name {
+        // TODO support IDN (xn--XX-XXXX)
+        // TODO support symbols other than - and _
+        description
+          "The owner name must be a valid dns name for the owner of a resource record.
+           It can start with a '*' to denote a wildcard and must end with a '.'";
+
+        type string {
+            length "1..255";
+            pattern '(\*\.)?([a-z0-9_][-a-z0-9_]{0,61}[a-z0-9]\.)+|\.';
+            pattern ".*--.*" {
+              modifier invert-match;
+            }
+        }
+    }
+
+    typedef zone-name {
+      type owner-name {
+        pattern '([a-z0-9_][-a-z0-9_]{0,63}\.)+|\.';
+      }
+    }
+
+    typedef host-name {
+      type zone-name {
+        pattern '([a-z0-9]([-a-z0-9_]{0,61}[a-z0-9])\.){2,}';
+      }
+    }
+
     /*
      * Groupings
      */
@@ -270,7 +304,7 @@ module pdns-server {
         leaf name {
             description
               "Name of the zone, MUST be suffixed with a dot";
-            type inet:domain-name;
+            type zone-name;
             mandatory true;
         }
 
@@ -314,7 +348,10 @@ module pdns-server {
             key "owner type";
             description
               "RRSet";
-            uses dnszc:owner-field;
+            leaf owner {
+              type owner-name;
+              mandatory true;
+            }
 
             leaf ttl {
                 type dnszc:time-interval;
@@ -333,14 +370,14 @@ module pdns-server {
                     description
                       "RDATA content for 'SOA' Resource Record.";
                     leaf mname {
-                        type dnszc:domain-name;
+                        type host-name;
                         mandatory "true";
                         description
                           "Name server that was the original or primary source of
                            data for this zone.";
                     }
                     leaf rname {
-                        type dnszc:domain-name;
+                        type host-name;
                         mandatory "true";
                         description
                           "Mailbox of the person responsible for this zone.";
@@ -402,7 +439,7 @@ module pdns-server {
                       "RFC 1035: Domain Names - Implementation and
                        Specification.";
                     leaf cname {
-                        type inet:domain-name;
+                        type host-name;
                         mandatory "true";
                         description
                           "Canonical or primary name for the owner.";
@@ -425,7 +462,7 @@ module pdns-server {
                                owner. Lower values are preferred.";
                         }
                         leaf exchange {
-                            type inet:domain-name;
+                            type host-name;
                             mandatory "true";
                             description
                               "Host willing to act as a mail exchange for the owner
@@ -441,7 +478,7 @@ module pdns-server {
                       "RFC 1035: Domain Names - Implementation and
                        Specification.";
                     leaf-list nsdname {
-                        type inet:domain-name;
+                        type host-name;
                         min-elements 1;
                         description
                             "Host which should be authoritative for the specified
@@ -456,7 +493,7 @@ module pdns-server {
                       "RFC 1035: Domain Names - Implementation and
                        Specification.";
                     leaf-list ptrdname {
-                        type inet:domain-name;
+                        type host-name;
                         min-elements 1;
                         description
                           "A pointer to some location in the domain name space.";

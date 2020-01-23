@@ -32,6 +32,16 @@ config_test = executable('create-config',
   include_directories: [src_include],
   dependencies: [spdlog_dep, sysrepo_cpp_dep, libyang_cpp_dep, boost_deps, mstch_dep, gtest_dep])
 
+yang_typedef_test_sources = files(
+  'yang-typedefs/yang-typedefs.cc'
+)
+
+yang_typedef_test = executable('yang-typedefs',
+  sources: yang_typedef_test_sources,
+  dependencies: [libyang_cpp_dep, gtest_dep]
+)
+test('yang-typedefs', yang_typedef_test, args: [meson.source_root() + '/yang'])
+
 if microhttp_dep.found()
   httpmockserver_dep = declare_dependency(sources: 'httpmockserver/src/mock_server.cc',
   dependencies: [microhttp_dep])

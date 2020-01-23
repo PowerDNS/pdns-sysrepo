@@ -32,6 +32,11 @@ class TestRemoteBackend:
         assert(seen_dot_1)
         assert(seen_dot_3)
 
+    def test_lookup_wildcard(self):
+        data = requests.get(self.url + 'lookup/*.wildcard.testdomain.example./AAAA').json()
+        assert(len(data['result']) == 1)
+        assert(data["result"][0]["qtype"] == "AAAA")
+
     def test_lookup_domain_does_not_exist(self):
         data = requests.get(self.url + 'lookup/nosuchdomain.example./A').json()
         assert(len(data['result']) == 0)
