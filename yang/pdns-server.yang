@@ -45,6 +45,10 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-02-13 {
+      description "Add option to not restart te PowerDNS service";
+    }
+
     revision 2020-02-06 {
       description "Add DNAME to supported rrset types";
     }
@@ -622,6 +626,13 @@ module pdns-server {
         }
         leaf config-file {
           type string; // TODO use a filepath-style type
+        }
+        leaf restart {
+          type boolean;
+          default true;
+          description
+                  "Restart the PowerDNS Authoritative Server service when the configuration in
+                   /pdns-server:pdns-server/ or /pdns-server:pdns-sysrepo/service is changed";
         }
       }
 
