@@ -26,8 +26,16 @@ string RemoteBackend::findBestZone(const string& qname) {
   // I miss dnsname.cc :(
   std::vector<std::string> labels;
   boost::split(labels, qname, boost::is_any_of("."));
-  string ret = qname;
   auto session = getSession();
+
+  if (labels.at(0) == "*") {
+    labels.erase(labels.begin());
+  }
+
+  string ret = boost::algorithm::join(labels, ".");
+  if (ret.empty()) {
+    ret = ".";
+  }
 
   while (!labels.empty()) {
     try {
