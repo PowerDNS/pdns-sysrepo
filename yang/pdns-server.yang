@@ -45,6 +45,10 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-02-12 {
+      description "Add remote backend settings";
+    }
+
     revision 2020-02-06 {
       description "Add DNAME to supported rrset types";
     }
@@ -641,6 +645,20 @@ module pdns-server {
         leaf timestamp {
           description "Whether to timestamp the logs";
           type boolean;
+        }
+      }
+
+      container remote-backend {
+        if-feature 'rrset-management';
+        container listen-address {
+          leaf ip-address {
+              type inet:ip-address;
+              default "127.0.0.1";
+          }
+          leaf port {
+              type inet:port-number;
+              default 9100;
+          }
         }
       }
     }

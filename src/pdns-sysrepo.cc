@@ -114,7 +114,13 @@ int main(int argc, char* argv[]) {
       std::shared_ptr<pdns_sysrepo::remote_backend::RemoteBackend> rb;
       if (rrsetManagement) {
         spdlog::trace("Starting remote-backend webserver");
-        Pistache::Address a = "127.0.0.1:9100";
+        auto session(make_shared<sysrepo::Session>(sess));
+        auto addressNode = session->get_subtree("/pdns-server:pdns-sysrepo/remote-backend/listen-address/ip-address");
+        auto portNode = session->get_subtree("/pdns-server:pdns-sysrepo/remote-backend/listen-address/port");
+        auto address = std::make_shared<libyang::Data_Node_Leaf_List>(addressNode)->value_str();
+        auto port = std::make_shared<libyang::Data_Node_Leaf_List>(portNode)->value()->uint16();
+        iputils::ComboAddress remoteBackendAddr(address, port);
+        Pistache::Address a = remoteBackendAddr.toStringWithPort();
         rb = make_shared<pdns_sysrepo::remote_backend::RemoteBackend>(conn, a);
         rb->start();
         spdlog::trace("Started remote-backend webserver");
