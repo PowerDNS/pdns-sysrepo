@@ -15,6 +15,9 @@
  */
 
 #include "remote-backend.hh"
+#include <libyang/Tree_Data.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 namespace pdns_sysrepo::remote_backend
 {
@@ -55,18 +58,74 @@ namespace pdns_sysrepo::remote_backend
     sendResponse(request, response, nlohmann::json({{"result", true}}));
   }
 
+  // TODO make fed records do this?
+  struct rrset {
+    std::vector<string> rdata;
+    uint32_t ttl;
+  };
+  typedef std::map<string, std::map<string, rrset > > rrsets_t;
+
   void RemoteBackend::commitTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
     logRequest(request);
     uint32_t txId = request.param(":txid").as<uint32_t>();
     auto it = d_transactions.find(txId);
     if (it == d_transactions.end()) {
-      sendResponse(request, response, nlohmann::json({{"result", false}, {"log", nlohmann::json::array_t({"Transaction already in progress"})}}));
+      sendResponse(request, response, nlohmann::json({{"result", false}, {"log", nlohmann::json::array_t({"No such transaction"})}}));
       return;
     }
-    // TODO Pushing to sysrepo here
+
     auto records = it->second->getFedRecords();
-    for (auto const &i : records) {
-      spdlog::trace("Have record qname={} qtype={} ttl={} content='{}'", i.qname, i.qtype, i.ttl, i.content);
+    rrsets_t rrsets;
+
+    auto session = getSession();
+    session->session_switch_ds(SR_DS_OPERATIONAL);
+
+    string baseXPath = fmt::format("/pdns-server:zones/zones[name='{}']/rrset-state", it->second->getDomainName());
+    try {
+      for (auto const& i : records) {
+        auto rrsetXPath = fmt::format("{}[owner='{}'][type='{}']/", baseXPath, i.qname, i.qtype);
+        session->set_item_str(fmt::format("{}ttl", rrsetXPath).c_str(), std::to_string(i.ttl).c_str());
+        auto rdataXPath = fmt::format("{}rdata/", rrsetXPath);
+        if (i.qtype == "SOA") {
+          std::vector<std::string> parts;
+          boost::split(parts, i.content, boost::is_any_of(" "));
+          session->set_item_str(fmt::format("{}SOA/mname", rdataXPath).c_str(), parts.at(0).c_str());
+          session->set_item_str(fmt::format("{}SOA/rname", rdataXPath).c_str(), parts.at(1).c_str());
+          session->set_item_str(fmt::format("{}SOA/serial", rdataXPath).c_str(), parts.at(2).c_str());
+          session->set_item_str(fmt::format("{}SOA/refresh", rdataXPath).c_str(), parts.at(3).c_str());
+          session->set_item_str(fmt::format("{}SOA/retry", rdataXPath).c_str(), parts.at(4).c_str());
+          session->set_item_str(fmt::format("{}SOA/expire", rdataXPath).c_str(), parts.at(5).c_str());
+          session->set_item_str(fmt::format("{}SOA/minimum", rdataXPath).c_str(), parts.at(6).c_str());
+        }
+        else if (i.qtype == "A" || i.qtype == "AAAA") {
+          session->set_item_str(fmt::format("{}{}/address", rdataXPath, i.qtype).c_str(), i.content.c_str());
+        }
+        else if (i.qtype == "NS") {
+          session->set_item_str(fmt::format("{}{}/nsdname", rdataXPath, i.qtype).c_str(), i.content.c_str());
+        }
+        else {
+          throw std::logic_error(fmt::format("Unimplemented record type: {}", i.qtype));
+        }
+      }
+    } catch (const std::exception& e) {
+      spdlog::warn("Exception while setting items: {}", e.what());
+      auto errors = getErrorsFromSession(session);
+      for (auto const &error : errors) {
+        spdlog::warn("error={} xpath={}", error.first, error.second);
+      }
+      sendError(request, response, e.what());
+      return;
+    }
+    try {
+      session->apply_changes();
+    } catch (const std::exception& e) {
+      spdlog::warn("Exception in apply_changes: {}", e.what());
+      auto errors = getErrorsFromSession(session);
+      for (auto const &error : errors) {
+        spdlog::warn("error={} xpath={}", error.first, error.second);
+      }
+      sendError(request, response, e.what());
+      return;
     }
     d_transactions.erase(it);
     sendResponse(request, response, nlohmann::json({{"result", true}}));

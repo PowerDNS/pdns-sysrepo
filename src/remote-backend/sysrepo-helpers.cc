@@ -17,11 +17,11 @@
 #include "remote-backend.hh"
 
 namespace pdns_sysrepo::remote_backend {
-  nlohmann::json::array_t RemoteBackend::getRecordsFromRRSetNode(const libyang::S_Data_Node &node) {
+  nlohmann::json::array_t RemoteBackend::getRecordsFromRRSetNode(const libyang::S_Data_Node &node, const string &rrsetLocation) {
     auto ret = nlohmann::json::array();
     auto nodeSchemaPath = node->schema()->path();
-    if (nodeSchemaPath != "/pdns-server:zones/pdns-server:zones/pdns-server:rrset") {
-        throw std::range_error(fmt::format("Node {} is not /pdns-server:zones/pdns-server:zones/pdns-server:rrset", nodeSchemaPath));
+    if (nodeSchemaPath != fmt::format("/pdns-server:zones/pdns-server:zones/pdns-server:{}", rrsetLocation)) {
+        throw std::range_error(fmt::format("Node {} is not /pdns-server:zones/pdns-server:zones/pdns-server:{}", nodeSchemaPath, rrsetLocation));
     }
     // childNode is rrset[owner][type]/owner
     auto childNode = node->child();

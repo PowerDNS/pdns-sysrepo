@@ -22,6 +22,7 @@ namespace pdns_sysrepo::remote_backend
 void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
   logRequest(request);
   auto session = getSession();
+  session->session_switch_ds(SR_DS_OPERATIONAL);
   libyang::S_Data_Node zonesNode;
   try {
     zonesNode = getZoneTree(session);
@@ -53,9 +54,12 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
     auto domainInfo = getDomainInfoFor(zoneName);
 
     auto refreshXPath = fmt::format("/pdns-server:zones/zones[name='{}']/rrset-state[owner='{}'][type='SOA']/rdata/SOA/refresh", zoneName, zoneName);
+    auto serialXPath = fmt::format("/pdns-server:zones/zones[name='{}']/rrset-state[owner='{}'][type='SOA']/rdata/SOA/serial", zoneName, zoneName);
     libyang::S_Data_Node zoneSOARefreshNode;
     try {
       zoneSOARefreshNode = zone->find_path(refreshXPath.c_str())->data().at(0);
+      auto zoneSOASerialNode = zone->find_path(serialXPath.c_str())->data().at(0);
+      domainInfo["serial"] = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOASerialNode)->value()->uintu32();
     } catch (const std::out_of_range &e) {
       domainInfo["last_check"] = 0;
       domainInfo["serial"] = 0;
@@ -73,7 +77,7 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
     }
     domainInfo["last_check"] = lastCheck;
 
-    if (now + zoneSOARefresh > lastCheck) {
+    if (now > lastCheck + zoneSOARefresh) {
       allZones.push_back(domainInfo);
     }
   }

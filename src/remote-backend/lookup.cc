@@ -37,9 +37,17 @@ void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter re
   }
 
   auto session = getSession();
+  session->session_switch_ds(SR_DS_OPERATIONAL);
   auto tree = session->get_subtree("/pdns-server:zones");
+  spdlog::trace("have tree");
 
-  string xpathBase = fmt::format("/pdns-server:zones/zones['{}']/rrset[owner='{}']", zoneName, recordname);
+  string rrsetLocation = "rrset";
+  string zonetype = std::make_shared<libyang::Data_Node_Leaf_List>(tree->find_path(fmt::format("/pdns-server:zones/zones[name='{}']/zonetype", zoneName).c_str())->data().at(0))->value_str();
+  if (zonetype =="slave") {
+    rrsetLocation = "rrset-state";
+  }
+
+  string xpathBase = fmt::format("/pdns-server:zones/zones[name='{}']/{}[owner='{}']", zoneName, rrsetLocation, recordname);
   string xpathRecords = fmt::format("{}[type={}]", xpathBase, recordtype == "ANY" ? "*" : "'" + recordtype + "'");
   spdlog::trace("Attempting to find record node at {}", xpathRecords);
   auto nodeSet = tree->find_path(xpathRecords.c_str());
@@ -49,7 +57,7 @@ void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter re
   // Each node here is one rrset, so we need to make N records from the N rdata's
   for (auto const &node : nodeSet->data()) {
     spdlog::trace("Found node in xpath={} node_path={} node_name={}", xpathRecords, node->path(), node->schema()->name());
-    auto records = getRecordsFromRRSetNode(node);
+    auto records = getRecordsFromRRSetNode(node, rrsetLocation);
     allRecords.insert(
       allRecords.end(),
       std::make_move_iterator(records.begin()),

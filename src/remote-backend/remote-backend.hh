@@ -246,7 +246,7 @@ protected:
    * @param node 
    * @return nlohmann::json::array_t 
    */
-  nlohmann::json::array_t getRecordsFromRRSetNode(const libyang::S_Data_Node &node);
+  nlohmann::json::array_t getRecordsFromRRSetNode(const libyang::S_Data_Node &node, const string &rrsetLocation = "rrset");
 
   /**
    * @brief Get the DomainInfoFor for one domain
@@ -353,6 +353,7 @@ protected:
 
     void feedRecord(const string &qname, const string &qtype, const string &content, const uint32_t ttl);
     std::vector<FedRecord> getFedRecords() { return d_records; };
+    std::string getDomainName() { return d_domainName; };
 
     private:
     uint32_t d_txId;

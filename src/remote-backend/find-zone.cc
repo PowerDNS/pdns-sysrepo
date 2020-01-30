@@ -27,6 +27,7 @@ string RemoteBackend::findBestZone(const string& qname) {
   std::vector<std::string> labels;
   boost::split(labels, qname, boost::is_any_of("."));
   auto session = getSession();
+  session->session_switch_ds(SR_DS_OPERATIONAL);
 
   if (labels.at(0) == "*") {
     labels.erase(labels.begin());
