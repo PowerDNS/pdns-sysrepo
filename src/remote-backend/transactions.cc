@@ -82,9 +82,12 @@ namespace pdns_sysrepo::remote_backend
 
     string baseXPath = fmt::format("/pdns-server:zones/zones[name='{}']/rrset-state", it->second->getDomainName());
     try {
+      if (session->get_subtree(baseXPath.c_str()) != nullptr) {
+        session->delete_item(baseXPath.c_str());
+      }
       for (auto const& i : records) {
         auto rrsetXPath = fmt::format("{}[owner='{}'][type='{}']/", baseXPath, i.qname, i.qtype);
-        session->set_item_str(fmt::format("{}ttl", rrsetXPath).c_str(), std::to_string(i.ttl).c_str());
+        session->set_item_str(fmt::format("{}ttl", rrsetXPath).c_str(), std::to_string(i.ttl).c_str(), "unknown");
         auto rdataXPath = fmt::format("{}rdata/", rrsetXPath);
         if (i.qtype == "SOA") {
           std::vector<std::string> parts;

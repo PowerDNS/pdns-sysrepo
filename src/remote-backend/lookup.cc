@@ -39,7 +39,6 @@ void RemoteBackend::lookup(const Rest::Request& request, Http::ResponseWriter re
   auto session = getSession();
   session->session_switch_ds(SR_DS_OPERATIONAL);
   auto tree = session->get_subtree("/pdns-server:zones");
-  spdlog::trace("have tree");
 
   string rrsetLocation = "rrset";
   string zonetype = std::make_shared<libyang::Data_Node_Leaf_List>(tree->find_path(fmt::format("/pdns-server:zones/zones[name='{}']/zonetype", zoneName).c_str())->data().at(0))->value_str();

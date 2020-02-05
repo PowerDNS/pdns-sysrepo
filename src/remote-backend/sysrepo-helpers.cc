@@ -15,6 +15,8 @@
  */
 
 #include "remote-backend.hh"
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 namespace pdns_sysrepo::remote_backend {
   nlohmann::json::array_t RemoteBackend::getRecordsFromRRSetNode(const libyang::S_Data_Node &node, const string &rrsetLocation) {
@@ -23,30 +25,37 @@ namespace pdns_sysrepo::remote_backend {
     if (nodeSchemaPath != fmt::format("/pdns-server:zones/pdns-server:zones/pdns-server:{}", rrsetLocation)) {
         throw std::range_error(fmt::format("Node {} is not /pdns-server:zones/pdns-server:zones/pdns-server:{}", nodeSchemaPath, rrsetLocation));
     }
-    // childNode is rrset[owner][type]/owner
+
+    // childNode is rrset[owner][type]/any_of(owner,rdata,ttl,....)
     auto childNode = node->child();
 
-    auto record = nlohmann::json();
-    /* Iterate over childNode and its siblings (owner, ttl, type, rdata).
-     * As rdata is the last node, we can rely on record being filled properly when handling
-     * the rdata.
-     */
+    string qname, qtype;
+    uint32_t ttl;
+    nlohmann::json record;
     for (auto const &rrsetNode : childNode->tree_for()) {
       if ((rrsetNode->schema()->nodetype() & LYS_CONTAINER) && string(rrsetNode->schema()->name()) == "rdata") {
         // rdataNode is rrset[owner][type]/rdata/<type container>
         auto rdataNode = rrsetNode->child();
-        if (record["qtype"] == "SOA") {
-          // rdataNode is now the 'rrset/rdata/SOA/mname' node
+        std::vector<string> parts;
+        std::string path(rdataNode->path());
+        boost::split(parts, path, boost::is_any_of("/"));
+        if (parts.back() == "SOA" || parts.back() == "MX") {
+          // rdataNode is now the 'rrset/rdata/<TYPE>/<SOME_NODE>' node or one of its siblings
           rdataNode = rdataNode->child();
-          string content;
+          std::map<string, string> recordElements;
           for (auto const& soaNode : rdataNode->tree_for()) {
-            auto soaLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(soaNode);
-            content += " ";
-            content += soaLeaf->value_str();
+            auto rdataLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(soaNode);
+            string leafName = rdataLeaf->schema()->name();
+            recordElements[leafName] = rdataLeaf->value_str();
           }
-          record["content"] = content.substr(1);
+          if (parts.back() == "SOA") {
+            record["content"] = fmt::format("{} {} {} {} {} {} {}", recordElements["mname"], recordElements["rname"], recordElements["serial"], recordElements["refresh"], recordElements["retry"], recordElements["expire"], recordElements["minimum"]);
+          } else if (parts.back() == "MX") {
+            record["content"] = fmt::format("{} {}", recordElements["preference"], recordElements["exchange"]);
+          }
           ret.push_back(record);
         } else {
+          // This is for all records with one leaf or leaf-list like A, AAAA and CNAME
           // rdataNode is now the 'rrset/rdata/<rrset type>/<whatever the node is called>' node
           rdataNode = rdataNode->child();
           if (rdataNode->schema()->nodetype() & LYS_LEAF) {
@@ -61,7 +70,6 @@ namespace pdns_sysrepo::remote_backend {
             }
           }
         }
-        continue;
       }
 
       if (!(rrsetNode->schema()->nodetype() & (LYS_LEAFLIST | LYS_LEAF))) {
@@ -71,13 +79,22 @@ namespace pdns_sysrepo::remote_backend {
       string leafName(rrsetNode->schema()->name());
       if (leafName == "owner") {
         record["qname"] = leaf->value_str();
+        qname = leaf->value_str();
       }
       if (leafName  == "type") {
         record["qtype"] = leaf->value_str();
+        qtype = leaf->value_str();
       }
       if (leafName  == "ttl") {
         record["ttl"] = leaf->value()->uint32();
+        ttl = leaf->value()->uint32();
       }
+    }
+    // Set the qname, qtype and TTL explicitly in case the nodes were not in the YANG order
+    for (auto &r: ret) {
+      r["qname"] = qname;
+      r["qtype"] = qtype;
+      r["ttl"] = ttl;
     }
     return ret;
   }
