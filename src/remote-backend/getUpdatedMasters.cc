@@ -60,7 +60,7 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
 
     auto serialXPath = fmt::format("/pdns-server:zones/zones['{}']/rrset[owner='{}'][type='SOA']/rdata/SOA/serial", zoneName, zoneName);
     auto zoneSOASerialNode = zone->find_path(serialXPath.c_str())->data().at(0);
-    auto zoneSOASerial = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOASerialNode)->value()->uintu32();
+    auto zoneSOASerial = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOASerialNode)->value()->uint32();
     domainInfo["serial"] = zoneSOASerial;
 
     uint32_t notifiedSerial = 0;

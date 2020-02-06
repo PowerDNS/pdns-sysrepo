@@ -76,7 +76,7 @@ namespace pdns_sysrepo::remote_backend {
         record["qtype"] = leaf->value_str();
       }
       if (leafName  == "ttl") {
-        record["ttl"] = leaf->value()->uintu32();
+        record["ttl"] = leaf->value()->uint32();
       }
     }
     return ret;

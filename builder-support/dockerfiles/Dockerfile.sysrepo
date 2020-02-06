@@ -7,7 +7,7 @@ RUN cd /dist/3rdparty && apt install -y ./libyang*.deb
 
 WORKDIR /sysrepo
 
-ENV SYSREPO_VERSION=1.3.21
+ENV SYSREPO_VERSION=1.4.2
 
 RUN curl -L https://github.com/sysrepo/sysrepo/archive/v${SYSREPO_VERSION}.tar.gz | gunzip | tar xf - && \
       mv sysrepo-${SYSREPO_VERSION} sysrepo_${SYSREPO_VERSION}

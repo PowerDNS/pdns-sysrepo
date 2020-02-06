@@ -59,7 +59,7 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
     try {
       zoneSOARefreshNode = zone->find_path(refreshXPath.c_str())->data().at(0);
       auto zoneSOASerialNode = zone->find_path(serialXPath.c_str())->data().at(0);
-      domainInfo["serial"] = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOASerialNode)->value()->uintu32();
+      domainInfo["serial"] = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOASerialNode)->value()->uint32();
     } catch (const std::out_of_range &e) {
       domainInfo["last_check"] = 0;
       domainInfo["serial"] = 0;
@@ -67,7 +67,7 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
       continue;
     }
 
-    auto zoneSOARefresh = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOARefreshNode)->value()->uintu32();
+    auto zoneSOARefresh = std::make_shared<libyang::Data_Node_Leaf_List>(zoneSOARefreshNode)->value()->uint32();
 
     uint32_t lastCheck = 0;
     uint32_t domainId = domainInfo["id"];
