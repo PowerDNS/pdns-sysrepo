@@ -45,8 +45,12 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-02-06 {
+      description "Add DNAME to supported rrset types";
+    }
+
     revision 2020-01-23 {
-      description 
+      description
       "* Stop accepting dns names without a trailing dot
        * Add the possibility for wildcard RRs";
     }
@@ -466,6 +470,20 @@ module pdns-server {
                 min-elements 1;
                 description
                   "IPv6 address.";
+            }
+        }
+        container DNAME {
+            when "../../type = 'DNAME'";
+            description
+              "RDATA content for 'DNAME' Resource Record.";
+            reference
+              "RFC 2672: Non-Terminal DNS Name Redirection";
+            leaf target {
+                type dnszc:domain-name;
+                mandatory "true";
+                description
+                  "Target domain name that is substituted for 'owner' as a
+                   suffix of a domain name.";
             }
         }
     }
