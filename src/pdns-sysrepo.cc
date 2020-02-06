@@ -109,7 +109,16 @@ int main(int argc, char* argv[]) {
       }
       spdlog::trace("rrset-management is {}abled", rrsetManagement ? "en" : "dis");
 
-      spdlog::debug("Configuration complete, starting callbacks for pdns-server");
+      spdlog::debug("Configuration complete");
+
+      std::shared_ptr<pdns_sysrepo::remote_backend::RemoteBackend> rb;
+      if (rrsetManagement) {
+        spdlog::trace("Starting remote-backend webserver");
+        Pistache::Address a = "127.0.0.1:9100";
+        rb = make_shared<pdns_sysrepo::remote_backend::RemoteBackend>(conn, a);
+        rb->start();
+        spdlog::trace("Started remote-backend webserver");
+      }
 
       std::shared_ptr<pdns_api::ApiClient> apiClient;
       if (!rrsetManagement) {
@@ -135,15 +144,6 @@ int main(int argc, char* argv[]) {
         spdlog::debug("Registered zone operational data callback");
       }
       
-      std::shared_ptr<pdns_sysrepo::remote_backend::RemoteBackend> rb;
-      if (rrsetManagement) {
-        spdlog::trace("Starting remote-backend webserver");
-        Pistache::Address a = "127.0.0.1:9100";
-        rb = make_shared<pdns_sysrepo::remote_backend::RemoteBackend>(conn, a);
-        rb->start();
-        spdlog::trace("Started remote-backend webserver");
-      }
-
       spdlog::trace("Registering signal handlers");
       signal(SIGINT, siginthandler);
       signal(SIGSTOP, siginthandler);
