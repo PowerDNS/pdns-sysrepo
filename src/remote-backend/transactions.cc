@@ -58,13 +58,6 @@ namespace pdns_sysrepo::remote_backend
     sendResponse(request, response, nlohmann::json({{"result", true}}));
   }
 
-  // TODO make fed records do this?
-  struct rrset {
-    std::vector<string> rdata;
-    uint32_t ttl;
-  };
-  typedef std::map<string, std::map<string, rrset > > rrsets_t;
-
   void RemoteBackend::commitTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
     logRequest(request);
     uint32_t txId = request.param(":txid").as<uint32_t>();
@@ -75,40 +68,83 @@ namespace pdns_sysrepo::remote_backend
     }
 
     auto records = it->second->getFedRecords();
-    rrsets_t rrsets;
-
     auto session = getSession();
     session->session_switch_ds(SR_DS_OPERATIONAL);
 
-    string baseXPath = fmt::format("/pdns-server:zones/zones[name='{}']/rrset-state", it->second->getDomainName());
+    string zoneXPath = fmt::format("/pdns-server:zones/zones[name='{}']", it->second->getDomainName());
+    nlohmann::json tree;
     try {
-      if (session->get_subtree(baseXPath.c_str()) != nullptr) {
-        session->delete_item(baseXPath.c_str());
-      }
+      auto full_tree = session->get_subtree(zoneXPath.c_str());
+      tree["pdns-server:zones"] = nlohmann::json::parse(full_tree->print_mem(LYD_JSON, 0));
+      tree["pdns-server:zones"]["pdns-server:zones"][0].erase("rrset-state");
+
       for (auto const& i : records) {
-        auto rrsetXPath = fmt::format("{}[owner='{}'][type='{}']/", baseXPath, i.qname, i.qtype);
-        session->set_item_str(fmt::format("{}ttl", rrsetXPath).c_str(), std::to_string(i.ttl).c_str(), "unknown");
-        auto rdataXPath = fmt::format("{}rdata/", rrsetXPath);
-        if (i.qtype == "SOA") {
-          std::vector<std::string> parts;
-          boost::split(parts, i.content, boost::is_any_of(" "));
-          session->set_item_str(fmt::format("{}SOA/mname", rdataXPath).c_str(), parts.at(0).c_str());
-          session->set_item_str(fmt::format("{}SOA/rname", rdataXPath).c_str(), parts.at(1).c_str());
-          session->set_item_str(fmt::format("{}SOA/serial", rdataXPath).c_str(), parts.at(2).c_str());
-          session->set_item_str(fmt::format("{}SOA/refresh", rdataXPath).c_str(), parts.at(3).c_str());
-          session->set_item_str(fmt::format("{}SOA/retry", rdataXPath).c_str(), parts.at(4).c_str());
-          session->set_item_str(fmt::format("{}SOA/expire", rdataXPath).c_str(), parts.at(5).c_str());
-          session->set_item_str(fmt::format("{}SOA/minimum", rdataXPath).c_str(), parts.at(6).c_str());
+        nlohmann::json jsonRecord;
+        jsonRecord["owner"] = std::get<0>(i.first);
+        jsonRecord["ttl"] = std::get<2>(i.first);
+
+        auto recordType = std::get<1>(i.first);
+        jsonRecord["type"] = recordType;
+
+        for (auto const& content : i.second) {
+          if (recordType == "SOA") {
+            std::vector<std::string> parts;
+            boost::split(parts, content, boost::is_any_of(" "));
+
+            jsonRecord["rdata"]["SOA"]["mname"] = parts.at(0);
+            jsonRecord["rdata"]["SOA"]["rname"] = parts.at(1);
+            jsonRecord["rdata"]["SOA"]["serial"] = std::atoi(parts.at(2).c_str());
+            jsonRecord["rdata"]["SOA"]["refresh"] = std::atoi(parts.at(3).c_str());
+            jsonRecord["rdata"]["SOA"]["retry"] = std::atoi(parts.at(4).c_str());
+            jsonRecord["rdata"]["SOA"]["expire"] = std::atoi(parts.at(5).c_str());
+            jsonRecord["rdata"]["SOA"]["minimum"] = std::atoi(parts.at(6).c_str());
+          }
+          else if (recordType == "A" || recordType == "AAAA") {
+            if (!jsonRecord["rdata"][recordType]["address"].is_array()) {
+              jsonRecord["rdata"][recordType]["address"] = nlohmann::json::array();
+            }
+            jsonRecord["rdata"][recordType]["address"].push_back(content);
+          }
+          else if (recordType == "PTR") {
+            if (!jsonRecord["rdata"][recordType]["ptrdname"].is_array()) {
+              jsonRecord["rdata"][recordType]["ptrdname"] = nlohmann::json::array();
+            }
+            jsonRecord["rdata"][recordType]["ptrdname"].push_back(content);
+          }
+          else if (recordType == "NS") {
+            if (!jsonRecord["rdata"][recordType]["nsdname"].is_array()) {
+              jsonRecord["rdata"][recordType]["nsdname"] = nlohmann::json::array();
+            }
+            jsonRecord["rdata"][recordType]["nsdname"].push_back(content);
+          }
+          else if (recordType == "TXT") {
+            if (!jsonRecord["rdata"][recordType]["txt-data"].is_array()) {
+              jsonRecord["rdata"][recordType]["txt-data"] = nlohmann::json::array();
+            }
+            jsonRecord["rdata"][recordType]["txt-data"].push_back(content);
+          }
+          else if (recordType == "CNAME") {
+            jsonRecord["rdata"][recordType]["cname"]= content;
+          }
+          else if (recordType == "DNAME") {
+            jsonRecord["rdata"][recordType]["target"]= content;
+          }
+          else if (recordType == "MX") {
+            if (!jsonRecord["rdata"][recordType]["mail-exchanger"].is_array()) {
+              jsonRecord["rdata"][recordType]["mail-exchanger"] = nlohmann::json::array();
+            }
+            std::vector<std::string> parts;
+            boost::split(parts, content, boost::is_any_of(" "));
+            nlohmann::json mx;
+            mx["preference"] = std::atoi(parts.at(0).c_str());
+            mx["exchange"] = parts.at(1);
+            jsonRecord["rdata"][recordType]["mail-exchanger"].push_back(mx);
+          }
+          else {
+            throw std::logic_error(fmt::format("Unimplemented record type: {}", recordType));
+          }
         }
-        else if (i.qtype == "A" || i.qtype == "AAAA") {
-          session->set_item_str(fmt::format("{}{}/address", rdataXPath, i.qtype).c_str(), i.content.c_str());
-        }
-        else if (i.qtype == "NS") {
-          session->set_item_str(fmt::format("{}{}/nsdname", rdataXPath, i.qtype).c_str(), i.content.c_str());
-        }
-        else {
-          throw std::logic_error(fmt::format("Unimplemented record type: {}", i.qtype));
-        }
+        tree["pdns-server:zones"]["pdns-server:zones"][0]["rrset-state"].push_back(jsonRecord);
       }
     } catch (const std::exception& e) {
       spdlog::warn("Exception while setting items: {}", e.what());
@@ -120,7 +156,43 @@ namespace pdns_sysrepo::remote_backend
       return;
     }
     try {
+      // Prepare the changes
+      auto newData = tree.dump();
+      auto ctx = session->get_context();
+      auto newNode = ctx->parse_data_mem(newData.c_str(), LYD_JSON, LYD_OPT_GET); // Why LYD_OPT_GET? see https://github.com/sysrepo/sysrepo/issues/1804#issuecomment-583309999
+
+      // Yes! there is a race condition here as we delete the whole zone from the operational
+      // datastore and _then_ add it with the new data (see https://github.com/sysrepo/sysrepo/issues/1809).
+      // During some testing, the zone is gone from the datastore between 0.005 and 0.008 seconds
+      spdlog::debug("RemoteBackend::commitTransaction - Removing zone for update xpath='{}'", zoneXPath);
+      session->delete_item(zoneXPath.c_str(), 0);
       session->apply_changes();
+
+      spdlog::debug("RemoteBackend::commitTransaction - Updating zone json='{}'", newData);
+      session->edit_batch(newNode, "merge");
+    } catch (const std::exception& e) {
+      spdlog::warn("Exception in edit_batch: {}", e.what());
+      auto errors = getErrorsFromSession(session);
+      for (auto const &error : errors) {
+        spdlog::warn("error={} xpath={}", error.first, error.second);
+      }
+      sendError(request, response, e.what());
+      return;
+    }
+    try {
+      session->validate();
+    } catch (const std::exception& e) {
+      spdlog::warn("Exception in validate: {}", e.what());
+      auto errors = getErrorsFromSession(session);
+      for (auto const &error : errors) {
+        spdlog::warn("error={} xpath={}", error.first, error.second);
+      }
+      sendError(request, response, e.what());
+      return;
+    }
+    try {
+      session->apply_changes();
+      spdlog::debug("RemoteBackend::commitTransaction - Finished updating zone='{}'", it->second->getDomainName());
     } catch (const std::exception& e) {
       spdlog::warn("Exception in apply_changes: {}", e.what());
       auto errors = getErrorsFromSession(session);
@@ -135,12 +207,8 @@ namespace pdns_sysrepo::remote_backend
   }
 
   void RemoteBackend::Transaction::feedRecord(const string& qname, const string& qtype, const string& content, const uint32_t ttl) {
-    FedRecord f;
-    f.qname = qname;
-    f.qtype = qtype;
-    f.content = content;
-    f.ttl = ttl;
+    FedRRSet f = std::make_tuple(qname, qtype, ttl);
     const std::lock_guard<std::mutex> lock(d_lock);
-    d_records.push_back(f);
+    d_records[f].push_back(content);
   }
 }

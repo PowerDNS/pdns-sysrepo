@@ -335,12 +335,8 @@ protected:
   void logRequest(const Pistache::Rest::Request &request);
   void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
 
-  struct FedRecord {
-    std::string qname;
-    std::string content;
-    std::string qtype;
-    uint32_t ttl;
-  };
+  typedef std::tuple<std::string, std::string, uint32_t> FedRRSet;
+  typedef std::map<FedRRSet, std::vector<std::string> > FullRRSets;
 
   class Transaction
   {
@@ -352,7 +348,7 @@ protected:
     ~Transaction() {};
 
     void feedRecord(const string &qname, const string &qtype, const string &content, const uint32_t ttl);
-    std::vector<FedRecord> getFedRecords() { return d_records; };
+    FullRRSets getFedRecords() { return d_records; };
     std::string getDomainName() { return d_domainName; };
 
     private:
@@ -360,7 +356,7 @@ protected:
     uint32_t d_domainId;
     std::string d_domainName;
     std::mutex d_lock;
-    std::vector<FedRecord> d_records;
+    FullRRSets d_records;
     time_t d_timesStarted;
   };
 
