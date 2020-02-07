@@ -222,18 +222,6 @@ protected:
    */
   nlohmann::json makeDomainInfo(const std::string &zone, const std::string &kind);
 
-
-  /**
-   * @brief Returns a JSON object for a record
-   * 
-   * @param name 
-   * @param rtype 
-   * @param content 
-   * @param ttl 
-   * @return nlohmann::json 
-   */
-  nlohmann::json makeRecord(const std::string& name, const std::string& rtype, const std::string& content, const uint16_t ttl);
-
   /**
    * @brief Retrieve an Array of records from an RRSet Node
    * 
