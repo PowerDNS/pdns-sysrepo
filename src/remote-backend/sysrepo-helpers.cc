@@ -125,4 +125,11 @@ namespace pdns_sysrepo::remote_backend {
     }
     return ret;
   }
+
+  void RemoteBackend::logSessionErrors(const sysrepo::S_Session& session, const spdlog::level::level_enum &level) {
+    auto errors = getErrorsFromSession(session);
+    for (auto const& error : errors) {
+      spdlog::log(level, "  Error xpath='{}' message='{}'", error.first, error.second);
+    }
+  }
 }

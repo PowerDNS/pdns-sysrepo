@@ -287,6 +287,16 @@ protected:
   sessionErrors getErrorsFromSession(const sysrepo::S_Session& session);
 
   /**
+   * @brief Logs all errors in the sysrepo session at a certain level
+   * 
+   * @param session 
+   * @param level 
+   * @throw logic_error when session is a nullptr
+   * @throw sysrepo_exception when the errors can't be retrieved
+   */
+  void logSessionErrors(const sysrepo::S_Session& session, const spdlog::level::level_enum &level);
+
+  /**
    * @brief Decodes a url-encoded string
    * 
    * @param eString 
