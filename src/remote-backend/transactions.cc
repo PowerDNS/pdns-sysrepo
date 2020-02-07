@@ -72,133 +72,82 @@ namespace pdns_sysrepo::remote_backend
     session->session_switch_ds(SR_DS_OPERATIONAL);
 
     string zoneXPath = fmt::format("/pdns-server:zones/zones[name='{}']", it->second->getDomainName());
-    nlohmann::json tree;
+    string rrsetBaseXPath = fmt::format("{}/rrset-state", zoneXPath);
     try {
-      auto full_tree = session->get_subtree(zoneXPath.c_str());
-      tree["pdns-server:zones"] = nlohmann::json::parse(full_tree->print_mem(LYD_JSON, 0));
-      tree["pdns-server:zones"]["pdns-server:zones"][0].erase("rrset-state");
+      spdlog::debug("RemoteBackend::commitTransaction - removing rrsets for zone={} xpath={}", it->second->getDomainName(), rrsetBaseXPath);
+      session->delete_item(fmt::format("{}", rrsetBaseXPath).c_str());
+      spdlog::trace("RemoteBackend::commitTransaction - removed rrsets for zone={} xpath={}", it->second->getDomainName(), rrsetBaseXPath);
 
       for (auto const& i : records) {
-        nlohmann::json jsonRecord;
-        jsonRecord["owner"] = std::get<0>(i.first);
-        jsonRecord["ttl"] = std::get<2>(i.first);
-
+        auto owner = std::get<0>(i.first);
         auto recordType = std::get<1>(i.first);
-        jsonRecord["type"] = recordType;
-
+        string rrsetXPath = fmt::format("{}[owner='{}'][type='{}']", rrsetBaseXPath, owner, recordType);
+        session->set_item_str(fmt::format("{}/ttl", rrsetXPath).c_str(), std::to_string(std::get<2>(i.first)).c_str());
         for (auto const& content : i.second) {
+          auto rdataXPath = fmt::format("{}/rdata", rrsetXPath);
+          spdlog::trace("RemoteBackend::commitTransaction - setting content='{}' recordtype={} recordname={}", content, recordType, owner);
           if (recordType == "SOA") {
             std::vector<std::string> parts;
             boost::split(parts, content, boost::is_any_of(" "));
-
-            jsonRecord["rdata"]["SOA"]["mname"] = parts.at(0);
-            jsonRecord["rdata"]["SOA"]["rname"] = parts.at(1);
-            jsonRecord["rdata"]["SOA"]["serial"] = std::atoi(parts.at(2).c_str());
-            jsonRecord["rdata"]["SOA"]["refresh"] = std::atoi(parts.at(3).c_str());
-            jsonRecord["rdata"]["SOA"]["retry"] = std::atoi(parts.at(4).c_str());
-            jsonRecord["rdata"]["SOA"]["expire"] = std::atoi(parts.at(5).c_str());
-            jsonRecord["rdata"]["SOA"]["minimum"] = std::atoi(parts.at(6).c_str());
+            session->set_item_str(fmt::format("{}/SOA/mname", rdataXPath).c_str(), parts.at(0).c_str());
+            session->set_item_str(fmt::format("{}/SOA/rname", rdataXPath).c_str(), parts.at(1).c_str());
+            session->set_item_str(fmt::format("{}/SOA/serial", rdataXPath).c_str(), parts.at(2).c_str());
+            session->set_item_str(fmt::format("{}/SOA/refresh", rdataXPath).c_str(), parts.at(3).c_str());
+            session->set_item_str(fmt::format("{}/SOA/retry", rdataXPath).c_str(), parts.at(4).c_str());
+            session->set_item_str(fmt::format("{}/SOA/expire", rdataXPath).c_str(), parts.at(5).c_str());
+            session->set_item_str(fmt::format("{}/SOA/minimum", rdataXPath).c_str(), parts.at(6).c_str());
           }
           else if (recordType == "A" || recordType == "AAAA") {
-            if (!jsonRecord["rdata"][recordType]["address"].is_array()) {
-              jsonRecord["rdata"][recordType]["address"] = nlohmann::json::array();
-            }
-            jsonRecord["rdata"][recordType]["address"].push_back(content);
+            session->set_item_str(fmt::format("{}/{}/address", rdataXPath, recordType).c_str(), content.c_str());
           }
           else if (recordType == "PTR") {
-            if (!jsonRecord["rdata"][recordType]["ptrdname"].is_array()) {
-              jsonRecord["rdata"][recordType]["ptrdname"] = nlohmann::json::array();
-            }
-            jsonRecord["rdata"][recordType]["ptrdname"].push_back(content);
+            session->set_item_str(fmt::format("{}/{}/ptrdname", rdataXPath, recordType).c_str(), content.c_str());
           }
           else if (recordType == "NS") {
-            if (!jsonRecord["rdata"][recordType]["nsdname"].is_array()) {
-              jsonRecord["rdata"][recordType]["nsdname"] = nlohmann::json::array();
-            }
-            jsonRecord["rdata"][recordType]["nsdname"].push_back(content);
+            session->set_item_str(fmt::format("{}/{}/nsdname", rdataXPath, recordType).c_str(), content.c_str());
           }
           else if (recordType == "TXT") {
-            if (!jsonRecord["rdata"][recordType]["txt-data"].is_array()) {
-              jsonRecord["rdata"][recordType]["txt-data"] = nlohmann::json::array();
-            }
-            jsonRecord["rdata"][recordType]["txt-data"].push_back(content);
+            session->set_item_str(fmt::format("{}/{}/txt-data", rdataXPath, recordType).c_str(), content.c_str());
           }
           else if (recordType == "CNAME") {
-            jsonRecord["rdata"][recordType]["cname"]= content;
+            session->set_item_str(fmt::format("{}/{}/cname", rdataXPath, recordType).c_str(), content.c_str());
           }
           else if (recordType == "DNAME") {
-            jsonRecord["rdata"][recordType]["target"]= content;
+            session->set_item_str(fmt::format("{}/{}/target", rdataXPath, recordType).c_str(), content.c_str());
           }
           else if (recordType == "MX") {
-            if (!jsonRecord["rdata"][recordType]["mail-exchanger"].is_array()) {
-              jsonRecord["rdata"][recordType]["mail-exchanger"] = nlohmann::json::array();
-            }
             std::vector<std::string> parts;
             boost::split(parts, content, boost::is_any_of(" "));
-            nlohmann::json mx;
-            mx["preference"] = std::atoi(parts.at(0).c_str());
-            mx["exchange"] = parts.at(1);
-            jsonRecord["rdata"][recordType]["mail-exchanger"].push_back(mx);
+            session->set_item_str(fmt::format("{}/{}/mail-exchanger[preference='{}'][exchange='{}']", rdataXPath, recordType, parts.at(0), parts.at(1)).c_str(), nullptr);
           }
           else {
             throw std::logic_error(fmt::format("Unimplemented record type: {}", recordType));
           }
         }
-        tree["pdns-server:zones"]["pdns-server:zones"][0]["rrset-state"].push_back(jsonRecord);
       }
     } catch (const std::exception& e) {
-      spdlog::warn("Exception while setting items: {}", e.what());
-      auto errors = getErrorsFromSession(session);
-      for (auto const &error : errors) {
-        spdlog::warn("error={} xpath={}", error.first, error.second);
-      }
+      spdlog::warn("RemoteBackend::commitTransaction - Could not set an item, aborting. error={}", e.what());
+      logSessionErrors(session, spdlog::level::warn);
       sendError(request, response, e.what());
       return;
     }
     try {
-      // Prepare the changes
-      auto newData = tree.dump();
-      auto ctx = session->get_context();
-      auto newNode = ctx->parse_data_mem(newData.c_str(), LYD_JSON, LYD_OPT_GET); // Why LYD_OPT_GET? see https://github.com/sysrepo/sysrepo/issues/1804#issuecomment-583309999
-
-      // Yes! there is a race condition here as we delete the whole zone from the operational
-      // datastore and _then_ add it with the new data (see https://github.com/sysrepo/sysrepo/issues/1809).
-      // During some testing, the zone is gone from the datastore between 0.005 and 0.008 seconds
-      spdlog::debug("RemoteBackend::commitTransaction - Removing zone for update xpath='{}'", zoneXPath);
-      session->delete_item(zoneXPath.c_str(), 0);
-      session->apply_changes();
-
-      spdlog::debug("RemoteBackend::commitTransaction - Updating zone json='{}'", newData);
-      session->edit_batch(newNode, "merge");
-    } catch (const std::exception& e) {
-      spdlog::warn("Exception in edit_batch: {}", e.what());
-      auto errors = getErrorsFromSession(session);
-      for (auto const &error : errors) {
-        spdlog::warn("error={} xpath={}", error.first, error.second);
-      }
-      sendError(request, response, e.what());
-      return;
-    }
-    try {
+      spdlog::trace("RemoteBackend::commitTransaction - Validating changes");
       session->validate();
+      spdlog::trace("RemoteBackend::commitTransaction - Validated changes");
     } catch (const std::exception& e) {
-      spdlog::warn("Exception in validate: {}", e.what());
-      auto errors = getErrorsFromSession(session);
-      for (auto const &error : errors) {
-        spdlog::warn("error={} xpath={}", error.first, error.second);
-      }
+      spdlog::warn("RemoteBackend::commitTransaction - Changes did not validate. error={}", e.what());
+      logSessionErrors(session, spdlog::level::warn);
       sendError(request, response, e.what());
       return;
     }
     try {
+      spdlog::trace("RemoteBackend::commitTransaction - Applying changes");
       session->apply_changes();
       spdlog::debug("RemoteBackend::commitTransaction - Finished updating zone='{}'", it->second->getDomainName());
     } catch (const std::exception& e) {
-      spdlog::warn("Exception in apply_changes: {}", e.what());
-      auto errors = getErrorsFromSession(session);
-      for (auto const &error : errors) {
-        spdlog::warn("error={} xpath={}", error.first, error.second);
-      }
+      spdlog::warn("RemoteBackend::commitTransaction - Unable to apply changes. error={}", e.what());
+      logSessionErrors(session, spdlog::level::warn);
       sendError(request, response, e.what());
       return;
     }
