@@ -16,6 +16,7 @@
 
 #include <boost/bimap.hpp>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
 #include <sysrepo-cpp/Session.hpp>
 #include <pistache/endpoint.h>
 #include <pistache/router.h>

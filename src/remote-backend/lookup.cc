@@ -15,7 +15,6 @@
  */
 
 #include <spdlog/spdlog.h>
-// #include <fmt/format.h>
 #include "remote-backend.hh"
 
 namespace pdns_sysrepo::remote_backend

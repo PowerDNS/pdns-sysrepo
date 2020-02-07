@@ -19,8 +19,8 @@
 #include <signal.h>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
 #include <boost/program_options.hpp>
-#include <fmt/format.h>
 #include <systemd/sd-daemon.h>
 #include <pistache/net.h>
 
