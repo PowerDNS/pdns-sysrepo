@@ -39,7 +39,7 @@ namespace pdns_sysrepo::remote_backend {
         std::vector<string> parts;
         std::string path(rdataNode->path());
         boost::split(parts, path, boost::is_any_of("/"));
-        if (parts.back() == "SOA" || parts.back() == "MX") {
+        if (parts.back() == "SOA") {
           // rdataNode is now the 'rrset/rdata/<TYPE>/<SOME_NODE>' node or one of its siblings
           rdataNode = rdataNode->child();
           std::map<string, string> recordElements;
@@ -48,12 +48,31 @@ namespace pdns_sysrepo::remote_backend {
             string leafName = rdataLeaf->schema()->name();
             recordElements[leafName] = rdataLeaf->value_str();
           }
-          if (parts.back() == "SOA") {
-            record["content"] = fmt::format("{} {} {} {} {} {} {}", recordElements["mname"], recordElements["rname"], recordElements["serial"], recordElements["refresh"], recordElements["retry"], recordElements["expire"], recordElements["minimum"]);
-          } else if (parts.back() == "MX") {
-            record["content"] = fmt::format("{} {}", recordElements["preference"], recordElements["exchange"]);
-          }
+          record["content"] = fmt::format("{} {} {} {} {} {} {}", recordElements["mname"], recordElements["rname"], recordElements["serial"], recordElements["refresh"], recordElements["retry"], recordElements["expire"], recordElements["minimum"]);
           ret.push_back(record);
+        } else if (parts.back() == "MX") {
+          bool havePref = false;
+          uint16_t pref;
+          bool haveExchange = false;
+          string exchange;
+          for (auto const &n : rdataNode->tree_dfs()) {
+            string name(n->schema()->name());
+            if (name == "preference") {
+              havePref = true;
+              auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+              pref = leaf->value()->uint16();
+            } else if (name == "exchange") {
+              haveExchange = true;
+              auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+              exchange = leaf->value_str();
+            }
+            if (haveExchange && havePref) {
+              havePref = false;
+              haveExchange = false;
+              record["content"] = fmt::format("{} {}", pref, exchange);
+              ret.push_back(record);
+            }
+          }
         } else {
           // This is for all records with one leaf or leaf-list like A, AAAA and CNAME
           // rdataNode is now the 'rrset/rdata/<rrset type>/<whatever the node is called>' node
