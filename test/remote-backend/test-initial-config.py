@@ -101,3 +101,11 @@ class TestRemoteBackend(unittest.TestCase):
         self.assertEqual(len(data['result']), 2)
         other_zone_id = data['result'][0]['id']
         self.assertNotEqual(zone_id, other_zone_id)
+
+    def test_getDomainInfo(self):
+        data = requests.get(self.url + 'getDomainInfo/example.com.').json()
+        print(data)
+        self.assertListEqual(data['result']['allow-axfr'],
+                             ['::1/128', '127.0.0.0/8'])
+        self.assertEqual(data['result']['zone'], 'example.com.')
+        self.assertEqual(data['result']['kind'], 'master')
