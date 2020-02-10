@@ -33,6 +33,24 @@ class TestRemoteBackend(unittest.TestCase):
         self.assertTrue(seen_dot_1)
         self.assertTrue(seen_dot_3)
 
+    def test_lookup_example_com_MX(self):
+        data = requests.get(self.url + 'lookup/example.com./MX').json()
+        print(data)
+        self.assertEqual(len(data['result']), 2)
+        rdatas = set()
+        for record in data['result']:
+            self.assertEqual(record['qname'], 'example.com.')
+            self.assertEqual(record['qtype'], 'MX')
+            self.assertEqual(record['ttl'], 3000)
+            rdatas.add(record['content'])
+        self.assertSetEqual(rdatas, {'10 mx1.example.net.', '20 mx2.example.net.'})
+
+    def test_lookup_www_example_com_ANY(self):
+        # This is what PowerDNS actually does :)
+        data = requests.get(self.url + 'lookup/www.example.com./ANY').json()
+        # 1 AAAA answer
+        self.assertEqual(len(data['result']), 1)
+
     def test_lookup_wildcard(self):
         data = requests.get(self.url + 'lookup/*.wildcard.testdomain.example./AAAA').json()
         assert(len(data['result']) == 1)
@@ -45,7 +63,7 @@ class TestRemoteBackend(unittest.TestCase):
 
     def test_list_example_com(self):
         data = requests.get(self.url + 'list/-1/example.com.').json()
-        self.assertEqual(len(data['result']), 6)
+        self.assertEqual(len(data['result']), 8)
 
     def test_list_nonexist(self):
         data = requests.get(self.url + 'list/-1/doesnexist.example.').json()

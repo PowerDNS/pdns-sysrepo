@@ -162,6 +162,25 @@
           },
           {
             "owner": "example.com.",
+            "type": "MX",
+            "ttl": 3000,
+            "rdata": {
+              "MX": {
+                "mail-exchanger":  [
+                  {
+                    "preference": 10,
+                    "exchange": "mx1.example.net."
+                  },
+                  {
+                    "preference": 20,
+                    "exchange": "mx2.example.net."
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "owner": "example.com.",
             "type": "NS",
             "ttl": 3600,
             "rdata": {
