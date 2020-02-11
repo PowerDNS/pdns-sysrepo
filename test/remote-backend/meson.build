@@ -28,6 +28,7 @@ remote_backend_test_env.set('NOSETESTS', nosetests.path())
 
 remote_backend_test_env.set('SYSREPO_INITIAL_CONFIG', meson.current_build_dir() + '/config-initial.json')
 remote_backend_test_env.set('TEST_INITIAL_CONFIG_PY', meson.current_source_dir() + '/test-initial-config.py')
+remote_backend_test_env.set('TEST_SLAVE_PY', meson.current_source_dir() + '/test-slave.py')
 
 # For the actual tests we use python, these are the modules we need
 python = find_program('python3')

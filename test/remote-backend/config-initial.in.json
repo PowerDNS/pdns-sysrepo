@@ -39,6 +39,17 @@
       ]
     }
   ],
+  "pdns-server:master-endpoint": [
+    {
+      "name": "localhost",
+      "address": [
+        {
+          "name": "v4",
+          "ip-address": "127.0.0.1"
+        }
+      ]
+    }
+  ],
   "pdns-server:pdns-sysrepo": {
     "pdns-service": {
       "name": "pdns-sysrepo-test.service",
@@ -60,6 +71,11 @@
   },
   "pdns-server:zones": {
     "zones": [
+      {
+        "name": "slavedomain.example.",
+        "zonetype": "slave",
+        "masters": ["localhost"]
+      },
       {
         "name": "testdomain.example.",
         "also-notify": [

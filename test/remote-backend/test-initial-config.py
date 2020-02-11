@@ -76,8 +76,8 @@ class TestRemoteBackend(unittest.TestCase):
 
     def test_getAllDomains(self):
         data = requests.get(self.url + 'getAllDomains').json()
-        self.assertEqual(len(data['result']), 3)
-        self.assertEqual(len(set(x['id'] for x in data['result'])), 3, 'domain IDs are not unique')
+        self.assertEqual(len(data['result']), 4)
+        self.assertEqual(len(set(x['id'] for x in data['result'])), 4, 'domain IDs are not unique')
 
     def test_getDomainMetadata_ALSONOTIFY(self):
         data = requests.get(self.url + 'getDomainMetadata/example.com./ALSO-NOTIFY').json()
