@@ -132,7 +132,7 @@ jobs:
           command: sysrepoctl -c pdns-server -e rrset-management
           workdir: ~/project
       - run:
-          command: ninja -v test || (cat meson-logs/testlog.txt; false)
+          command: ninja -v test || (cat meson-logs/testlog.txt; cat test/remote-backend/pdns-sysrepo.log; false)
           workdir: ~/project/build
 
   test-model:
