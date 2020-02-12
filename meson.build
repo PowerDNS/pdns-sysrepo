@@ -39,8 +39,8 @@ pdns_sysrepo_remote_backend = files(
   'src/remote-backend/feedRecord.cc'
 )
 
-sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.2')
-libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.130')
+sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.7')
+libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.131')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
 libsystemd_dep = dependency('libsystemd')
 sdbusplus_dep = dependency('sdbusplus')
