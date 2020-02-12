@@ -37,7 +37,7 @@ commands:
       - run: |
           git clone -q https://github.com/CESNET/libyang.git ~/libyang && \
           cd ~/libyang && \
-          git checkout v1.0.130 && \
+          git checkout cecb048feb5a021e6ca267e3efa3da56efee6bc3 && \
           mkdir ~/libyang/build
       - run:
           command: |
@@ -60,7 +60,7 @@ commands:
       - run: |
           git clone -q https://github.com/sysrepo/sysrepo.git ~/sysrepo && \
           cd ~/sysrepo && \
-          git checkout v1.4.2 && \
+          git checkout eac941f77e008fcd1f3cfb39edd2cff64b97e002 && \
           mkdir ~/sysrepo/build
       - run:
           command: |
