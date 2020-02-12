@@ -15,17 +15,16 @@
  */
 #include <boost/algorithm/string/join.hpp>
 
-#include "../subscribe.hh"
-#include "../util.hh"
-#include "api/ZonesApi.h"
+#include "pdns-config-callback.hh"
+#include "spdlog/spdlog.h"
+#include "sr_wrapper/session.hh"
+#include "util/util.hh"
 #include "api/ServersApi.h"
-#include "model/Zone.h"
+#include "api/ZonesApi.h"
 
-namespace pdns_model = org::openapitools::client::model;
-
-namespace pdns_conf
+namespace pdns_sysrepo::pdns_config
 {
-void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
+void PdnsConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
   // This fetches only full zone nodes, not subnodes.
   auto iter = session->get_changes_iter("/pdns-server:zones/pdns-server:zones");
   auto change = session->get_change_tree_next(iter);
@@ -40,7 +39,7 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
     sApi.listServers().get();
   }
   
-  auto sess = static_pointer_cast<sr::Session>(session);
+  auto sess = std::static_pointer_cast<sr::Session>(session);
 
   while (change != nullptr && change->node() != nullptr) {
     spdlog::trace("zones change. operation={}", util::srChangeOper2String(change->oper()));
@@ -50,7 +49,7 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
       pdns_api::Zone z;
       string zoneName;
       while (child) {
-        auto leaf = make_shared<libyang::Data_Node_Leaf_List>(child);
+        auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(child);
         string leafName = leaf->schema()->name();
         // spdlog::trace("child name={} value={}", leaf->schema()->name(), leaf->value_str());
         if (leafName == "name") {
@@ -76,7 +75,7 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
     if (change->oper() == SR_OP_DELETED) {
       if (change->node()->schema()->nodetype() != LYS_LIST) {
         spdlog::debug("Had unexpected element type {} at {} while expecting a list for a zone removal",
-          util::libyangNodeType2String(change->node()->schema()->nodetype()),
+          pdns_sysrepo::util::libyangNodeType2String(change->node()->schema()->nodetype()),
           change->node()->path());
         continue;
       }
@@ -95,7 +94,7 @@ void ServerConfigCB::changeZoneAddAndDelete(sysrepo::S_Session& session) {
   }
 }
 
-void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
+void PdnsConfigCB::changeZoneModify(sysrepo::S_Session &session) {
   // Fetch the sub-nodes of all zones that changed
   auto iter = session->get_changes_iter("/pdns-server:zones/pdns-server:zones/*");
   auto change = session->get_change_tree_next(iter);
@@ -136,7 +135,7 @@ void ServerConfigCB::changeZoneModify(sysrepo::S_Session &session) {
   }
 }
 
-void ServerConfigCB::doneZoneAddAndDelete() {
+void PdnsConfigCB::doneZoneAddAndDelete() {
   vector<string> errors;
   pdns_api::ZonesApi zonesApiClient(d_apiClient);
 
@@ -183,7 +182,7 @@ void ServerConfigCB::doneZoneAddAndDelete() {
   }
 }
 
-void ServerConfigCB::doneZoneModify() {
+void PdnsConfigCB::doneZoneModify() {
   vector<string> errors;
   for (auto const &z : zonesModified) {
     auto zoneName = z.first;

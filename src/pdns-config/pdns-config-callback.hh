@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright Pieter Lexis <pieter.lexis@powerdns.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,60 +15,17 @@
  */
 #pragma once
 
-#include <sysrepo-cpp/Session.hpp>
-#include <spdlog/spdlog.h>
-#include <sdbusplus/message.hpp>
-
-#include "configurator.hh"
-#include "config.h"
-#include "sr_wrapper/session.hh"
-
+#include "sysrepo-cpp/Session.hpp"
+#include "config/config.hh"
 #include "ApiClient.h"
 #include "model/Zone.h"
-#include "config/config.hh"
+#include "iputils/iputils.hh"
 
-using std::map;
-using std::shared_ptr;
-using std::string;
-using std::vector;
-using std::make_shared;
 namespace pdns_api = org::openapitools::client::api;
 namespace pdns_api_model = org::openapitools::client::model;
 
-namespace pdns_conf
-{
-class ZoneCB : public sysrepo::Callback
-{
-  public:
-  ZoneCB(shared_ptr<pdns_api::ApiClient> &apiClient) :
-    sysrepo::Callback(),
-    d_apiClient(apiClient)
-    {};
-  ~ZoneCB(){};
-
-  /**
-   * @brief Callback called when an application is requesting operational or config data
-   * 
-   * @see sysrepo::Callback::oper_get_items
-   * 
-   * @param session 
-   * @param module_name 
-   * @param path 
-   * @param request_xpath 
-   * @param request_id 
-   * @param parent 
-   * @param private_data 
-   * @return int 
-   */
-  int oper_get_items(sysrepo::S_Session session, const char* module_name,
-    const char* path, const char* request_xpath,
-    uint32_t request_id, libyang::S_Data_Node& parent, void* private_data) override;
-
-  private:
-  shared_ptr<pdns_api::ApiClient> d_apiClient;
-};
-
-class ServerConfigCB : public sysrepo::Callback
+namespace pdns_sysrepo::pdns_config {
+class PdnsConfigCB : public sysrepo::Callback
 {
 public:
 /**
@@ -83,13 +40,12 @@ public:
  * @param apiClient  apiClient for the PowerDNS API. Set this to a nullptr to indicate
  *                   that PowerDNS will connect to pdns-sysrepo's remote backend.
  */
-  ServerConfigCB(shared_ptr<pdns_sysrepo::config::Config> &config, shared_ptr<pdns_api::ApiClient> &apiClient) :
+  PdnsConfigCB(std::shared_ptr<pdns_sysrepo::config::Config> &config, std::shared_ptr<pdns_api::ApiClient> &apiClient) :
     sysrepo::Callback(),
     d_apiClient(apiClient),
     d_config(config)
     {};
-  ~ServerConfigCB(){};
-
+  ~PdnsConfigCB(){};
 
   /**
    * @brief Callback for when data in a module changes.
@@ -139,14 +95,14 @@ protected:
   /**
    * @brief API client
    */
-  shared_ptr<pdns_api::ApiClient> d_apiClient;
+  std::shared_ptr<pdns_api::ApiClient> d_apiClient;
 
   /**
    * @brief Holder for the pdns-sysrepo config
    * 
    * Used to look up the file path and service name
    */
-  shared_ptr<pdns_sysrepo::config::Config> d_config;
+  std::shared_ptr<pdns_sysrepo::config::Config> d_config;
 
   /**
    * @brief Checks if pdns.conf requires updating
@@ -191,9 +147,9 @@ protected:
    */
   string getZoneId(const string &zone);
 
-  vector<pdns_api_model::Zone> zonesCreated;
-  map<string, pdns_api_model::Zone> zonesModified;
-  vector<string> zonesRemoved;
+  std::vector<pdns_api_model::Zone> zonesCreated;
+  std::map<string, pdns_api_model::Zone> zonesModified;
+  std::vector<string> zonesRemoved;
   bool pdnsConfigChanged{false};
   bool apiConfigChanged{false};
 };
@@ -205,15 +161,108 @@ protected:
  * @param apiClient             A shared_ptr to an API Client
  * @return std::shared_ptr<ServerConfigCB> 
  */
-std::shared_ptr<ServerConfigCB> getServerConfigCB(shared_ptr<pdns_sysrepo::config::Config> &config, shared_ptr<pdns_api::ApiClient> &apiClient);
+std::shared_ptr<PdnsConfigCB> getServerConfigCB(std::shared_ptr<pdns_sysrepo::config::Config> &config, std::shared_ptr<pdns_api::ApiClient> &apiClient);
+
+class PdnsServerConfig
+{
+public:
+  /**
+   * @brief Construct a new PdnsServerConfig object
+   * 
+   * This object contains the config for a PowerDNS Authoritative Server,
+   * along with some functions to manipulate the stored config.
+   * 
+   * @param node  A node rooted at '/pdns-server:pdns-server/', used to
+   *              extract the PowerDNS configuration
+   * @param session  A sysrepo session that is used to retrieve the config
+   * @param doRemoteBackendOnly  Configure a single remote backend to connect to pdns-sysrepo
+   */
+  PdnsServerConfig(const libyang::S_Data_Node &node, const sysrepo::S_Session &session = nullptr, const bool doRemoteBackendOnly = false);
+
+  /**
+   * @brief Write a pdns.conf-style file to fpath
+   * 
+   * @param fpath             File path to write to
+   * @throw std::range_error  When the path is invalid
+   */
+  void writeToFile(const string &fpath);
+  void changeConfigValue(const libyang::S_Data_Node_Leaf_List &node);
+  void deleteConfigValue();
+
+  std::string getConfig();
+
+  /**
+   * @brief Get the Webserver Address
+   * 
+   * @return string 
+   */
+  std::string getWebserverAddress() {
+    return webserver.address.toStringWithPort();
+  };
+
+  /**
+   * @brief Get the Api Key
+   * 
+   * @return string 
+   */
+  std::string getApiKey() {
+    return webserver.api_key;
+  };
 
 /**
- * @brief Get a new ZoneCB object wrapped in a shared_ptr
+ * @brief Whether or not the API is enabled
  * 
- * @param url     Domain name for the API, "http://" wil be prepended, "/api/v1" will be appended
- * @param passwd  The API Key to use
- * @return std::shared_ptr<ZoneCB> 
+ * @return true 
+ * @return false 
  */
-std::shared_ptr<ZoneCB> getZoneCB(shared_ptr<pdns_api::ApiClient> &apiClient);
+  bool doesAPI() {
+    return webserver.api;
+  };
 
-} // namespace pdns_conf
+private:
+  /**
+   * @brief Converts a bool to a string
+   * 
+   * Returns "true" or "false"
+   * 
+   * @param b        bool to convert
+   * @return string 
+   */
+  std::string bool2str(const bool b);
+
+  struct listenAddress {
+      std::string name;
+      iputils::ComboAddress address;
+  };
+
+  struct axfrAcl {
+    std::string name;
+    std::vector<std::string> addresses; // TODO migrate to iputil::NetMask
+  };
+
+  struct backend {
+    std::string name;
+    std::string backendtype;
+    std::vector<std::pair<std::string, std::string>> options{};
+  };
+
+  struct {
+    bool webserver{false};
+    iputils::ComboAddress address{"127.0.0.1:8081"};
+    string password;
+    bool api{false};
+    string api_key;
+    std::vector<std::string> allow_from{{"127.0.0.0/8"}};
+    uint32_t max_body_size{2};
+    string loglevel{"normal"};
+  } webserver;
+
+  std::vector<listenAddress> listenAddresses{};
+  std::vector<backend> backends;
+  bool master{false};
+  bool slave{false};
+
+  std::vector<axfrAcl> allowAxfrIps;
+  std::vector<axfrAcl> alsoNotifyIps;
+};
+}

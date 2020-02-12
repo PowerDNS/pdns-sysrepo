@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "../subscribe.hh"
+#include "pdns-config-callback.hh"
+#include "sr_wrapper/session.hh"
 
-namespace pdns_conf
+namespace pdns_sysrepo::pdns_config
 {
-void ServerConfigCB::changeConfigUpdate(sysrepo::S_Session& session, const uint32_t request_id) {
+void PdnsConfigCB::changeConfigUpdate(sysrepo::S_Session& session, const uint32_t request_id) {
   auto iter = session->get_changes_iter("/pdns-server:pdns-server//*");
   auto change = session->get_change_tree_next(iter);
 
@@ -25,7 +26,7 @@ void ServerConfigCB::changeConfigUpdate(sysrepo::S_Session& session, const uint3
     pdnsConfigChanged = true;
     auto fpath = tmpFile(request_id);
 
-    auto sess = static_pointer_cast<sr::Session>(session);
+    auto sess = std::static_pointer_cast<sr::Session>(session);
 
     // The session already has the new datastore values
     PdnsServerConfig c(sess->getConfigTree(), session, (d_apiClient == nullptr));

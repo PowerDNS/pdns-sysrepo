@@ -1,9 +1,9 @@
 #pragma once
 
-#include "configurator/subscribe.hh"
+#include "pdns-config/pdns-config-callback.hh"
 #include "config/config.hh"
 
-class TestServerConfigCB : public pdns_conf::ServerConfigCB
+class TestServerConfigCB : public pdns_sysrepo::pdns_config::PdnsConfigCB
 {
 public:
   /**
@@ -12,8 +12,8 @@ public:
    * @param privData 
    * @param apiClient 
    */
-  TestServerConfigCB(shared_ptr<pdns_sysrepo::config::Config>& config, shared_ptr<pdns_api::ApiClient>& apiClient) :
-    pdns_conf::ServerConfigCB(config, apiClient){};
+  TestServerConfigCB(std::shared_ptr<pdns_sysrepo::config::Config>& config, std::shared_ptr<pdns_api::ApiClient>& apiClient) :
+    pdns_sysrepo::pdns_config::PdnsConfigCB(config, apiClient){};
   ~TestServerConfigCB(){};
 
   void modifyZoneType(const string& zonename, const string& newType) {

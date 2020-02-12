@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <libyang/Libyang.hpp>
-#include <sysrepo.h>
-
 #include "util.hh"
 
-namespace pdns_conf::util
+namespace pdns_sysrepo::util
 {
-string libyangNodeType2String(const LYS_NODE& node) {
+std::string libyangNodeType2String(const LYS_NODE& node) {
   switch (node) {
   case LYS_UNKNOWN:
     return "uninitialized";
@@ -62,9 +59,8 @@ string libyangNodeType2String(const LYS_NODE& node) {
   return "unknown";
 }
 
-string srEvent2String(const sr_event_t &event){
-  switch (event)
-  {
+std::string srEvent2String(const sr_event_t& event) {
+  switch (event) {
   case SR_EV_UPDATE:
     return "UPDATE";
   case SR_EV_CHANGE:
@@ -81,7 +77,7 @@ string srEvent2String(const sr_event_t &event){
   return "unknown event";
 }
 
-string srChangeOper2String(const sr_change_oper_t &changeOper) {
+std::string srChangeOper2String(const sr_change_oper_t& changeOper) {
   switch (changeOper) {
   case SR_OP_CREATED:
     return "created";
@@ -94,4 +90,4 @@ string srChangeOper2String(const sr_change_oper_t &changeOper) {
   }
   return "unknown";
 }
-} // namespace pdns_conf
+} // namespace pdns_repo::util

@@ -17,12 +17,9 @@
 
 #include "test-common.hh"
 
-#include <string>
 #include <cpprest/json.h>
 #include "httpmockserver/mock_server.h"
 #include "httpmockserver/test_environment.h"
-
-using std::string;
 
 class PDNSApiMock : public httpmock::MockServer
 {
@@ -68,8 +65,8 @@ private:
     }
 
     if (method == "POST" && matchesPrefix(url, "/api/v1/servers/localhost/zones")) {
-      cout<<jsonData["kind"].as_string()<<endl;
-      cout<<jsonData["name"].as_string()<<endl;
+      std::cout<<jsonData["kind"].as_string()<<std::endl;
+      std::cout<<jsonData["name"].as_string()<<std::endl;
       if (jsonData["kind"].as_string() == "master" && jsonData["name"].as_string() == "create.example.com.") {
 
         jsonData["id"] = web::json::value("create.example.com.");

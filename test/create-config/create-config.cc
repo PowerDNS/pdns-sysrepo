@@ -19,7 +19,7 @@
 
 #include <libyang/Libyang.hpp>
 
-#include "configurator/configurator.hh"
+#include "pdns-config/pdns-config-callback.hh"
 
 using std::make_shared;
 using std::runtime_error;
@@ -76,14 +76,14 @@ void testAllBasicsExcept(const string &config, const string &e) {
 
 TEST(config_test, empty_config) {
   auto node = getBasicConfig();
-  auto configurator = pdns_conf::PdnsServerConfig(node);
+  auto configurator = pdns_sysrepo::pdns_config::PdnsServerConfig(node);
   auto config = configurator.getConfig();
   testAllBasicsExcept(config, "none");
 }
 
 TEST(config_test, master) {
   auto node = getMasterConfig();
-  auto configurator = pdns_conf::PdnsServerConfig(node);
+  auto configurator = pdns_sysrepo::pdns_config::PdnsServerConfig(node);
   auto config = configurator.getConfig();
   testAllBasicsExcept(config, "master");
   ASSERT_THAT(config, HasSubstr("master = yes\n"));
