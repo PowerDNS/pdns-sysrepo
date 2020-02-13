@@ -7,10 +7,18 @@ RUN cd /dist/3rdparty && apt install -y ./libyang*.deb
 
 WORKDIR /sysrepo
 
-ENV SYSREPO_VERSION=1.3.21
+ENV SYSREPO_VERSION=1.4.7
 
-RUN curl -L https://github.com/sysrepo/sysrepo/archive/v${SYSREPO_VERSION}.tar.gz | gunzip | tar xf - && \
-      mv sysrepo-${SYSREPO_VERSION} sysrepo_${SYSREPO_VERSION}
+# 1.4.7 has not been tagged
+ENV SYSREPO_COMMIT=eac941f77e008fcd1f3cfb39edd2cff64b97e002
+
+RUN if [ -z "${SYSREPO_COMMIT}" ]; then \
+      curl -L https://github.com/sysrepo/sysrepo/archive/v${SYSREPO_VERSION}.tar.gz | gunzip | tar xf - && \
+      mv sysrepo-${SYSREPO_VERSION} sysrepo_${SYSREPO_VERSION}; \
+    else \
+      curl -L https://github.com/sysrepo/sysrepo/archive/${SYSREPO_COMMIT}.tar.gz | gunzip | tar xf - && \
+      mv sysrepo-${SYSREPO_COMMIT} sysrepo_${SYSREPO_VERSION}; \
+    fi
 
 ADD builder-support/debian/sysrepo sysrepo_${SYSREPO_VERSION}/debian
 ADD builder/helpers /builder/helpers

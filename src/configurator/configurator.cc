@@ -187,7 +187,7 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
             webserver.loglevel = leaf->value_str();
           }
           if (leafName == "max-body-size") {
-            webserver.max_body_size = leaf->value()->uintu32();
+            webserver.max_body_size = leaf->value()->uint32();
           }
         }
       }

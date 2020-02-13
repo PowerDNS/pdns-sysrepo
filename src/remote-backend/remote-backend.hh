@@ -16,6 +16,7 @@
 
 #include <boost/bimap.hpp>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
 #include <sysrepo-cpp/Session.hpp>
 #include <pistache/endpoint.h>
 #include <pistache/router.h>
@@ -113,6 +114,64 @@ protected:
   void getDomainMetadata(const Pistache::Rest::Request& request, Http::ResponseWriter response);
 
   /**
+   * @brief Implements the getUnfreshSlaveInfos endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void getUnfreshSlaveInfos(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the getDomainInfo endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void getDomainInfo(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the setFresh endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void setFresh(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the startTransaction endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void startTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the abortTransaction endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void abortTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the commitTransaction endpoint
+   * 
+   * This stores the zone data from the transaction in sysrepo
+   * 
+   * @param request 
+   * @param response 
+   */
+  void commitTransaction(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
+   * @brief Implements the feedRecord endpoint
+   * 
+   * @param request 
+   * @param response 
+   */
+  void feedRecord(const Pistache::Rest::Request& request, Http::ResponseWriter response);
+
+  /**
    * @brief Sends a 404 with {"result": false}
    * 
    * @param request 
@@ -163,18 +222,6 @@ protected:
    */
   nlohmann::json makeDomainInfo(const std::string &zone, const std::string &kind);
 
-
-  /**
-   * @brief Returns a JSON object for a record
-   * 
-   * @param name 
-   * @param rtype 
-   * @param content 
-   * @param ttl 
-   * @return nlohmann::json 
-   */
-  nlohmann::json makeRecord(const std::string& name, const std::string& rtype, const std::string& content, const uint16_t ttl);
-
   /**
    * @brief Retrieve an Array of records from an RRSet Node
    * 
@@ -188,7 +235,15 @@ protected:
    * @param node 
    * @return nlohmann::json::array_t 
    */
-  nlohmann::json::array_t getRecordsFromRRSetNode(const libyang::S_Data_Node &node);
+  nlohmann::json::array_t getRecordsFromRRSetNode(const libyang::S_Data_Node &node, const string &rrsetLocation = "rrset");
+
+  /**
+   * @brief Get the DomainInfoFor for one domain
+   * 
+   * @param domain 
+   * @return nlohmann::json 
+   */
+  nlohmann::json getDomainInfoFor(const string& domain);
 
   /**
    * @brief Get a new Sysrepo session
@@ -219,6 +274,16 @@ protected:
    * @throw sysrepo_exception when the errors can't be retrieved
    */
   sessionErrors getErrorsFromSession(const sysrepo::S_Session& session);
+
+  /**
+   * @brief Logs all errors in the sysrepo session at a certain level
+   * 
+   * @param session 
+   * @param level 
+   * @throw logic_error when session is a nullptr
+   * @throw sysrepo_exception when the errors can't be retrieved
+   */
+  void logSessionErrors(const sysrepo::S_Session& session, const spdlog::level::level_enum &level);
 
   /**
    * @brief Decodes a url-encoded string
@@ -260,8 +325,67 @@ protected:
    */
   std::map<uint32_t, uint32_t> d_notifiedMasters;
 
+  /**
+   * @brief Contains the time when slave zones were last marked as fresh
+   * 
+   */
+  std::map<uint32_t, time_t> d_slaveFreshnessChecks;
+
   void logRequest(const Pistache::Rest::Request &request);
   void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
+
+  typedef std::tuple<std::string, std::string, uint32_t> RRSetKey;
+  typedef std::map<RRSetKey, std::vector<std::string> > RRSets;
+
+  class Transaction
+  {
+    public:
+    Transaction(const uint32_t txId, const uint32_t domainId, const string &domainName) :
+    d_txId(txId), d_domainId(domainId), d_domainName(domainName)  {
+      d_timesStarted = time(nullptr);
+    };
+    ~Transaction() {};
+
+    /**
+     * @brief Takes a record and adds it to the rrset in this transaction
+     * 
+     * @param qname     name of the record
+     * @param qtype     type of the record
+     * @param content   the content of the record
+     * @param ttl       the ttl of the record
+     */
+    void feedRecord(const string &qname, const string &qtype, const string &content, const uint32_t ttl);
+
+    /**
+     * @brief Returns all rrsets in this transaction
+     * 
+     * @return RRSets 
+     */
+    RRSets getRRSets() {
+      const std::lock_guard<std::mutex> lock(d_lock);
+      return d_records;
+    };
+
+    /**
+     * @brief Returns the domain name for this transaction
+     * 
+     * @return std::string 
+     */
+    std::string getDomainName() { return d_domainName; };
+
+    private:
+    uint32_t d_txId;
+    uint32_t d_domainId;
+    std::string d_domainName;
+    std::mutex d_lock;
+    RRSets d_records;
+    time_t d_timesStarted;
+  };
+
+  /**
+   * @brief Maps open transactions by id to Transaction objects
+   */
+  std::map<uint32_t, std::shared_ptr<Transaction> > d_transactions;
 
   sysrepo::S_Connection d_connection;
   std::shared_ptr<Http::Endpoint> d_endpoint;

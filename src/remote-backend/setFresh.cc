@@ -18,12 +18,10 @@
 
 namespace pdns_sysrepo::remote_backend
 {
-nlohmann::json RemoteBackend::makeDomainInfo(const std::string& zone, const std::string& kind) {
-    nlohmann::json ret;
-    ret["id"] = getDomainID(zone);
-    ret["zone"] = zone;
-    ret["kind"] = kind;
-    ret["serial"] = 0;
-    return ret;
+void RemoteBackend::setFresh(const Pistache::Rest::Request& request, Http::ResponseWriter response) {
+    logRequest(request);
+    uint32_t zoneId = request.param(":id").as<uint32_t>();
+    d_slaveFreshnessChecks[zoneId] = time(nullptr);
+    sendResponse(request, response, nlohmann::json({{"result", true}}));
 }
-} // namespace pdns_sysrepo::remote_backend
+}

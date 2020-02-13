@@ -30,30 +30,28 @@ pdns_sysrepo_remote_backend = files(
   'src/remote-backend/setNotified.cc',
   'src/remote-backend/log.cc',
   'src/remote-backend/remote-backend.cc',
-  'src/remote-backend/domainMetadata.cc'
+  'src/remote-backend/domainMetadata.cc',
+  'src/remote-backend/getUnfreshSlaveInfos.cc',
+  'src/remote-backend/zone-helpers.cc',
+  'src/remote-backend/getDomainInfo.cc',
+  'src/remote-backend/setFresh.cc',
+  'src/remote-backend/transactions.cc',
+  'src/remote-backend/feedRecord.cc'
 )
 
-sysrepo_cpp_dep = dependency('libSysrepo-cpp', version: '>=1.3.13')
-libyang_cpp_dep = dependency('libyang-cpp')
+sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.7')
+libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.131')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
 libsystemd_dep = dependency('libsystemd')
-## This will need to be shipped to the customer though...
 sdbusplus_dep = dependency('sdbusplus')
 
 # Ubuntu Bionic ships with an spdlog that does not support the API we use
-spdlog_dep = dependency('spdlog', required: false)
-if not spdlog_dep.found() or spdlog_dep.version().version_compare('<1.4.0')
-  spdlog_proj = subproject('spdlog-1.4.2', default_options: ['enable_examples=false'])
-  spdlog_dep = spdlog_proj.get_variable('spdlog_dep')
-endif
+# So let's just use the spdlog we ship anyway
+spdlog_proj = subproject('spdlog-1.4.2', default_options: ['enable_examples=false'])
+spdlog_dep = spdlog_proj.get_variable('spdlog_dep')
 
 json_proj = subproject('nlohmann-json')
 json_dep = json_proj.get_variable('nlohmann_json_dep')
-
-fmt_dep = dependency('fmt', required: false)
-if not fmt_dep.found()
-  fmt_dep = meson.get_compiler('cpp').find_library('fmt')
-endif
 
 mstch_dep = dependency('mstch', required: false)
 if not mstch_dep.found()
@@ -97,7 +95,7 @@ version_h = configure_file(input : 'src/config.h.in',
 
 pdns_sysrepo_bin = executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
   sr_wrapper, pdns_sysrepo, pdns_sysrepo_remote_backend, version_h,
-  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, fmt_dep, pdns_api_cpp_dep, pistache_dep, json_dep],
+  dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, pdns_api_cpp_dep, pistache_dep, json_dep],
   include_directories: [pdns_api_cpp_incdir, include_directories('src'), pistache_include],
   install: true)
 

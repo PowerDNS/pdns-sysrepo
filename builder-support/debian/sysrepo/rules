@@ -16,4 +16,4 @@ override_dh_auto_configure:
 	  -DGEN_CPP_BINDINGS=ON \
 	  -DGEN_PYTHON_BINDINGS=OFF \
 	  -DREPOSITORY_LOC=/etc/sysrepo \
-	  -DDREPO_PATH=/etc/sysrepo
+	  -DREPO_PATH=/etc/sysrepo

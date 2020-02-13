@@ -32,6 +32,6 @@ if [ $started -ne 1 ]; then
   exit 1
 fi
 
-$NOSETESTS $TEST_INITIAL_CONFIG_PY
+$NOSETESTS $TEST_INITIAL_CONFIG_PY $TEST_SLAVE_PY
 
 exit $?

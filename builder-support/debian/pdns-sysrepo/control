@@ -7,19 +7,17 @@ Build-Depends: cmake,
                libboost-filesystem-dev,
                libboost-program-options-dev,
                libcpprest-dev,
-               libfmt-dev,
                libmstch-dev,
                libsdbusplus-dev,
-               libspdlog-dev,
-               libsysrepo-cpp-dev (>= 1.2),
+               libsysrepo-cpp-dev (>= 1.4.7),
                libsystemd-dev,
-               libyang-cpp-dev (>= 1.0),
+               libyang-cpp-dev (>= 1.0.131),
                meson,
                pkg-config,
                python3-sphinx,
                systemd
 Standards-Version: 4.1.2
-Homepage: https://github.com/PowerDNS/pdns-sysrepo-cpp
+Homepage: https://github.com/PowerDNS/pdns-sysrepo
 
 Package: pdns-sysrepo
 Architecture: any

@@ -104,7 +104,9 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
 
       try {
         // TODO Are we responsible for this, or should we let the network service controller decide?
-        session->copy_config(SR_DS_RUNNING, SR_DS_STARTUP, module_name);
+        session->session_switch_ds(SR_DS_STARTUP);
+        session->copy_config(SR_DS_RUNNING, module_name);
+        session->session_switch_ds(SR_DS_RUNNING);
       }
       catch (const sysrepo::sysrepo_exception& se) {
         spdlog::warn("Could not copy running config to startup config");

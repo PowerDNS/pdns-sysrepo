@@ -37,7 +37,7 @@ commands:
       - run: |
           git clone -q https://github.com/CESNET/libyang.git ~/libyang && \
           cd ~/libyang && \
-          git checkout v1.0.109 && \
+          git checkout cecb048feb5a021e6ca267e3efa3da56efee6bc3 && \
           mkdir ~/libyang/build
       - run:
           command: |
@@ -60,7 +60,7 @@ commands:
       - run: |
           git clone -q https://github.com/sysrepo/sysrepo.git ~/sysrepo && \
           cd ~/sysrepo && \
-          git checkout v1.3.21 && \
+          git checkout eac941f77e008fcd1f3cfb39edd2cff64b97e002 && \
           mkdir ~/sysrepo/build
       - run:
           command: |
@@ -83,7 +83,10 @@ commands:
   build-sdbusplus:
     description: "Builds sdbusplus"
     steps:
-      - run: git clone https://github.com/openbmc/sdbusplus.git ~/sdbusplus
+      - run: |
+          git clone https://github.com/openbmc/sdbusplus.git ~/sdbusplus && \
+          cd ~/sdbusplus && \
+          git checkout 4212292bcf136d04b38ba5116aa568b0fa312798
       - run:
           command: |
             ./bootstrap.sh && \
@@ -132,7 +135,7 @@ jobs:
           command: sysrepoctl -c pdns-server -e rrset-management
           workdir: ~/project
       - run:
-          command: ninja -v test || (cat meson-logs/testlog.txt; false)
+          command: ninja -v test || (cat meson-logs/testlog.txt; cat test/remote-backend/pdns-sysrepo.log; false)
           workdir: ~/project/build
 
   test-model:

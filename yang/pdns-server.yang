@@ -37,10 +37,6 @@ module pdns-server {
         prefix dnszc;
     }
 
-    import iana-dns-parameters {
-        prefix "ianadns";
-    }
-
     organization
       "PowerDNS.COM BV";
     contact
@@ -49,10 +45,18 @@ module pdns-server {
     description
       "This module describes the PowerDNS Authoritative Server";
 
+    revision 2020-02-06 {
+      description "Add DNAME to supported rrset types";
+    }
+
     revision 2020-01-23 {
-      description 
+      description
       "* Stop accepting dns names without a trailing dot
        * Add the possibility for wildcard RRs";
+    }
+
+    revision 2020-01-20 {
+      description "Add a rrset-state container for slave zones";
     }
 
     revision 2020-01-17 {
@@ -214,6 +218,13 @@ module pdns-server {
       }
     }
 
+    typedef master-ref {
+      type leafref {
+        path "/pdns-server:master-endpoint/pdns-server:name";
+      }
+      description "This type is used to reference master servers";
+    }
+
     /*
      * Groupings
      */
@@ -298,6 +309,210 @@ module pdns-server {
         }
     }
 
+    grouping rdata {
+        container SOA {
+            when "../../type='SOA'";
+            description
+              "RDATA content for 'SOA' Resource Record.";
+            leaf mname {
+                type dnszc:domain-name;
+                mandatory "true";
+                description
+                  "Name server that was the original or primary source of
+                   data for this zone.";
+            }
+            leaf rname {
+                type dnszc:domain-name;
+                mandatory "true";
+                description
+                  "Mailbox of the person responsible for this zone.";
+            }
+            leaf serial {
+                type uint32;
+                mandatory "true";
+                description
+                  "Version number of the original copy of the zone.";
+            }
+            leaf refresh {
+                type dnszc:time-interval;
+                mandatory "true";
+                description
+                  "Time interval that should elapse before the zone should
+                   be refreshed.";
+            }
+            leaf retry {
+                type dnszc:time-interval;
+                mandatory "true";
+                description
+                  "Time interval that should elapse before a failed refresh
+                   should be retried.";
+            }
+            leaf expire {
+                type dnszc:time-interval;
+                mandatory "true";
+                description
+                  "Upper limit on the time interval that can elapse before
+                   the zone is no longer authoritative.";
+            }
+            leaf minimum {
+                type dnszc:time-interval;
+                mandatory "true";
+                description
+                  "Minimum TTL that should be exported with any RR from
+                   this zone.";
+            }
+        }
+        container A {
+            when "../../type = 'A'";
+            description
+              "RDATA content for 'A' Resource Record.";
+            reference
+              "RFC 1035: Domain Names - Implementation and
+               Specification.";
+            leaf-list address {
+                min-elements 1;
+                type inet:ipv4-address-no-zone;
+                description
+                  "IPv4 address.";
+            }
+        }
+        container CNAME {
+            when "../../type = 'CNAME'";
+            description
+              "RDATA content for 'CNAME' Resource Record.";
+            reference
+              "RFC 1035: Domain Names - Implementation and
+               Specification.";
+            leaf cname {
+                type inet:domain-name;
+                mandatory "true";
+                description
+                  "Canonical or primary name for the owner.";
+            }
+        }
+        container MX {
+            when "../../type = 'MX'";
+            description
+              "RDATA content for 'MX' Resource Record.";
+            reference
+              "RFC 1035: Domain Names - Implementation and
+               Specification.";
+            list mail-exchanger {
+                key "preference exchange";
+                leaf preference {
+                    type uint16;
+                    mandatory "true";
+                    description
+                      "Preference given to this RR among others at the same
+                       owner. Lower values are preferred.";
+                }
+                leaf exchange {
+                    type inet:domain-name;
+                    mandatory "true";
+                    description
+                      "Host willing to act as a mail exchange for the owner
+                       name.";
+                }
+            }
+        }
+        container NS {
+            when "../../type = 'NS'";
+            description
+              "RDATA content for 'NS' Resource Record.";
+            reference
+              "RFC 1035: Domain Names - Implementation and
+               Specification.";
+            leaf-list nsdname {
+                type inet:domain-name;
+                min-elements 1;
+                description
+                  "Host which should be authoritative for the specified
+                   domain.";
+            }
+        }
+        container PTR {
+            when "../../type = 'PTR'";
+            description
+              "RDATA content for 'PTR' Resource Record.";
+            reference
+              "RFC 1035: Domain Names - Implementation and
+               Specification.";
+            leaf-list ptrdname {
+                type inet:domain-name;
+                min-elements 1;
+                description
+                  "A pointer to some location in the domain name space.";
+            }
+        }
+        container TXT {
+            when "../../type = 'TXT'";
+            description
+              "RDATA content for 'TXT' Resource Record.";
+            reference
+              "RFC 1035: Domain Names - Implementation and
+               Specification.";
+            leaf-list txt-data {
+                type dnszc:ascii-string;
+                min-elements 1;
+                description
+                  "Descriptive text whose semantics depends on the domain
+                   where it is found.";
+            }
+        }
+        container AAAA {
+            when "../../type = 'AAAA'";
+            description
+              "RDATA content for 'AAAA' Resource Record.";
+            reference
+              "RFC 3596: DNS Extensions to Support IP Version 6";
+            leaf-list address {
+                type inet:ipv6-address-no-zone;
+                min-elements 1;
+                description
+                  "IPv6 address.";
+            }
+        }
+        container DNAME {
+            when "../../type = 'DNAME'";
+            description
+              "RDATA content for 'DNAME' Resource Record.";
+            reference
+              "RFC 2672: Non-Terminal DNS Name Redirection";
+            leaf target {
+                type dnszc:domain-name;
+                mandatory "true";
+                description
+                  "Target domain name that is substituted for 'owner' as a
+                   suffix of a domain name.";
+            }
+        }
+    }
+
+    grouping rrset {
+        // Nearly a straight up copy from
+        // https://gitlab.labs.nic.cz/jetconf/jetconf-knot/blob/master/yang-modules/dns-zones-state@2017-01-12.yang
+        // RRSIG data is removed
+        description
+          "RRSet";
+        uses dnszc:owner-field;
+
+        leaf ttl {
+            type dnszc:time-interval;
+            mandatory "true";
+            description
+              "Time-To-Live of the RR.";
+        }
+
+        leaf type {
+            type dnsct:rr-type;
+        }
+
+        container rdata {
+            uses rdata;
+        }
+
+    }
+
     grouping zone {
         description
           "A DNS Zone";
@@ -318,7 +533,7 @@ module pdns-server {
         leaf-list masters {
             description
               "Master servers for this zone";
-            type inet:ip-address;
+            type master-ref;
             when "../zonetype = 'slave'";
             min-elements 1;
         }
@@ -342,192 +557,16 @@ module pdns-server {
         list rrset {
             if-feature "rrset-management";
             when "../zonetype = 'master' or ../zonetype = 'native'";
-            // Nearly a straight up copy from
-            // https://gitlab.labs.nic.cz/jetconf/jetconf-knot/blob/master/yang-modules/dns-zones-state@2017-01-12.yang
-            // RRSIG data is removed
+            uses rrset;
             key "owner type";
-            description
-              "RRSet";
-            leaf owner {
-              type owner-name;
-              mandatory true;
-            }
+        }
 
-            leaf ttl {
-                type dnszc:time-interval;
-                mandatory "true";
-                description
-                  "Time-To-Live of the RR.";
-            }
-
-            leaf type {
-                type dnsct:rr-type;
-            }
-
-            container rdata {
-                container SOA {
-                    when "../../type='SOA'";
-                    description
-                      "RDATA content for 'SOA' Resource Record.";
-                    leaf mname {
-                        type host-name;
-                        mandatory "true";
-                        description
-                          "Name server that was the original or primary source of
-                           data for this zone.";
-                    }
-                    leaf rname {
-                        type host-name;
-                        mandatory "true";
-                        description
-                          "Mailbox of the person responsible for this zone.";
-                    }
-                    leaf serial {
-                        type uint32;
-                        mandatory "true";
-                        description
-                          "Version number of the original copy of the zone.";
-                    }
-                    leaf refresh {
-                        type dnszc:time-interval;
-                        mandatory "true";
-                        description
-                          "Time interval that should elapse before the zone should
-                           be refreshed.";
-                    }
-                    leaf retry {
-                        type dnszc:time-interval;
-                        mandatory "true";
-                        description
-                          "Time interval that should elapse before a failed refresh
-                           should be retried.";
-                    }
-                    leaf expire {
-                        type dnszc:time-interval;
-                        mandatory "true";
-                        description
-                          "Upper limit on the time interval that can elapse before
-                           the zone is no longer authoritative.";
-                    }
-                    leaf minimum {
-                        type dnszc:time-interval;
-                        mandatory "true";
-                        description
-                          "Minimum TTL that should be exported with any RR from
-                           this zone.";
-                    }
-                }
-                container A {
-                    when "../../type = 'A'";
-                    description
-                      "RDATA content for 'A' Resource Record.";
-                    reference
-                      "RFC 1035: Domain Names - Implementation and
-                       Specification.";
-                    leaf-list address {
-                        min-elements 1;
-                        type inet:ipv4-address-no-zone;
-                        description
-                          "IPv4 address.";
-                    }
-                }
-                container CNAME {
-                    when "../../type = 'CNAME'";
-                    description
-                      "RDATA content for 'CNAME' Resource Record.";
-                    reference
-                      "RFC 1035: Domain Names - Implementation and
-                       Specification.";
-                    leaf cname {
-                        type host-name;
-                        mandatory "true";
-                        description
-                          "Canonical or primary name for the owner.";
-                    }
-                }
-                container MX {
-                    when "../../type = 'MX'";
-                    description
-                      "RDATA content for 'MX' Resource Record.";
-                    reference
-                      "RFC 1035: Domain Names - Implementation and
-                       Specification.";
-                    list mail-exchanger {
-                      key "preference exchange";
-                        leaf preference {
-                            type uint16;
-                            mandatory "true";
-                            description
-                              "Preference given to this RR among others at the same
-                               owner. Lower values are preferred.";
-                        }
-                        leaf exchange {
-                            type host-name;
-                            mandatory "true";
-                            description
-                              "Host willing to act as a mail exchange for the owner
-                               name.";
-                        }
-                    }
-                }
-                container NS {
-                    when "../../type = 'NS'";
-                    description
-                      "RDATA content for 'NS' Resource Record.";
-                    reference
-                      "RFC 1035: Domain Names - Implementation and
-                       Specification.";
-                    leaf-list nsdname {
-                        type host-name;
-                        min-elements 1;
-                        description
-                            "Host which should be authoritative for the specified
-                           domain.";
-                    }
-                }
-                container PTR {
-                    when "../../type = 'PTR'";
-                    description
-                      "RDATA content for 'PTR' Resource Record.";
-                    reference
-                      "RFC 1035: Domain Names - Implementation and
-                       Specification.";
-                    leaf-list ptrdname {
-                        type host-name;
-                        min-elements 1;
-                        description
-                          "A pointer to some location in the domain name space.";
-                    }
-                }
-                container TXT {
-                    when "../../type = 'TXT'";
-                    description
-                      "RDATA content for 'TXT' Resource Record.";
-                    reference
-                      "RFC 1035: Domain Names - Implementation and
-                       Specification.";
-                    leaf-list txt-data {
-                        type dnszc:ascii-string;
-                        min-elements 1;
-                        description
-                          "Descriptive text whose semantics depends on the domain
-                           where it is found.";
-                    }
-                }
-                container AAAA {
-                    when "../../type = 'AAAA'";
-                    description
-                      "RDATA content for 'AAAA' Resource Record.";
-                    reference
-                      "RFC 3596: DNS Extensions to Support IP Version 6";
-                    leaf-list address {
-                        type inet:ipv6-address-no-zone;
-                        min-elements 1;
-                        description
-                          "IPv6 address.";
-                    }
-                }
-            }
+        list rrset-state {
+            config false;
+            if-feature "rrset-management";
+            when "../zonetype = 'slave'";
+            uses rrset;
+            key "owner type";
         }
     }
 
@@ -646,6 +685,30 @@ module pdns-server {
         unique "ip-address port";
 
         description "Address to notify";
+        leaf name {
+          type string;
+        }        
+
+        uses endpoint {
+          refine port {
+            default 53;
+          }
+        }
+      }
+    }
+
+    list master-endpoint {
+      key "name";
+      description
+        "Endpoints that can act as a master for slave zones";
+      leaf name {
+        type string;
+      }
+      list address {
+        key "name";
+        unique "ip-address port";
+
+        description "Address that are a master";
         leaf name {
           type string;
         }        
