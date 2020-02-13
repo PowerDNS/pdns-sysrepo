@@ -228,7 +228,12 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
     backend b;
     b.backendtype = "remote";
     b.name = "pdns_sysrepo";
-    b.options.push_back({"connection-string", "http:url=http://localhost:9100/dns"});
+    auto addressNode = session->get_subtree("/pdns-server:pdns-sysrepo/remote-backend/listen-address/ip-address");
+    auto portNode = session->get_subtree("/pdns-server:pdns-sysrepo/remote-backend/listen-address/port");
+    auto address = std::make_shared<libyang::Data_Node_Leaf_List>(addressNode)->value_str();
+    auto port = std::make_shared<libyang::Data_Node_Leaf_List>(portNode)->value()->uint16();
+    iputils::ComboAddress remoteBackendAddr(address, port);
+    b.options.push_back({"connection-string", fmt::format("http:url=http://{}/dns", remoteBackendAddr.toStringWithPort())});
     b.options.push_back({"dnssec", "yes"});
     backends.push_back(b);
   }
