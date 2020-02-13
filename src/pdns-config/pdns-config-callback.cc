@@ -48,6 +48,7 @@ int PdnsConfigCB::module_change(sysrepo::S_Session session, const char* module_n
 
   if (event == SR_EV_ENABLED) {
     try {
+      isFromEnabled = true;
       changeConfigUpdate(session, request_id);
     } catch(const std::exception &e) {
       spdlog::warn("Unable to create temporary config: {}", e.what());
@@ -57,8 +58,13 @@ int PdnsConfigCB::module_change(sysrepo::S_Session session, const char* module_n
 
   if (event == SR_EV_CHANGE) {
     try {
+      isFromEnabled = false;
       changeConfigUpdate(session, request_id);
-    } catch(const std::exception &e) {
+    } catch(const std::runtime_error &e) {
+      spdlog::warn("PdnsConfigCB::{} - {}", __func__, e.what());
+      return SR_ERR_INVAL_ARG;
+    }
+    catch(const std::exception &e) {
       spdlog::warn("Unable to create temporary config: {}", e.what());
       return SR_ERR_OPERATION_FAILED;
     }
@@ -108,33 +114,33 @@ int PdnsConfigCB::module_change(sysrepo::S_Session session, const char* module_n
         return SR_ERR_OPERATION_FAILED;
       }
 
-      if (!d_config->getDoServiceRestart()) {
+      if (d_config->getDoServiceRestart()) {
         restartService(d_config->getServiceName());
       }
+    }
 
-      if (d_apiClient != nullptr) {
-        if (apiConfigChanged) {
-          try {
-            auto sess = std::static_pointer_cast<sr::Session>(session);
-            configureApi(sess->getConfigTree());
-            apiConfigChanged = false;
-          }
-          catch (const std::exception& e) {
-            spdlog::warn("Could not initiate API Client: {}", e.what());
-            apiConfigChanged = false;
-            return SR_ERR_OPERATION_FAILED;
-          }
+    if (d_apiClient != nullptr) {
+      if (apiConfigChanged) {
+        try {
+          auto sess = std::static_pointer_cast<sr::Session>(session);
+          configureApi(sess->getConfigTree());
+          apiConfigChanged = false;
+        }
+        catch (const std::exception& e) {
+          spdlog::warn("Could not initiate API Client: {}", e.what());
+          apiConfigChanged = false;
+          return SR_ERR_OPERATION_FAILED;
         }
       }
+    }
 
-      try {
-        doneZoneAddAndDelete();
-        doneZoneModify();
-      }
-      catch (const std::exception& e) {
-        spdlog::warn("Zone manipulation failed: {}", e.what());
-        return SR_ERR_OPERATION_FAILED;
-      }
+    try {
+      doneZoneAddAndDelete();
+      doneZoneModify();
+    }
+    catch (const std::exception& e) {
+      spdlog::warn("Zone manipulation failed: {}", e.what());
+      return SR_ERR_OPERATION_FAILED;
     }
   }
 

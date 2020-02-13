@@ -23,6 +23,10 @@ void PdnsConfigCB::changeConfigUpdate(sysrepo::S_Session& session, const uint32_
   auto change = session->get_change_tree_next(iter);
 
   if (change != nullptr) {
+    if (!d_config->getDoServiceRestart() && !isFromEnabled) {
+      session->set_error("Unable to process configuration changes, service may not restart", nullptr);
+      throw std::runtime_error("Service restarts are disabled");
+    }
     pdnsConfigChanged = true;
     auto fpath = tmpFile(request_id);
 

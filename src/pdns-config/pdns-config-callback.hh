@@ -152,6 +152,7 @@ protected:
   std::vector<string> zonesRemoved;
   bool pdnsConfigChanged{false};
   bool apiConfigChanged{false};
+  bool isFromEnabled{false};
 };
 
 /**
