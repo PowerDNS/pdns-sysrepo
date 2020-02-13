@@ -74,8 +74,8 @@
   ],
   "pdns-server:pdns-sysrepo": {
     "pdns-service": {
-      "name": "pdns-sysrepo-test.service",
-      "config-file": "@pdns-config-file@"
+      "config-file": "@pdns-config-file@",
+      "restart": false
     },
     "logging": {
       "level": "trace",

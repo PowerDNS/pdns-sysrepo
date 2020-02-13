@@ -54,6 +54,8 @@ int Config::module_change(sysrepo::S_Session session, const char* module_name,
       setLogFormat(getOption("logging/timestamp", session) == "true");
       d_pdns_service = getOption("pdns-service/name", session);
       d_pdns_conf = getOption("pdns-service/config-file", session);
+      auto restartOpt = getOption("pdns-service/restart", session);
+      d_pdns_restart = (restartOpt == "true");
     }
     catch (const sysrepo::sysrepo_exception& e) {
       spdlog::warn("Unable to retrieve initial config due to sysrepo error: {}", e.what());
@@ -91,6 +93,8 @@ int Config::module_change(sysrepo::S_Session session, const char* module_name,
             setLoglevel(leaf->value_str());
           } else if (path == "/pdns-server:pdns-sysrepo/logging/timestamp") {
             setLogFormat(leaf->value()->bln());
+          } else if (path == "/pdns-server:pdns-sysrepo/pdns-service/restart") {
+            d_pdns_restart = (leaf->value()->bln());
           }
         }
       }
