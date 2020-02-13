@@ -1,6 +1,7 @@
 #include "test-common.hh"
 
-#include "configurator/subscribe.hh"
+#include "pdns-config/pdns-config-callback.hh"
+#include "config.h"
 
 #include "callback-wrapper.hh"
 #include "api-mock.hh"
@@ -26,7 +27,7 @@ TEST(zone_test, add_zone) {
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   if (argc != 2) {
-    cerr << "Please prove the path to the yang directory" << endl;
+    std::cerr << "Please prove the path to the yang directory" << std::endl;
     return 1;
   }
   yangDir = argv[1];
@@ -38,7 +39,7 @@ int main(int argc, char** argv) {
   apiConfig->setBaseUrl("http://127.0.0.1:" + std::to_string(mock_server_env->getMock()->getPort()) + "/api/v1");
   apiConfig->setApiKey("X-API-Key", APIKEY);
   apiConfig->setUserAgent("pdns-sysrepo/" + string(VERSION));
-  apiClient = make_shared<pdns_api::ApiClient>(pdns_api::ApiClient(apiConfig));
+  apiClient = std::make_shared<pdns_api::ApiClient>(pdns_api::ApiClient(apiConfig));
 
   return RUN_ALL_TESTS();
 }

@@ -334,6 +334,41 @@ protected:
   void logRequest(const Pistache::Rest::Request &request);
   void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
 
+  enum class IpLeafRef
+  {
+    master,
+    also_notify
+  };
+
+  /**
+   * @brief Get all IPs for an endpoint leaf-ref
+   * 
+   * @param session                    A sysrepo session
+   * @param node                       The first libyang node of the leaf-list that contains the leaf-refs
+   * @param kind                       What IP addresses we need to grab
+   * @throw std::logic_error           When session is a nullptr
+   * @throw sysrepo::sysrepo_exception When sysrepo errors
+   * @return nlohmann::json::array_t 
+   */
+  nlohmann::json::array_t getListofIPs(const sysrepo::S_Session& session, const libyang::S_Data_Node& node, const IpLeafRef& kind);
+
+  enum class NetmaskLeafRef
+  {
+    allow_axfr
+  };
+
+  /**
+   * @brief Get all netmasks for an ip-prefix leaf-ref
+   * 
+   * @param session                    A sysrepo session
+   * @param node                       The first libyang node of the leaf-list that contains the leaf-refs
+   * @param kind                       What type of netmasks we need to grab
+   * @throw std::logic_error           When session is a nullptr
+   * @throw sysrepo::sysrepo_exception When sysrepo errors
+   * @return nlohmann::json::array_t 
+   */
+  nlohmann::json::array_t getListofNetmasks(const sysrepo::S_Session& session, const libyang::S_Data_Node& node, const NetmaskLeafRef& kind);
+
   typedef std::tuple<std::string, std::string, uint32_t> RRSetKey;
   typedef std::map<RRSetKey, std::vector<std::string> > RRSets;
 

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright Pieter Lexis <pieter.lexis@powerdns.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,35 +15,30 @@
  */
 
 #include <boost/filesystem.hpp>
+#include <spdlog/spdlog.h>
 
-#include "api/ZonesApi.h"
-#include "subscribe.hh"
-#include "configurator.hh"
-#include "util.hh"
+#include "pdns-config-callback.hh"
+#include "util/util.hh"
 #include "sr_wrapper/session.hh"
-#include "config/config.hh"
 
+namespace pdns_api = org::openapitools::client::api;
+namespace pdns_api_model = org::openapitools::client::model;
 namespace fs = boost::filesystem;
 
-namespace pdns_conf
+namespace pdns_sysrepo::pdns_config
 {
-std::shared_ptr<ServerConfigCB> getServerConfigCB(shared_ptr<pdns_sysrepo::config::Config> &config, shared_ptr<pdns_api::ApiClient> &apiClient) {
-  auto cb = make_shared<ServerConfigCB>(ServerConfigCB(
+std::shared_ptr<PdnsConfigCB> getServerConfigCB(std::shared_ptr<pdns_sysrepo::config::Config> &config, std::shared_ptr<pdns_api::ApiClient> &apiClient) {
+  auto cb = std::make_shared<PdnsConfigCB>(PdnsConfigCB(
     config,
     apiClient));
   return cb;
 }
 
-std::shared_ptr<ZoneCB> getZoneCB(shared_ptr<pdns_api::ApiClient> &apiClient) {
-  auto cb = make_shared<ZoneCB>(ZoneCB(apiClient));
-  return cb;
+std::string PdnsConfigCB::tmpFile(const uint32_t request_id) {
+  return d_config->getPdnsConfigFilename() + "-tmp-" + std::to_string(request_id);
 }
 
-string ServerConfigCB::tmpFile(const uint32_t request_id) {
-  return d_config->getPdnsConfigFilename() + "-tmp-" + to_string(request_id);
-}
-
-int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module_name,
+int PdnsConfigCB::module_change(sysrepo::S_Session session, const char* module_name,
   const char* xpath, sr_event_t event,
   uint32_t request_id, void* private_data) {
   spdlog::trace("Had callback. module_name={} xpath={} event={} request_id={}",
@@ -54,7 +49,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
   if (event == SR_EV_ENABLED) {
     try {
       changeConfigUpdate(session, request_id);
-    } catch(const exception &e) {
+    } catch(const std::exception &e) {
       spdlog::warn("Unable to create temporary config: {}", e.what());
       return SR_ERR_OPERATION_FAILED;
     }
@@ -63,7 +58,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
   if (event == SR_EV_CHANGE) {
     try {
       changeConfigUpdate(session, request_id);
-    } catch(const exception &e) {
+    } catch(const std::exception &e) {
       spdlog::warn("Unable to create temporary config: {}", e.what());
       return SR_ERR_OPERATION_FAILED;
     }
@@ -72,7 +67,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       try {
         changeZoneAddAndDelete(session);
       }
-      catch (const exception& e) {
+      catch (const std::exception& e) {
         spdlog::warn("Zone changes not possible: {}", e.what());
         return SR_ERR_OPERATION_FAILED;
       }
@@ -80,7 +75,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       try {
         changeZoneModify(session);
       }
-      catch (const exception& e) {
+      catch (const std::exception& e) {
         spdlog::warn("Zone modifications not possible: {}", e.what());
         return SR_ERR_OPERATION_FAILED;
       }
@@ -96,7 +91,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
         spdlog::debug("Moving {} to {}", fpath, d_config->getPdnsConfigFilename());
         fs::rename(fpath, d_config->getPdnsConfigFilename());
       }
-      catch (const exception& e) {
+      catch (const std::exception& e) {
         spdlog::warn("Unable to move {} to {}: {}", fpath, d_config->getPdnsConfigFilename(), e.what());
         fs::remove(fpath);
         return SR_ERR_OPERATION_FAILED;
@@ -120,7 +115,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       if (d_apiClient != nullptr) {
         if (apiConfigChanged) {
           try {
-            auto sess = static_pointer_cast<sr::Session>(session);
+            auto sess = std::static_pointer_cast<sr::Session>(session);
             configureApi(sess->getConfigTree());
             apiConfigChanged = false;
           }
@@ -150,7 +145,7 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
       try {
         fs::remove(fpath);
       }
-      catch (const exception& e) {
+      catch (const std::exception& e) {
         spdlog::warn("Unable to remove temporary file fpath={}: {}", fpath, e.what());
       }
     }
@@ -164,47 +159,5 @@ int ServerConfigCB::module_change(sysrepo::S_Session session, const char* module
   return SR_ERR_OK;
 }
 
-int ZoneCB::oper_get_items(sysrepo::S_Session session, const char* module_name,
-  const char* path, const char* request_xpath,
-  uint32_t request_id, libyang::S_Data_Node& parent, void* private_data) {
-  spdlog::trace("oper_get_items called path={} request_xpath={}",
-    path, (request_xpath != nullptr) ? request_xpath : "<none>");
 
-  libyang::S_Context ctx = session->get_context();
-  libyang::S_Module mod = ctx->get_module(module_name);
-  parent.reset(new libyang::Data_Node(ctx, "/pdns-server:zones-state", nullptr, LYD_ANYDATA_CONSTSTRING, 0));
-
-  pdns_api::ZonesApi zoneApiClient(d_apiClient);
-  try {
-    // We use a blocking call
-    auto res = zoneApiClient.listZones("localhost", boost::none);
-    auto zones = res.get();
-    for (const auto &zone : zones) {
-      libyang::S_Data_Node zoneNode(new libyang::Data_Node(parent, mod, "zones"));
-      libyang::S_Data_Node classNode(new libyang::Data_Node(zoneNode, mod, "class", "IN"));
-      libyang::S_Data_Node nameNode(new libyang::Data_Node(zoneNode, mod, "name", zone->getName().c_str()));
-      libyang::S_Data_Node serialNode(new libyang::Data_Node(zoneNode, mod, "serial", to_string(zone->getSerial()).c_str()));
-
-      // Lowercase zonekind
-      string zoneKind = zone->getKind();
-      std::transform(zoneKind.begin(), zoneKind.end(), zoneKind.begin(), [](unsigned char c){ return std::tolower(c); });
-      libyang::S_Data_Node zonetypeNode(new libyang::Data_Node(zoneNode, mod, "zonetype", zoneKind.c_str()));
-
-      if (zoneKind == "slave") {
-        for (auto const &master: zone->getMasters()) {
-          libyang::S_Data_Node(new libyang::Data_Node(zoneNode, mod, "masters", master.c_str()));
-        }
-      }
-
-    }
-  } catch (const web::uri_exception &e) {
-    spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
-  } catch (const web::http::http_exception &e) {
-    spdlog::warn("Unable to retrieve zones from from server: {}", e.what());
-  } catch (const std::exception &e) {
-    spdlog::warn("Could not create zonestatus: {}", e.what());
-  }
-
-  return SR_ERR_OK;
 }
-} // namespace pdns_conf

@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <fstream>
-
-#include <boost/filesystem.hpp>
-#include <mstch/mstch.hpp>
-#include <spdlog/spdlog.h>
 #include <sysrepo-cpp/Session.hpp>
+#include <mstch/mstch.hpp>
+#include <ostream>
+#include <boost/filesystem.hpp>
 
-#include "configurator.hh"
-#include "util.hh"
+#include "pdns-config.hh"
+#include "spdlog/spdlog.h"
+#include "spdlog/fmt/fmt.h"
+#include "util/util.hh"
 
-using std::make_shared;
-using std::range_error;
-using std::runtime_error;
 namespace fs = boost::filesystem;
 
-namespace pdns_conf
+namespace pdns_sysrepo::pdns_config
 {
-static const string pdns_conf_template = R"(
+static const std::string pdns_conf_template = R"(
 local-address =
 {{ #local-address }}
 local-address += {{ address }} # {{ name }}
@@ -76,7 +70,7 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
   // spdlog::debug("root node name={} schema_type={} path={}", node->schema()->name(), libyangNodeType2String(node->schema()->nodetype()), node->schema()->path());
 
   libyang::S_Data_Node_Leaf_List leaf;
-  string nodename(node->schema()->name());
+  std::string nodename(node->schema()->name());
 
   if (node->schema()->nodetype() == LYS_CONTAINER && nodename == "pdns-server") {
     auto child = node->child();
@@ -107,7 +101,7 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
       nodename = child->schema()->name();
       // spdlog::debug("node name={} schema_type={} path={}", child->schema()->name(), libyangNodeType2String(child->schema()->nodetype()), child->schema()->path());
       if (child->schema()->nodetype() == LYS_LEAF) {
-        leaf = make_shared<libyang::Data_Node_Leaf_List>(child);
+        leaf = std::make_shared<libyang::Data_Node_Leaf_List>(child);
       }
       if(nodename == "master") {
         master = leaf->value()->bln();
@@ -119,13 +113,13 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
         listenAddress la;
         for (const auto &n: child->tree_dfs()) {
           if(n->schema()->nodetype() == LYS_LEAF) {
-            string leafName(n->schema()->name());
-            leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+            std::string leafName(n->schema()->name());
+            leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
             if(leafName == "name") {
               la.name = leaf->value()->string();
             }
             if(leafName == "ip-address") {
-              la.address = ComboAddress(leaf->value()->string(), la.address.getPort());
+              la.address = iputils::ComboAddress(leaf->value()->string(), la.address.getPort());
             }
             if(leafName == "port") {
               la.address.setPort(leaf->value()->uint16());
@@ -139,8 +133,8 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
         backend b;
         for (const auto &n: child->tree_dfs()) {
           if(n->schema()->nodetype() == LYS_LEAF) {
-            string leafName(n->schema()->name());
-            leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+            std::string leafName(n->schema()->name());
+            leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
             if(leafName == "name") {
               b.name = leaf->value_str();
             }
@@ -164,8 +158,8 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
             // The first child is the container leaf
             continue;
           }
-          leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
-          string leafName(n->schema()->name());
+          leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+          std::string leafName(n->schema()->name());
           if (leafName == "password") {
             webserver.password = leaf->value_str();
             webserver.webserver = true;
@@ -175,7 +169,7 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
             webserver.api = true;
           }
           if (leafName == "address") {
-            webserver.address = ComboAddress(leaf->value_str(), webserver.address.getPort());
+            webserver.address = iputils::ComboAddress(leaf->value_str(), webserver.address.getPort());
           }
           if (leafName == "port") {
             webserver.address.setPort(leaf->value()->uint16());
@@ -196,15 +190,15 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
     for (auto const n : node->find_path("/pdns-server:pdns-server/pdns-server:allow-axfr")->data()) {
       if (n->schema()->nodetype() == LYS_LEAFLIST && session != nullptr) {
         axfrAcl a;
-        auto leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+        auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
         // spdlog::trace("ACL node path={} name={} value={}", leaf->path(), leaf->schema()->name(), leaf->value_str());
         a.name = leaf->value_str();
         auto aclNode = session->get_subtree(fmt::format("/pdns-server:axfr-access-control-list[name='{}']", leaf->value_str()).c_str());
         if (aclNode) {
           for (auto const networkNode : aclNode->find_path("/pdns-server:axfr-access-control-list/pdns-server:network/pdns-server:ip-prefix")->data()) {
-            auto networkLeaf = make_shared<libyang::Data_Node_Leaf_List>(networkNode);
+            auto networkLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(networkNode);
             a.addresses.push_back(networkLeaf->value_str());
-            spdlog::trace("Have ACL leafref target path={} name={} type={} value={}", networkNode->path(), networkNode->schema()->name(), util::libyangNodeType2String(networkNode->schema()->nodetype()), networkLeaf->value_str());
+            spdlog::trace("Have ACL leafref target path={} name={} type={} value={}", networkNode->path(), networkNode->schema()->name(), pdns_sysrepo::util::libyangNodeType2String(networkNode->schema()->nodetype()), networkLeaf->value_str());
           }
         }
         allowAxfrIps.push_back(a);
@@ -213,7 +207,7 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
     for (auto const n : node->find_path("/pdns-server:pdns-server/pdns-server:also-notify")->data()) {
       if (n->schema()->nodetype() == LYS_LEAFLIST && session != nullptr) {
         axfrAcl a;
-        auto leaf = make_shared<libyang::Data_Node_Leaf_List>(n);
+        auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
         a.name = leaf->value_str();
         auto alsoNotifyNode = session->get_subtree(fmt::format("/pdns-server:notify-endpoint[name='{}']", leaf->value_str()).c_str());
         if (alsoNotifyNode) {
@@ -240,18 +234,18 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
   }
 }
 
-void PdnsServerConfig::writeToFile(const string &fpath) {
+void PdnsServerConfig::writeToFile(const std::string &fpath) {
   spdlog::debug("Attempting to create configuration file={}", fpath);
   auto p = fs::path(fpath);
   auto d = p.remove_filename();
   if (!fs::is_directory(d)) {
     // TODO find better exception
-    throw range_error(d.string() + " is not a directory");
+    throw std::range_error(d.string() + " is not a directory");
   }
 
   std::ofstream outputFile(fpath);
   if (!outputFile) {
-    throw runtime_error("Unable to open output file '" + fpath + "'");
+    throw std::runtime_error("Unable to open output file '" + fpath + "'");
   }
 
   outputFile << getConfig();
@@ -259,7 +253,7 @@ void PdnsServerConfig::writeToFile(const string &fpath) {
   spdlog::trace("Written config file {}", fpath);
 }
 
-string PdnsServerConfig::getConfig() {
+std::string PdnsServerConfig::getConfig() {
   // Don't do HTML escaping, we're not a webserver
   mstch::config::escape = [](const std::string& str) -> std::string {
     return str;
@@ -331,7 +325,7 @@ string PdnsServerConfig::getConfig() {
   return mstch::render(pdns_conf_template, ctx);
 }
 
-string PdnsServerConfig::bool2str(const bool b) {
+std::string PdnsServerConfig::bool2str(const bool b) {
   return b ? "yes" : "no";
 }
 } // namespace pdns_conf

@@ -81,19 +81,25 @@ class TestRemoteBackend(unittest.TestCase):
 
     def test_getDomainMetadata_ALSONOTIFY(self):
         data = requests.get(self.url + 'getDomainMetadata/example.com./ALSO-NOTIFY').json()
-        self.assertEqual(len(data['result']), 2)
+        self.assertEqual(len(data['result']), 3)
         print(data)
         self.assertEqual(data['result'][0], '192.0.2.200:53')
         self.assertEqual(data['result'][1], '[2001:db8::53:1]:53')
+        self.assertEqual(data['result'][2], '192.0.2.222:53')
 
     def test_getDomainMetadata_ALSONOTIFY_with_port(self):
         data = requests.get(self.url + 'getDomainMetadata/testdomain.example./ALSO-NOTIFY').json()
-        self.assertEqual(len(data['result']), 1)
+        self.assertEqual(len(data['result']), 2)
         self.assertEqual(data['result'][0], '192.0.2.3:1500')
+        self.assertEqual(data['result'][1], '192.0.2.222:53')
 
     def test_getDomainMetadata_ALLOWAXFR(self):
         data = requests.get(self.url + 'getDomainMetadata/example.com./ALLOW-AXFR-FROM').json()
-        self.assertEqual(len(data['result']), 2)
+        self.assertEqual(len(data['result']), 4)
+        self.assertEqual(data['result'][0], '::1/128')
+        self.assertEqual(data['result'][1], '127.0.0.0/8')
+        self.assertEqual(data['result'][2], '2001:db8:53::/64')
+        self.assertEqual(data['result'][3], '192.0.2.128/25')
 
     def test_getDomainMetadata_unknown(self):
         response = requests.get(self.url + 'getDomainMetadata/example.com./UNKNOWN-METADATA')

@@ -25,11 +25,11 @@
 #include <pistache/net.h>
 
 #include "sr_wrapper/session.hh"
-#include "configurator/subscribe.hh"
-#include "configurator/configurator.hh"
 #include "config/config.hh"
 #include "config.h"
 #include "remote-backend/remote-backend.hh"
+#include "pdns-config/pdns-config-callback.hh"
+#include "zone-oper-callback/zone-oper-callback.hh"
 
 using std::set;
 using std::cout;
@@ -132,14 +132,14 @@ int main(int argc, char* argv[]) {
       spdlog::debug("Registering config change callback");
       sysrepo::S_Session sSess(make_shared<sysrepo::Session>(sess));
       auto s = sysrepo::Subscribe(sSess);
-      auto cb = pdns_conf::getServerConfigCB(myConfig, apiClient);
+      auto cb = pdns_sysrepo::pdns_config::getServerConfigCB(myConfig, apiClient);
       s.module_change_subscribe("pdns-server", cb, nullptr, nullptr, 0, SR_SUBSCR_ENABLED);
       spdlog::debug("Registered config change callback");
 
       if (!rrsetManagement) {
         spdlog::debug("Registering zone operational data callback");
         auto zoneSubscribe = sysrepo::Subscribe(sSess);
-        auto zoneCB = pdns_conf::getZoneCB(apiClient);
+        auto zoneCB = pdns_sysrepo::zone_oper_callback::getZoneCB(apiClient);
         zoneSubscribe.oper_get_items_subscribe("pdns-server", "/pdns-server:zones-state", zoneCB);
         spdlog::debug("Registered zone operational data callback");
       }

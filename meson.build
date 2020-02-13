@@ -10,14 +10,18 @@ conf_data.set('bindir', get_option('bindir'))
 conf_data.set('sysconfdir', get_option('sysconfdir'))
 conf_data.set('version', meson.project_version())
 
-sr_wrapper = files('sr_wrapper/session.hh', 'sr_wrapper/session.cc')
-pdns_sysrepo = files('src/configurator/configurator.cc', 'src/config/config.cc',
-  'src/configurator/subscribe.cc', 'src/configurator/subscribe/zones.cc', 'src/configurator/subscribe/service.cc',
-  'src/configurator/subscribe/helpers.cc', 'src/configurator/subscribe/pdns-config.cc',
-  'src/configurator/util.hh', 'src/configurator/util.cc'
+sr_wrapper_sources = files('sr_wrapper/session.cc')
+
+pdns_sysrepo_sources = files(
+  'src/pdns-sysrepo.cc',
+  'src/config/config.cc'
   )
 
-pdns_sysrepo_remote_backend = files(
+pdns_sysrepo_util_sources = files(
+  'src/util/util.cc',
+)
+
+pdns_sysrepo_remote_backend_sources = files(
   'src/remote-backend/list.cc', 
   'src/remote-backend/lookup.cc',
   'src/remote-backend/httpfunc.cc',
@@ -37,6 +41,19 @@ pdns_sysrepo_remote_backend = files(
   'src/remote-backend/setFresh.cc',
   'src/remote-backend/transactions.cc',
   'src/remote-backend/feedRecord.cc'
+)
+
+pdns_sysrepo_pdns_config_sources = files(
+  'src/pdns-config/api-client.cc',
+  'src/pdns-config/config-update.cc',
+  'src/pdns-config/pdns-config-callback.cc',
+  'src/pdns-config/pdns-config.cc',
+  'src/pdns-config/service.cc',
+  'src/pdns-config/zone-management.cc',
+)
+
+pdns_sysrepo_zone_oper_callback = files(
+  'src/zone-oper-callback/zone-oper-callback.cc'
 )
 
 sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.7')
@@ -93,8 +110,14 @@ version_h = configure_file(input : 'src/config.h.in',
                output : 'config.h',
                configuration : conf_data)
 
-pdns_sysrepo_bin = executable('pdns-sysrepo', 'src/pdns-sysrepo.cc',
-  sr_wrapper, pdns_sysrepo, pdns_sysrepo_remote_backend, version_h,
+pdns_sysrepo_bin = executable('pdns-sysrepo',
+  pdns_sysrepo_pdns_config_sources,
+  pdns_sysrepo_remote_backend_sources,
+  pdns_sysrepo_sources,
+  pdns_sysrepo_util_sources,
+  pdns_sysrepo_zone_oper_callback,
+  sr_wrapper_sources,
+  version_h,
   dependencies: [sysrepo_cpp_dep, spdlog_dep, boost_deps, mstch_dep, libsystemd_dep, libyang_cpp_dep, sdbusplus_dep, pdns_api_cpp_dep, pistache_dep, json_dep],
   include_directories: [pdns_api_cpp_incdir, include_directories('src'), pistache_include],
   install: true)

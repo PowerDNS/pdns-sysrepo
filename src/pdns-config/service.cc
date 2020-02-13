@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 #include <sdbusplus/sdbus.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
+#include <spdlog/spdlog.h>
 
-#include "../subscribe.hh"
+#include "pdns-config-callback.hh"
 
-namespace pdns_conf
+namespace pdns_sysrepo::pdns_config
 {
-void ServerConfigCB::restartService(const string& service) {
+void PdnsConfigCB::restartService(const string& service) {
   bool hadSignal = false;
   sdbusplus::message::message signalMessage;
   auto signalInterface = sdbusplus::bus::match::rules::interface("org.freedesktop.systemd1.Manager");
@@ -51,7 +54,7 @@ void ServerConfigCB::restartService(const string& service) {
       reply = b.call(m);
     }
     catch (const sdbusplus::exception::exception& e) {
-      throw runtime_error("Could not request service restart: " + string(e.description()));
+      throw std::runtime_error("Could not request service restart: " + string(e.description()));
     }
 
     try {
@@ -60,7 +63,7 @@ void ServerConfigCB::restartService(const string& service) {
       spdlog::debug("restart requested job={}", job.str);
     }
     catch (const sdbusplus::exception_t& e) {
-      throw runtime_error("Problem getting reply: " + string(e.description()));
+      throw std::runtime_error("Problem getting reply: " + string(e.description()));
     }
 
     // Wait for the signal to come back
@@ -93,7 +96,7 @@ void ServerConfigCB::restartService(const string& service) {
   catch (const sdbusplus::exception_t& e) {
     spdlog::warn("Could not communicate to dbus: {}", e.description());
   }
-  catch (const runtime_error& e) {
+  catch (const std::runtime_error& e) {
     spdlog::warn("Error restarting: {}", e.what());
   }
 }

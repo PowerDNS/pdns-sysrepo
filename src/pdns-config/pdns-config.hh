@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright Pieter Lexis <pieter.lexis@powerdns.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,22 +15,11 @@
  */
 #pragma once
 
-#include <string>
-#include <vector>
-
-#include <sysrepo-cpp/Sysrepo.hpp>
-#include <libyang/Libyang.hpp>
-#include <libyang/Tree_Data.hpp>
-
 #include "iputils/iputils.hh"
+#include "libyang/Libyang.hpp"
+#include "sysrepo-cpp/Sysrepo.hpp"
 
-using std::vector;
-using std::string;
-using std::pair;
-using iputils::ComboAddress;
-
-namespace pdns_conf
-{
+namespace pdns_sysrepo::pdns_config {
 class PdnsServerConfig
 {
 public:
@@ -53,7 +42,7 @@ public:
    * @param fpath             File path to write to
    * @throw std::range_error  When the path is invalid
    */
-  void writeToFile(const string &fpath);
+  void writeToFile(const std::string &fpath);
   void changeConfigValue(const libyang::S_Data_Node_Leaf_List &node);
   void deleteConfigValue();
 
@@ -96,41 +85,41 @@ private:
    * @param b        bool to convert
    * @return string 
    */
-  string bool2str(const bool b);
+  std::string bool2str(const bool b);
 
   struct listenAddress {
-      string name;
-      ComboAddress address;
+      std::string name;
+      iputils::ComboAddress address;
   };
 
   struct axfrAcl {
-    string name;
-    vector<string> addresses; // TODO migrate to iputil::NetMask
+    std::string name;
+    std::vector<std::string> addresses; // TODO migrate to iputil::NetMask
   };
 
   struct backend {
-    string name;
-    string backendtype;
-    vector<pair<string, string>> options{};
+    std::string name;
+    std::string backendtype;
+    std::vector<std::pair<std::string, std::string>> options{};
   };
 
   struct {
     bool webserver{false};
-    ComboAddress address{"127.0.0.1:8081"};
-    string password;
+    iputils::ComboAddress address{"127.0.0.1:8081"};
+    std::string password;
     bool api{false};
-    string api_key;
-    vector<string> allow_from{{"127.0.0.0/8"}};
+    std::string api_key;
+    std::vector<std::string> allow_from{{"127.0.0.0/8"}};
     uint32_t max_body_size{2};
-    string loglevel{"normal"};
+    std::string loglevel{"normal"};
   } webserver;
 
-  vector<listenAddress> listenAddresses{};
-  vector<backend> backends;
+  std::vector<listenAddress> listenAddresses{};
+  std::vector<backend> backends;
   bool master{false};
   bool slave{false};
 
-  vector<axfrAcl> allowAxfrIps;
-  vector<axfrAcl> alsoNotifyIps;
+  std::vector<axfrAcl> allowAxfrIps;
+  std::vector<axfrAcl> alsoNotifyIps;
 };
-} // namespace pdns_conf
+}

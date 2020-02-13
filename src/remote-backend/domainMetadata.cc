@@ -26,6 +26,7 @@ void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Ht
   zone = urlDecode(zone);
   auto kind = request.param(":kind").as<string>();
   kind = urlDecode(kind);
+  spdlog::debug("RemoteBackend::{} - Requested metadata - zone={} kind={}", __func__, zone, kind);
 
   try {
     auto bestZone = findBestZone(zone);
@@ -46,50 +47,52 @@ void RemoteBackend::getDomainMetadata(const Pistache::Rest::Request& request, Ht
 
   nlohmann::json::array_t metadata;
   auto session = getSession();
-  libyang::S_Data_Node tree;
+  libyang::S_Data_Node zoneTree, pdnsServerTree;
   try {
-    tree = getZoneTree(session);
+    zoneTree = getZoneTree(session);
+    pdnsServerTree = session->get_subtree("/pdns-server:pdns-server");
   } catch(const sysrepo::sysrepo_exception &e) {
     auto errors = getErrorsFromSession(session);
-    spdlog::error("remote-backend - getDomainMetadata - {}", e.what());
-    for (auto const &error : errors) {
-      spdlog::error("remote-backend - getDomainMetadata -     xpath={} message=", error.first, error.second);
-    }
+    spdlog::error("RemoteBackend::getDomainMetadata - {}", e.what());
+    logSessionErrors(session, spdlog::level::err);
     sendError(request, response, e.what());
     return;
   }
 
-  spdlog::trace("kind {}", kind);
   try {
     if (kind == "ALSO-NOTIFY") {
       auto alsoNotifyXPath = fmt::format("/pdns-server:zones/zones[name='{}']/also-notify", zone);
-      for (auto const& alsoNotifyNode : tree->find_path(alsoNotifyXPath.c_str())->data()) {
-        auto alsoNotifyleaf = std::make_shared<libyang::Data_Node_Leaf_List>(alsoNotifyNode);
-        auto notifyXPath = fmt::format("/pdns-server:notify-endpoint[name='{}']", alsoNotifyleaf->value_str());
-        auto notifyNode = session->get_subtree(notifyXPath.c_str());
-        spdlog::trace("RemoteBackend::getDomainMetadata - notifyNode path={}", notifyNode->path());
-        for (auto const& notifyAddrNode : notifyNode->find_path("/pdns-server:notify-endpoint/address")->data()) {
-          spdlog::trace("RemoteBackend::getDomainMetadata - notifyAddrNode path={}", notifyAddrNode->path());
-          auto n = notifyAddrNode->child()->next(); // /pdns-server/notify-endpoint[name]/address[name]/ip-address
-          auto addrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-          n = n->next(); // /pdns-server:notify-endpoint[name]/address[name]/port
-          auto portLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-          iputils::ComboAddress a(addrLeaf->value_str(), portLeaf->value()->uint16());
-          metadata.push_back(a.toStringWithPort());
-        }
+      const static std::string globalAlsoNotifyXPath = "/pdns-server:pdns-server/pdns-server:also-notify";
+
+      spdlog::trace("RemoteBackend::{} - Grabbing also-notify addresses - alsoNotifyXPath='{}' globalAlsoNotifyXPath='{}'", __func__, alsoNotifyXPath, globalAlsoNotifyXPath);
+      for (auto const& alsoNotifyNode : zoneTree->find_path(alsoNotifyXPath.c_str())->data()) {
+        auto addresses = getListofIPs(session, alsoNotifyNode, IpLeafRef::also_notify);
+        metadata.insert(metadata.end(), addresses.begin(), addresses.end());
+        break;
+      }
+
+      for (auto const& alsoNotifyNode : pdnsServerTree->find_path(globalAlsoNotifyXPath.c_str())->data()) {
+        auto addresses = getListofIPs(session, alsoNotifyNode, IpLeafRef::also_notify);
+        metadata.insert(metadata.end(), addresses.begin(), addresses.end());
+        break;
       }
     }
 
     if (kind == "ALLOW-AXFR-FROM") {
       auto allowAxfrXPath = fmt::format("/pdns-server:zones/zones[name='{}']/allow-axfr", zone);
-      for (auto const& allowAxfrNode : tree->find_path(allowAxfrXPath.c_str())->data()) {
-        auto allowAxfrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(allowAxfrNode);
-        auto aclXPath = fmt::format("/pdns-server:axfr-access-control-list[name='{}']", allowAxfrLeaf->value_str());
-        auto aclNode = session->get_subtree(aclXPath.c_str());
-        for (auto const& aclAddressNode : aclNode->find_path("/pdns-server:axfr-access-control-list/network/ip-prefix")->data()) {
-          auto aclAddressLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(aclAddressNode);
-          metadata.push_back(aclAddressLeaf->value_str());
-        }
+      const static std::string globalAllowAxfrXPath = "/pdns-server:pdns-server/pdns-server:allow-axfr";
+
+      spdlog::trace("RemoteBackend::{} - Grabbing AXFR ACLs - allowAxfrXPath='{}' globalAllowAxfrPath='{}'", __func__, allowAxfrXPath, globalAllowAxfrXPath);
+      for (auto const& allowAxfrNode : zoneTree->find_path(allowAxfrXPath.c_str())->data()) {
+        auto masks = getListofNetmasks(session, allowAxfrNode, NetmaskLeafRef::allow_axfr);
+        metadata.insert(metadata.end(), masks.begin(), masks.end());
+        break;
+      }
+
+      for (auto const& allowAxfrNode : pdnsServerTree->find_path(globalAllowAxfrXPath.c_str())->data()) {
+        auto masks = getListofNetmasks(session, allowAxfrNode, NetmaskLeafRef::allow_axfr);
+        metadata.insert(metadata.end(), masks.begin(), masks.end());
+        break;
       }
     }
   }
