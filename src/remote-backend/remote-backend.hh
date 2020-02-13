@@ -334,8 +334,8 @@ protected:
   void logRequest(const Pistache::Rest::Request &request);
   void logRequestResponse(const Pistache::Rest::Request &request, const Pistache::Http::Response &response, const nlohmann::json& ret);
 
-  typedef std::tuple<std::string, std::string, uint32_t> FedRRSet;
-  typedef std::map<FedRRSet, std::vector<std::string> > FullRRSets;
+  typedef std::tuple<std::string, std::string, uint32_t> RRSetKey;
+  typedef std::map<RRSetKey, std::vector<std::string> > RRSets;
 
   class Transaction
   {
@@ -346,8 +346,31 @@ protected:
     };
     ~Transaction() {};
 
+    /**
+     * @brief Takes a record and adds it to the rrset in this transaction
+     * 
+     * @param qname     name of the record
+     * @param qtype     type of the record
+     * @param content   the content of the record
+     * @param ttl       the ttl of the record
+     */
     void feedRecord(const string &qname, const string &qtype, const string &content, const uint32_t ttl);
-    FullRRSets getFedRecords() { return d_records; };
+
+    /**
+     * @brief Returns all rrsets in this transaction
+     * 
+     * @return RRSets 
+     */
+    RRSets getRRSets() {
+      const std::lock_guard<std::mutex> lock(d_lock);
+      return d_records;
+    };
+
+    /**
+     * @brief Returns the domain name for this transaction
+     * 
+     * @return std::string 
+     */
     std::string getDomainName() { return d_domainName; };
 
     private:
@@ -355,7 +378,7 @@ protected:
     uint32_t d_domainId;
     std::string d_domainName;
     std::mutex d_lock;
-    FullRRSets d_records;
+    RRSets d_records;
     time_t d_timesStarted;
   };
 

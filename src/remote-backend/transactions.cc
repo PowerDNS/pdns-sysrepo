@@ -67,7 +67,7 @@ namespace pdns_sysrepo::remote_backend
       return;
     }
 
-    auto records = it->second->getFedRecords();
+    auto records = it->second->getRRSets();
     auto session = getSession();
     session->session_switch_ds(SR_DS_OPERATIONAL);
 
@@ -156,7 +156,7 @@ namespace pdns_sysrepo::remote_backend
   }
 
   void RemoteBackend::Transaction::feedRecord(const string& qname, const string& qtype, const string& content, const uint32_t ttl) {
-    FedRRSet f = std::make_tuple(qname, qtype, ttl);
+    RRSetKey f = std::make_tuple(qname, qtype, ttl);
     const std::lock_guard<std::mutex> lock(d_lock);
     d_records[f].push_back(content);
   }

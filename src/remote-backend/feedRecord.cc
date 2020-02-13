@@ -27,7 +27,7 @@ void RemoteBackend::feedRecord(const Pistache::Rest::Request& request, Http::Res
   uint32_t txId = request.param(":txid").as<uint32_t>();
   auto it = d_transactions.find(txId);
   if (it == d_transactions.end()) {
-    sendResponse(request, response, nlohmann::json({{"result", false}, {"log", nlohmann::json::array_t({"Transaction already in progress"})}}));
+    sendResponse(request, response, nlohmann::json({{"result", false}, {"log", nlohmann::json::array_t({"Transaction not in progress"})}}));
     return;
   }
 
