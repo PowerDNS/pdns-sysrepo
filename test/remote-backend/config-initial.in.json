@@ -22,6 +22,15 @@
           "port": 1500
         }
       ]
+    },
+    {
+      "name": "global",
+      "address": [
+        {
+          "name": "very cool",
+          "ip-address": "192.0.2.222"
+        }
+      ]
     }
   ],
   "pdns-server:axfr-access-control-list": [
@@ -35,6 +44,19 @@
         {
           "name": "v4",
           "ip-prefix": "127.0.0.0/8"
+        }
+      ]
+    },
+    {
+      "name": "global",
+      "network": [
+        {
+          "name": "v6",
+          "ip-prefix": "2001:db8:53::/64"
+        },
+        {
+          "name": "v4",
+          "ip-prefix": "192.0.2.128/25"
         }
       ]
     }
@@ -67,6 +89,12 @@
         "ip-address": "127.0.0.1",
         "port": 5300
       }
+    ],
+    "also-notify": [
+      "global"
+    ],
+    "allow-axfr": [
+      "global"
     ]
   },
   "pdns-server:zones": {

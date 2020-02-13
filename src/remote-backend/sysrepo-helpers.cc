@@ -15,6 +15,7 @@
  */
 
 #include "remote-backend.hh"
+#include "iputils/iputils.hh"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 

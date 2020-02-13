@@ -19,14 +19,11 @@
 
 namespace pdns_sysrepo::remote_backend
 {
-enum class IpLeafRef
-{
-  master,
-  also_notify
-};
-
 nlohmann::json::array_t
-getListofIPs(const sysrepo::S_Session& session, const libyang::S_Data_Node& node, const IpLeafRef& kind) {
+RemoteBackend::getListofIPs(const sysrepo::S_Session& session, const libyang::S_Data_Node& node, const IpLeafRef& kind) {
+  if (session == nullptr) {
+    throw std::logic_error("session is nullptr");
+  }
   string zoneElementSchemaPath = "/pdns-server:zones/pdns-server:zones/pdns-server:";
   string zoneElementSchemaName;
   string leafRefXPathTemplate = "/pdns-server:";
@@ -65,13 +62,11 @@ getListofIPs(const sysrepo::S_Session& session, const libyang::S_Data_Node& node
   return ret;
 }
 
-enum class NetmaskLeafRef
-{
-  allow_axfr
-};
-
 nlohmann::json::array_t
-getListofNetmasks(const sysrepo::S_Session& session, const libyang::S_Data_Node& node, const NetmaskLeafRef& kind) {
+RemoteBackend::getListofNetmasks(const sysrepo::S_Session& session, const libyang::S_Data_Node& node, const NetmaskLeafRef& kind) {
+  if (session == nullptr) {
+    throw std::logic_error("session is nullptr");
+  }
   string zoneElementSchemaPath = "/pdns-server:zones/pdns-server:zones/pdns-server:";
   string zoneElementSchemaName;
   string leafRefXPathTemplate = "/pdns-server:";
