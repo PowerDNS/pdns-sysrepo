@@ -54,17 +54,30 @@ Build and run :program:`pdns-sysrepo`
 -------------------------------------
 Build :program:`pdns-sysrepo` in the :doc:`normal way <building>`.
 
-Then create a configuration for it at ``/home/lieter/src/PowerDNS/pdns-conf/netconf/pdns-sysrepo.yaml``
+Then create the configuration for it:
 
-.. code-block:: yaml
+.. code-block:: json
 
-  pdns_conf: /home/lieter/src/PowerDNS/pdns-conf/netconf/pdns.conf
+  {
+    "pdns-server:pdns-server": {
+      "pdns-sysrepo" : {
+        "pdns-service": {
+          "name": "pdns-sysrepo-test.service",
+          "config-file": "/home/lieter/src/PowerDNS/pdns-conf/netconf/pdns.conf"
+        },
+        "logging": {
+          "timestamp": true,
+          "level": "trace"
+        }
+      }
+    }
+  }
 
-  pdns_service: "pdns-sysrepo-test.service"
+And configure it with :program:`sysrepocfg`.
 
-Then start it on the foreground::
+Then start :program:`pdns-sysrepo` on the foreground::
 
-  ./pdns-sysrepo -c /home/lieter/src/PowerDNS/pdns-conf/netconf/pdns-sysrepo.yaml -l trace
+  ./pdns-sysrepo
 
 Run the end-to-end tests
 ------------------------

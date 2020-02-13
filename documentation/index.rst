@@ -32,8 +32,8 @@ Conceptually, the whole system looks like this::
                            |         |  /   |       API calls        |   |
                            |         |  |   |                        |   |
                            |         |  |   |       RemoteBackend   /    |
-                           |         |  |   |   /------------------/     |
-                           |         v  v   v  /                         |
+                           |         |  |   |  /-------------------/     |
+                           |         v  v   v  v                         |
                            +-----[  pdns_server  ]-----------------------+
 
 In pseudo code :program:`pdns-sysrepo` does the following:
@@ -47,7 +47,7 @@ In pseudo code :program:`pdns-sysrepo` does the following:
    * On configuration change
       * Write new PowerDNS configuration file
       * Send IPC to systemd to restart PowerDNS Service
-   * On zone change (when rrsets are not managed by the NSO)
+   * On zone change (when rrsets are not managed by the NMS)
       * Use API to set the zone's config
 
 .. toctree::

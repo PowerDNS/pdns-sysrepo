@@ -14,6 +14,25 @@ In order for the PowerDNS Authoritative server to be able
 to serve the zone, **at least** an SOA record with an owner
 name equal to the zone name is required.
 
+Zone types
+----------
+:program:`pdns-sysrepo` supports all `3 types <https://doc.powerdns.com/authoritative/modes-of-operation.html>`__
+that PowerDNS supports:
+
+ - Native
+ - Master
+ - Slave
+
+For master and native zones, the records for the zone can be set in the running
+and startup datastores at ``/pdns-server:zones/zones[name='NNNN']/rrset``.
+Please review :doc:`the model <../yang-model>` for more information.
+
+For slave zones, PowerDNS will request an AXFR from the master and will store the
+zone data in the operational datastore at ``/pdns-server:zones/zones[name='NNNN']/rrset-state``.
+Do note that a restart of :program:`pdns-sysrepo` will mean the zones need to be
+transferred again. As sysrepo will discard the operational datastore when the
+connection to sysrepo closes.
+
 Per-zone AXFR ACLs
 ------------------
 The AXFR ACLs at ``/pdns-server:axfr-access-control-list`` can be used
@@ -91,6 +110,9 @@ Per-zone notifications can be set with the leaf-ref at
 Example zone
 ------------
 
+Master or Native
+^^^^^^^^^^^^^^^^
+
 .. code-block:: json
 
   {
@@ -152,6 +174,25 @@ Example zone
                 }
               }
             }
+          ]
+        }
+      ]
+    }
+  }
+
+Slave
+^^^^^
+
+.. code-block:: json
+
+  {
+    "pdns-server:zones": {
+      "zones": [
+        {
+          "name": "slavedomain.example.",
+          "zonetype": "slave",
+          "masters": [
+            "some-host"
           ]
         }
       ]
