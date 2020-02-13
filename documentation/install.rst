@@ -77,13 +77,13 @@ When installing packages, these files are available in ``$PREFIX/share/pdns-sysr
 These modules need to be installed into sysrepo before they can be used.
 The :program:`sysrepoctl` tool can be used::
 
-  sysrepoctl -i ietf-inet-types@2013-07-15.yang
   sysrepoctl -i iana-dns-class-rr-type@2019-06-27.yang
+  sysrepoctl -i dns-zone-common@2017-01-12.yang
+  sysrepoctl -i iana-dns-parameters@2016-08-03.yang
   sysrepoctl -i pdns-server.yang
 
 Configure :program:`pdns-sysrepo`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Configure the service in ``/etc/pdns-sysrepo/pdns-sysrepo.yaml``.
 See :doc:`guides/config` for more information.
 
 Create an initial PowerDNS startup config

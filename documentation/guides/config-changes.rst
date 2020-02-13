@@ -83,3 +83,62 @@ To, for instance, add the loopback IP addresses as allowed addresses, apply the 
       ]
     }
   }
+
+Setting also-notify endpoints
+-----------------------------
+When sending a `NOTIFY to a slave <https://doc.powerdns.com/authoritative/modes-of-operation.html#master-operation>`__
+after the zone is updated, PowerDNS can notify additional IP addresses.
+
+The endpoints can be defined at ``/pdns-server:notify-endpoint`` and can be referenced by name
+for all zones in the ``/pdns-server:pdns-server/also-notify`` leaf-list or on a per-zone basis
+at ``/pdns-server:zones/zones[name='NNN']/also-notify``.
+
+e.g. the following configuration would notify 192.0.2.3:1500 for all zones and
+would notify 192.0.2.200 and 2001:db8::53:1 additionally for the example.com zone:
+
+.. code-block:: json
+
+  {
+    "pdns-server:notify-endpoint": [
+      {
+        "name": "example-200",
+        "address": [
+          {
+            "name": "host 200",
+            "ip-address": "192.0.2.200"
+          },
+          {
+            "name": "host 200 on v6",
+            "ip-address": "2001:db8::53:1"
+          }
+        ]
+      },
+      {
+        "name": "example-3",
+        "address": [
+          {
+            "name": "host 3",
+            "ip-address": "192.0.2.3",
+            "port": 1500
+          }
+        ]
+      }
+    ],
+    "pdns-server:pdns-server": {
+      "also-notify": [
+        "example-3"
+      ]
+    },
+    "pdns-server:zones": {
+      "zones": [
+        {
+          "name": "example.com.",
+          "zonetype": "master",
+          "also-notify": [
+            "example-200"
+          ],
+          "rrset": []
+        }
+      ]
+    }
+  }
