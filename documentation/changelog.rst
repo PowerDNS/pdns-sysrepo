@@ -1,6 +1,20 @@
 Changelog
 =========
 
+Release 0.3.0
+-------------
+Released 2020-02-13
+
+New Features
+^^^^^^^^^^^^
+- Implement zone slaving, zone data is store in the operational datastore
+- Wildcard records in zones work
+
+YANG Model updates
+^^^^^^^^^^^^^^^^^^
+- Added a dnsname, zonename and hostname types
+- Added an option to disallow service restarts
+
 Release 0.2.1
 -------------
 Released 2020-01-22
