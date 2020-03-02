@@ -37,7 +37,7 @@ commands:
       - run: |
           git clone -q https://github.com/CESNET/libyang.git ~/libyang && \
           cd ~/libyang && \
-          git checkout cecb048feb5a021e6ca267e3efa3da56efee6bc3 && \
+          git checkout 1937b1736cfe972ceaaca2c10d8c42adb2aecec2 && \
           mkdir ~/libyang/build
       - run:
           command: |
@@ -60,7 +60,7 @@ commands:
       - run: |
           git clone -q https://github.com/sysrepo/sysrepo.git ~/sysrepo && \
           cd ~/sysrepo && \
-          git checkout eac941f77e008fcd1f3cfb39edd2cff64b97e002 && \
+          git checkout 939db34f78348877da34456c8ef8526538fc52ca && \
           mkdir ~/sysrepo/build
       - run:
           command: |
@@ -113,12 +113,6 @@ jobs:
       - run:
           command: ninja -j5 -v
           workdir: ~/project/build
-      - run:
-          command: sysrepoctl -i yang/ietf-yang-types@2013-07-15.yang
-          workdir: ~/project
-      - run:
-          command: sysrepoctl -i yang/ietf-inet-types@2013-07-15.yang
-          workdir: ~/project
       - run:
           command: sysrepoctl -i yang/iana-dns-parameters@2016-08-03.yang
           workdir: ~/project

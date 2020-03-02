@@ -4,10 +4,10 @@ RUN apt-get -y install devscripts dpkg-dev build-essential python3 equivs curl
 RUN mkdir -p /dist/3rdparty /libyang /builder
 WORKDIR /libyang
 
-ENV LIBYANG_VERSION=1.0.131
+ENV LIBYANG_VERSION=1.0.139
 
-# 1.0.131 has not been tagged
-ENV LIBYANG_COMMIT=cecb048feb5a021e6ca267e3efa3da56efee6bc3
+# 1.0.139 has not been tagged
+ENV LIBYANG_COMMIT=1937b1736cfe972ceaaca2c10d8c42adb2aecec2
 
 RUN if [ -z "${LIBYANG_COMMIT}" ]; then \
       curl -L https://github.com/CESNET/libyang/archive/v${LIBYANG_VERSION}.tar.gz | gunzip | tar xf - && \
