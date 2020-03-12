@@ -39,14 +39,18 @@ void RemoteBackend::getUnfreshSlaveInfos(const Pistache::Rest::Request& request,
   time_t now = time(nullptr);
   nlohmann::json::array_t allZones;
   for (auto const& zone : zonesNode->tree_for()) {
-    auto zoneNode = zone->child(); // /pdns-server:zones/zones[name]/name
     string zoneName;
-
-    auto zoneNameLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zoneNode);
-    zoneName = zoneNameLeaf->value_str();
+    for (auto const &n : zone->child()->tree_for()) {
+      string nodeName(n->schema()->name());
+      if (nodeName == "name") {
+        auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+        zoneName = leaf->value_str();
+        break;
+      }
+    }
 
     auto zonetypeXPath = fmt::format("/pdns-server:zones/zones[name='{}']/zonetype", zoneName);
-    auto zonetypeLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zoneNode->find_path(zonetypeXPath.c_str())->data().at(0));
+    auto zonetypeLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zone->find_path(zonetypeXPath.c_str())->data().at(0));
     if (std::string(zonetypeLeaf->value_str()) != "slave") {
       continue;
     }
