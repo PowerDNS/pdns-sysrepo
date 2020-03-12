@@ -212,11 +212,20 @@ PdnsServerConfig::PdnsServerConfig(const libyang::S_Data_Node &node, const sysre
         auto alsoNotifyNode = session->get_subtree(fmt::format("/pdns-server:notify-endpoint[name='{}']", leaf->value_str()).c_str());
         if (alsoNotifyNode) {
           for (auto const addressNode : alsoNotifyNode->find_path("/pdns-server:notify-endpoint/address")->data()) {
-            auto n = addressNode->child()->next(); // /pdns-server/notify-endpoint/address/ip-address
-            auto addrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-            n = n->next();
-            auto portLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-            iputils::ComboAddress address(addrLeaf->value_str(), portLeaf->value()->uint16());
+            std::string ip_address;
+            uint16_t port = 53;
+            for (auto const &node : addressNode->tree_dfs()) {
+              std::string nodeName(node->schema()->name());
+              if (nodeName == "ip-address") {
+                auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(node);
+                ip_address = leaf->value_str();
+              }
+              if (nodeName == "port") {
+                auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(node);
+                port = leaf->value()->uint16();
+              }
+            }
+            iputils::ComboAddress address(ip_address, port);
             a.addresses.push_back(address.toStringWithPort());
           }
         }

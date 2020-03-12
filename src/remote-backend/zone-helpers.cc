@@ -51,12 +51,21 @@ RemoteBackend::getListofIPs(const sysrepo::S_Session& session, const libyang::S_
     auto leafRefXPath = fmt::format(leafRefXPathTemplate, nameLeaf->value_str());
     auto leafRefAddressNode = session->get_subtree(leafRefXPath.c_str());
     for (auto const& addressNode : leafRefAddressNode->find_path(fmt::format("{}/{}", leafRefXPath, "/address").c_str())->data()) {
-      auto n = addressNode->child()->next(); // /pdns-server/master-endpoint[name]/address[name]/ip-address
-      auto addrLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-      n = n->next(); // /pdns-server:master-endpoint[name]/address[name]/port
-      auto portLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
-      iputils::ComboAddress a(addrLeaf->value_str(), portLeaf->value()->uint16());
-      ret.push_back(a.toStringWithPort());
+      std::string ip_address;
+      uint16_t port = 53;
+      for (auto const& node : addressNode->tree_dfs()) {
+        std::string nodeName(node->schema()->name());
+        if (nodeName == "ip-address") {
+          auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(node);
+          ip_address = leaf->value_str();
+        }
+        if (nodeName == "port") {
+          auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(node);
+          port = leaf->value()->uint16();
+        }
+      }
+      iputils::ComboAddress address(ip_address, port);
+      ret.push_back(address.toStringWithPort());
     }
   }
   return ret;
