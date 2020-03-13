@@ -35,14 +35,16 @@ void RemoteBackend::getUpdatedMasters(const Pistache::Rest::Request& request, Ht
 
   nlohmann::json::array_t allZones;
   for (auto const& zone : zonesNode->tree_for()) {
-    auto zoneNode = zone->child(); //  This is /pdns-server:zones/zones[name]/name
-    nlohmann::json domainInfo;
-    string zoneName;
-
-    {
-      auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(zoneNode);
-      zoneName = leaf->value_str();
+    std::string zoneName;
+    for (auto const &n : zone->child()->tree_for()) {
+      string nodeName(n->schema()->name());
+      if (nodeName == "name") {
+        auto leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+        zoneName = leaf->value_str();
+        break;
+      }
     }
+    nlohmann::json domainInfo;
 
     auto zonetypeXPath = fmt::format("/pdns-server:zones/zones[name='{}']/zonetype", zoneName);
     auto zonetypeLeaf = std::make_shared<libyang::Data_Node_Leaf_List>(zone->find_path(zonetypeXPath.c_str())->data().at(0));
