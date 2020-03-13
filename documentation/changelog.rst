@@ -1,5 +1,12 @@
 Changelog
 =========
+Release 0.3.1
+-------------
+Released 2020-03-13
+
+Bug fixes
+^^^^^^^^^
+- Fix crashing bug that occurred when data nodes in sysrepo were not in an expected order
 
 Release 0.3.0
 -------------
