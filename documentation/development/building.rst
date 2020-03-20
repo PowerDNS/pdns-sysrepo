@@ -21,7 +21,7 @@ This list has the rest of the dependencies, including the package names for Debi
 * `libyang-cpp <https://github.com/CESNET/libyang>`__ version 1.0.146 or higher
 * `mstch <https://github.com/no1msd/mstch>`__
 * `sdbusplus <https://github.com/openbmc/sdbusplus>`__
-* `sysrepo <https://www.sysrepo.org/>`__ version 1.4.7 or higher
+* `sysrepo <https://www.sysrepo.org/>`__ version 1.4.26 or higher
 * `cpprestsdk <https://github.com/Microsoft/cpprestsdk>`__
 
 To install the distribution provided dependencies on a Debian system::
@@ -68,7 +68,7 @@ Now build the dependent software, it will be installed into ``~/.local/opt/sysre
     ## sysrepo
     git clone --branch devel https://github.com/sysrepo/sysrepo.git
     cd sysrepo
-    git checkout eac941f77e008fcd1f3cfb39edd2cff64b97e002
+    git checkout 9605836f239901ec765fa42aec34d1929a23fce4
     mkdir build; cd build
     cmake \
         -DCMAKE_BUILD_TYPE=Debug \
