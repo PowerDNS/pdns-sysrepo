@@ -37,7 +37,7 @@ commands:
       - run: |
           git clone -q https://github.com/CESNET/libyang.git ~/libyang && \
           cd ~/libyang && \
-          git checkout 1937b1736cfe972ceaaca2c10d8c42adb2aecec2 && \
+          git checkout 6f919a91245da7adf79d0d00f5dad0fd2cd3f6bc && \
           mkdir ~/libyang/build
       - run:
           command: |

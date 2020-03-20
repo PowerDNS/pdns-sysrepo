@@ -3,8 +3,8 @@ Priority: optional
 Maintainer: Pieter Lexis <pieter.lexis@powerdns.com>
 Build-Depends: debhelper (>= 11~),
                cmake,
-               libyang-dev (>= 1.0.131),
-               libyang-cpp-dev (>= 1.0.131),
+               libyang-dev (>= 1.0.146),
+               libyang-cpp-dev (>= 1.0.146),
                pkg-config
 Standards-Version: 4.1.4
 Section: libs

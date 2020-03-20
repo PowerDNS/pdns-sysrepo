@@ -18,7 +18,7 @@ This list has the rest of the dependencies, including the package names for Debi
 * `boost filesystem <https://www.boost.org/doc/libs/1_71_0/libs/filesystem/doc/index.htm>`__
 * `boost program options <https://www.boost.org/doc/libs/1_71_0/doc/html/program_options.html>`__
 * `libsystemd <https://freedesktop.org/wiki/Software/systemd/>`__ version 221 or higher
-* `libyang-cpp <https://github.com/CESNET/libyang>`__ version 1.0.131 or higher
+* `libyang-cpp <https://github.com/CESNET/libyang>`__ version 1.0.146 or higher
 * `mstch <https://github.com/no1msd/mstch>`__
 * `sdbusplus <https://github.com/openbmc/sdbusplus>`__
 * `sysrepo <https://www.sysrepo.org/>`__ version 1.4.7 or higher
@@ -50,7 +50,7 @@ Now build the dependent software, it will be installed into ``~/.local/opt/sysre
     export SYSREPO_INSTALL="${HOME}/.local/opt/sysrepo"
     git clone https://github.com/CESNET/libyang.git
     cd libyang
-    git checkout cecb048feb5a021e6ca267e3efa3da56efee6bc3
+    git checkout 6f919a91245da7adf79d0d00f5dad0fd2cd3f6bc
     mkdir build; cd build
     cmake -DCMAKE_INSTALL_PREFIX=${SYSREPO_INSTALL} \
             -DCMAKE_BUILD_TYPE=Debug \
