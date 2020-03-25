@@ -1,5 +1,5 @@
 project('pdns-sysrepo', 'cpp',
-  version : '0.3.2-dev',
+  version : '0.3.2',
   default_options : ['cpp_std=c++17'],
   license: ['Apache2']
   )
