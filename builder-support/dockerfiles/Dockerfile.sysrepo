@@ -7,10 +7,10 @@ RUN cd /dist/3rdparty && apt install -y ./libyang*.deb
 
 WORKDIR /sysrepo
 
-ENV SYSREPO_VERSION=1.4.7
+ENV SYSREPO_VERSION=1.4.26
 
-# 1.4.7 has not been tagged
-ENV SYSREPO_COMMIT=eac941f77e008fcd1f3cfb39edd2cff64b97e002
+# 1.4.26 has not been tagged
+ENV SYSREPO_COMMIT=9605836f239901ec765fa42aec34d1929a23fce4
 
 RUN if [ -z "${SYSREPO_COMMIT}" ]; then \
       curl -L https://github.com/sysrepo/sysrepo/archive/v${SYSREPO_VERSION}.tar.gz | gunzip | tar xf - && \

@@ -37,7 +37,7 @@ commands:
       - run: |
           git clone -q https://github.com/CESNET/libyang.git ~/libyang && \
           cd ~/libyang && \
-          git checkout cecb048feb5a021e6ca267e3efa3da56efee6bc3 && \
+          git checkout 6f919a91245da7adf79d0d00f5dad0fd2cd3f6bc && \
           mkdir ~/libyang/build
       - run:
           command: |
@@ -60,7 +60,7 @@ commands:
       - run: |
           git clone -q https://github.com/sysrepo/sysrepo.git ~/sysrepo && \
           cd ~/sysrepo && \
-          git checkout eac941f77e008fcd1f3cfb39edd2cff64b97e002 && \
+          git checkout 9605836f239901ec765fa42aec34d1929a23fce4 && \
           mkdir ~/sysrepo/build
       - run:
           command: |
@@ -96,6 +96,28 @@ commands:
           command: make -j $(nproc) install
           workdir: ~/sdbusplus
 
+  package-build:
+    description: Build packages
+    parameters:
+      distro:
+        type: string
+        default: ""
+    steps:
+      - run: if test -z "<< parameters.distro >>"; then exit 1; fi
+      - checkout
+      - run: apk add git bash sed grep xz
+      - run: git submodule init && git submodule update
+      - setup_remote_docker
+      - run: 
+          command: ./builder/build.sh << parameters.distro >>
+          no_output_timeout: 20m
+      - run: |
+          mkdir << parameters.distro >>-pkgs && \
+          mv builder/tmp/latest/<< parameters.distro >>/dist/* << parameters.distro >>-pkgs && \
+          tar cJf << parameters.distro >>-pkgs.tar.xz << parameters.distro >>-pkgs
+      - store_artifacts:
+          path: ~/project/<< parameters.distro >>-pkgs.tar.xz
+
 jobs:
   build-and-test:
     docker:
@@ -113,12 +135,6 @@ jobs:
       - run:
           command: ninja -j5 -v
           workdir: ~/project/build
-      - run:
-          command: sysrepoctl -i yang/ietf-yang-types@2013-07-15.yang
-          workdir: ~/project
-      - run:
-          command: sysrepoctl -i yang/ietf-inet-types@2013-07-15.yang
-          workdir: ~/project
       - run:
           command: sysrepoctl -i yang/iana-dns-parameters@2016-08-03.yang
           workdir: ~/project
@@ -148,10 +164,45 @@ jobs:
       - run: yanglint -VVV --strict yang/pdns-server.yang
       - run: yanglint -VVV -f tree yang/pdns-server.yang
 
+  sdist:
+    docker:
+      - image: docker:latest
+    steps:
+      - checkout
+      - run: apk add git bash sed grep xz
+      - run: git submodule init && git submodule update
+      - setup_remote_docker
+      - run: ./builder/build.sh sdist
+      - run: |
+          mkdir sdist-pkgs && \
+          mv builder/tmp/latest/sdist/* sdist-pkgs && \
+          tar cJf sdist-pkgs.tar.xz sdist-pkgs
+      - store_artifacts:
+          path: ~/project/sdist-pkgs.tar.xz
+
+  ubuntu-bionic:
+    docker:
+      - image: docker:latest
+    steps:
+      - package-build:
+          distro: ubuntu-bionic
+
+  debian-buster:
+    docker:
+      - image: docker:latest
+    steps:
+      - package-build:
+          distro: debian-buster
+
 workflows:
   version: 2
   build_and_test:
     jobs:
       - build-and-test
       - test-model
+  packages:
+    jobs:
+      - sdist
+      - ubuntu-bionic
+      - debian-buster
 

@@ -1,3 +1,15 @@
+libyang (1.0.146-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Pieter Lexis <pieter.lexis@powerdns.com>  Fri, 20 Mar 2020 09:20:06 +0100
+
+libyang (1.0.139-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Pieter Lexis <pieter.lexis@powerdns.com>  Mon, 02 Mar 2020 19:29:36 +0100
+
 libyang (1.0.131-1) UNRELEASED; urgency=medium
 
   * New upstream release
