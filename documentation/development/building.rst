@@ -50,7 +50,7 @@ Now build the dependent software, it will be installed into ``~/.local/opt/sysre
     export SYSREPO_INSTALL="${HOME}/.local/opt/sysrepo"
     git clone https://github.com/CESNET/libyang.git
     cd libyang
-    git checkout 6f919a91245da7adf79d0d00f5dad0fd2cd3f6bc
+    git checkout c29e25497e4aaba63b0dc5361e04805f5a29f5d2
     mkdir build; cd build
     cmake -DCMAKE_INSTALL_PREFIX=${SYSREPO_INSTALL} \
             -DCMAKE_BUILD_TYPE=Debug \
@@ -68,7 +68,7 @@ Now build the dependent software, it will be installed into ``~/.local/opt/sysre
     ## sysrepo
     git clone --branch devel https://github.com/sysrepo/sysrepo.git
     cd sysrepo
-    git checkout 9605836f239901ec765fa42aec34d1929a23fce4
+    git checkout cde26972fe2c053b6a2c24fac813ae18b2568766
     mkdir build; cd build
     cmake \
         -DCMAKE_BUILD_TYPE=Debug \

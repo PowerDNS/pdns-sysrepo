@@ -56,8 +56,8 @@ pdns_sysrepo_zone_oper_callback = files(
   'src/zone-oper-callback/zone-oper-callback.cc'
 )
 
-sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.26')
-libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.146')
+sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.30')
+libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.151')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
 libsystemd_dep = dependency('libsystemd')
 sdbusplus_dep = dependency('sdbusplus')
