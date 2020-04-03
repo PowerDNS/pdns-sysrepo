@@ -1,5 +1,14 @@
 Changelog
 =========
+Release 0.3.3
+-------------
+Released 2020-04-03
+
+This release only updates several dependencies:
+
+- sysrepo to 1.4.30
+- libyang to 1.0.151
+
 Release 0.3.2
 -------------
 Released 2020-03-25
