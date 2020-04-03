@@ -1,2 +1,0 @@
-#!/bin/sh
-awk '/^  version/ { print $3 }' meson.build | tr -d ",'"

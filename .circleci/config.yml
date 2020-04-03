@@ -24,12 +24,13 @@ commands:
             libsystemd-dev \
             libsystemd-dev \
             libtool \
-            meson \
             pkg-config \
             python3-pip \
             supervisor \
             swig \
             systemd
+      - run: |
+          pip3 install meson==0.54 ninja
 
   build-libyang:
     description: "Builds libyang"

@@ -23,6 +23,9 @@ ADD builder-support/debian/pdns-sysrepo pdns-sysrepo-${BUILDER_VERSION}/debian
 ADD builder/helpers /builder/helpers
 
 ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y python3-pip && \
+      pip3 install meson==0.54 ninja
+ARG BUILDER_RELEASE=1pdns
 RUN /builder/helpers/build-debs.sh pdns-sysrepo-${BUILDER_VERSION}
 
 RUN cp pdns-sysrepo*.deb /dist
