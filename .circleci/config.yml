@@ -24,12 +24,13 @@ commands:
             libsystemd-dev \
             libsystemd-dev \
             libtool \
-            meson \
             pkg-config \
             python3-pip \
             supervisor \
             swig \
             systemd
+      - run: |
+          pip3 install meson==0.54 ninja
 
   build-libyang:
     description: "Builds libyang"
@@ -102,14 +103,17 @@ commands:
       distro:
         type: string
         default: ""
+      is_release:
+        type: boolean
+        default: false
     steps:
       - run: if test -z "<< parameters.distro >>"; then exit 1; fi
+      - run: apk add git bash sed grep xz perl
       - checkout
-      - run: apk add git bash sed grep xz
       - run: git submodule init && git submodule update
       - setup_remote_docker
-      - run: 
-          command: ./builder/build.sh << parameters.distro >>
+      - run:
+          command: <<# parameters.is_release >>IS_RELEASE=YES <</ parameters.is_release>> ./builder/build.sh << parameters.distro >>
           no_output_timeout: 20m
       - run: |
           mkdir << parameters.distro >>-pkgs && \
@@ -168,8 +172,8 @@ jobs:
     docker:
       - image: docker:latest
     steps:
+      - run: apk add git bash sed grep xz perl
       - checkout
-      - run: apk add git bash sed grep xz
       - run: git submodule init && git submodule update
       - setup_remote_docker
       - run: ./builder/build.sh sdist
@@ -194,15 +198,68 @@ jobs:
       - package-build:
           distro: debian-buster
 
+  sdist-release:
+    docker:
+      - image: docker:latest
+    steps:
+      - run: apk add git bash sed grep xz perl
+      - checkout
+      - run: git submodule init && git submodule update
+      - setup_remote_docker
+      - run: IS_RELEASE=YES ./builder/build.sh sdist
+      - run: |
+          mkdir sdist-pkgs && \
+          mv builder/tmp/latest/sdist/* sdist-pkgs && \
+          tar cJf sdist-pkgs.tar.xz sdist-pkgs
+      - store_artifacts:
+          path: ~/project/sdist-pkgs.tar.xz
+
+  ubuntu-bionic-release:
+    docker:
+      - image: docker:latest
+    steps:
+      - package-build:
+          distro: ubuntu-bionic
+          is_release: true
+
+  debian-buster-release:
+    docker:
+      - image: docker:latest
+    steps:
+      - package-build:
+          distro: debian-buster
+          is_release: true
+
 workflows:
   version: 2
   build_and_test:
     jobs:
       - build-and-test
       - test-model
+
   packages:
     jobs:
       - sdist
       - ubuntu-bionic
       - debian-buster
 
+  release-packages:
+    jobs:
+      - sdist-release:
+         filters:
+           tags:
+             only: '/^v.*/'
+           branches:
+             ignore: '/.*/'
+      - ubuntu-bionic-release:
+         filters:
+           tags:
+             only: '/^v.*/'
+           branches:
+             ignore: '/.*/'
+      - debian-buster-release:
+         filters:
+           tags:
+             only: '/^v.*/'
+           branches:
+             ignore: '/.*/'

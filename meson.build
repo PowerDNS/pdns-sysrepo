@@ -1,8 +1,11 @@
 project('pdns-sysrepo', 'cpp',
-  version : '0.3.3',
+  version : run_command('make-version.sh').stdout().strip(),
   default_options : ['cpp_std=c++17'],
-  license: ['Apache2']
+  license: ['Apache2'],
+  meson_version: '>=0.52'
   )
+
+meson.add_dist_script('dist-fix.sh', meson.project_version())
 
 conf_data = configuration_data()
 conf_data.set('prefix', get_option('prefix'))
@@ -59,6 +62,13 @@ pdns_sysrepo_zone_oper_callback = files(
 sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.30')
 libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.151')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
+compiler = meson.get_compiler('cpp')
+compiler.has_header('boost/algorithm/string/split.hpp', required: true)
+compiler.has_header('boost/algorithm/string/join.hpp', required: true)
+compiler.has_header('boost/algorithm/string/classification.hpp', required: true)
+compiler.has_header('boost/optional.hpp', required: true)
+compiler.has_header('boost/bimap.hpp', required: true)
+compiler.has_header('boost/lexical_cast.hpp', required: true)
 libsystemd_dep = dependency('libsystemd')
 sdbusplus_dep = dependency('sdbusplus')
 

@@ -23,13 +23,15 @@ RUN cd /dist/3rdparty && \
       libfmt-dev \
       libmstch-dev \
       libsystemd-dev \
-      meson \
-      systemd
+      python3-pip \
+      systemd && \
+    pip3 install meson==0.54 ninja
 
 @EXEC sdist_dirs=(builder builder-support documentation polkit src sr_wrapper subprojects test yang .git)
 @EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /pdns-sysrepo-sdist/$d/" ; done
-ADD LICENSE meson.build meson_options.txt pdns-sysrepo.service.in README.md /pdns-sysrepo-sdist/
+ADD LICENSE meson.build meson_options.txt pdns-sysrepo.service.in README.md make-version.sh dist-fix.sh /pdns-sysrepo-sdist/
 
+ARG BUILDER_VERSION=
 WORKDIR /pdns-sysrepo-sdist
 RUN meson build && \
       cd build && \
