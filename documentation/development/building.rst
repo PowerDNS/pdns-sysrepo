@@ -68,7 +68,7 @@ Now build the dependent software, it will be installed into ``~/.local/opt/sysre
     ## sysrepo
     git clone --branch devel https://github.com/sysrepo/sysrepo.git
     cd sysrepo
-    git checkout cde26972fe2c053b6a2c24fac813ae18b2568766
+    git checkout bc9da665a2ce620b76a3f5bb6208c9d070e7748c
     mkdir build; cd build
     cmake \
         -DCMAKE_BUILD_TYPE=Debug \
