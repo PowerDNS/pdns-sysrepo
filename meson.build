@@ -60,7 +60,7 @@ pdns_sysrepo_zone_oper_callback = files(
 )
 
 sysrepo_cpp_dep = dependency('sysrepo-cpp', version: '>=1.4.30')
-libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.151')
+libyang_cpp_dep = dependency('libyang-cpp', version: '>=1.0.157')
 boost_deps = dependency('boost', modules : ['filesystem', 'program_options', 'system'])
 compiler = meson.get_compiler('cpp')
 compiler.has_header('boost/algorithm/string/split.hpp', required: true)
