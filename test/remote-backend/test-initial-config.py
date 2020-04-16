@@ -45,6 +45,14 @@ class TestRemoteBackend(unittest.TestCase):
             rdatas.add(record['content'])
         self.assertSetEqual(rdatas, {'10 mx1.example.net.', '20 mx2.example.net.'})
 
+    def test_lookup_SRV(self):
+        data = requests.get(self.url + 'lookup/_xmpp-client._tcp.testdomain.example./SRV').json()
+        self.assertEqual(len(data['result']), 1)
+        self.assertEqual(data['result'][0]['qname'], '_xmpp-client._tcp.testdomain.example.')
+        self.assertEqual(data['result'][0]['qtype'], 'SRV')
+        self.assertEqual(data['result'][0]['ttl'], 3600)
+        self.assertEqual(data['result'][0]['content'], '16 0 5222 sipserver.example.com.')
+
     def test_lookup_www_example_com_ANY(self):
         # This is what PowerDNS actually does :)
         data = requests.get(self.url + 'lookup/www.example.com./ANY').json()

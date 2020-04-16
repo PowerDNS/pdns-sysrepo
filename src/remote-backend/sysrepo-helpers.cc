@@ -74,6 +74,43 @@ namespace pdns_sysrepo::remote_backend {
               ret.push_back(record);
             }
           }
+        } else if (parts.back() == "SRV") {
+          bool havePrio = false;
+          uint16_t prio;
+          bool haveWeight = false;
+          uint16_t weight;
+          bool havePort = false;
+          uint16_t port;
+          bool haveTarget = false;
+          string target;
+          for (auto const &n : rdataNode->tree_dfs()) {
+            string nodeName(n->schema()->name());
+            std::shared_ptr<libyang::Data_Node_Leaf_List> leaf;
+            if (n->schema()->nodetype() == LYS_LEAF) {
+              leaf = std::make_shared<libyang::Data_Node_Leaf_List>(n);
+            }
+            if (nodeName == "priority") {
+              havePrio = true;
+              prio = leaf->value()->uint16();
+            } else if (nodeName == "weight") {
+              haveWeight = true;
+              weight = leaf->value()->uint16();
+            } else if (nodeName == "port") {
+              havePort = true;
+              port = leaf->value()->uint16();
+            } else if (nodeName == "target") {
+              haveTarget = true;
+              target = leaf->value_str();
+            }
+            if (havePrio && haveWeight && havePort && haveTarget) {
+              havePrio = false;
+              haveWeight = false;
+              havePort = false;
+              haveTarget = false;
+              record["content"] = fmt::format("{} {} {} {}", prio, weight, port, target);
+              ret.push_back(record);
+            }
+          }
         } else {
           // This is for all records with one leaf or leaf-list like A, AAAA and CNAME
           // rdataNode is now the 'rrset/rdata/<rrset type>/<whatever the node is called>' node

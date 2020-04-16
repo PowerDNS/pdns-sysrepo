@@ -165,6 +165,23 @@
             }
           },
           {
+            "owner": "_xmpp-client._tcp.testdomain.example.",
+            "type": "SRV",
+            "ttl": 3600,
+            "rdata": {
+              "SRV": {
+                "service": [
+                  {
+                    "priority": 16,
+                    "weight": 0,
+                    "port": 5222,
+                    "target": "sipserver.example.com."
+                  }
+                ]
+              }
+            }
+          },
+          {
             "owner": "testdomain.example.",
             "type": "SOA",
             "ttl": 3600,

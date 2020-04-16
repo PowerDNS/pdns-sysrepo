@@ -119,8 +119,11 @@ namespace pdns_sysrepo::remote_backend
             std::vector<std::string> parts;
             boost::split(parts, content, boost::is_any_of(" "));
             session->set_item_str(fmt::format("{}/{}/mail-exchanger[preference='{}'][exchange='{}']", rdataXPath, recordType, parts.at(0), parts.at(1)).c_str(), nullptr);
-          }
-          else {
+          } else if (recordType == "SRV") {
+            std::vector<std::string> parts;
+            boost::split(parts, content, boost::is_any_of(" "));
+            session->set_item_str(fmt::format("{}/{}/service[priority='{}'][weight='{}'][port='{}'][target='{}']", rdataXPath, recordType, parts.at(0), parts.at(1), parts.at(2), parts.at(3)).c_str(), nullptr);
+          } else {
             throw std::logic_error(fmt::format("Unimplemented record type: {}", recordType));
           }
         }
