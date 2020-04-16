@@ -21,7 +21,7 @@
  */
 module pdns-server {
     yang-version 1.1;
-    namespace urn:ietf:params:xml:ns:yang:pdns-server;
+    namespace "http://powerdns.com/yang/pdns-server";
     prefix pdns-server;
 
     import ietf-inet-types {
@@ -44,6 +44,10 @@ module pdns-server {
 
     description
       "This module describes the PowerDNS Authoritative Server";
+
+    revision 2020-04-16 {
+      description "Add SRV record and update namespace to a non-ietf one";
+    }
 
     revision 2020-02-13 {
       description "Add option to not restart te PowerDNS service";
@@ -475,6 +479,32 @@ module pdns-server {
                 description
                   "IPv6 address.";
             }
+        }
+        container SRV {
+          when "../../type = 'SRV'";
+          description
+            "RDATA for 'SRV' Resource Record";
+          reference
+            "RFC 2782: A DNS RR for specifying the location of services (DNS SRV)";
+          list service {
+            key "priority weight port target";
+            leaf priority {
+              type uint16;
+              description "The priority of this target host";
+            }
+            leaf weight {
+              type uint16;
+              description "A server selection mechanism. The weight field specifies a relative weight for entries with the same priority";
+            }
+            leaf port {
+              type inet:port-number;
+              description "The port on this target host of this service";
+            }
+            leaf target {
+              type host-name;
+              description "The domain name of the target host.";
+            }
+          }
         }
         container DNAME {
             when "../../type = 'DNAME'";
