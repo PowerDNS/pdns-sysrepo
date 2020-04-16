@@ -59,3 +59,33 @@ class TestRemoteBackendSlave(unittest.TestCase):
 
         data = requests.get(self.url + 'lookup/slavedomain.example./SOA').json()
         self.assertEqual(len(data['result']), 1)
+
+    def test_901_transaction_several_records(self):
+        txId = random.randint(1, 10000)
+        data = requests.get(self.url + 'getDomainInfo/slavedomain.example.').json()
+        zoneId = data['result']['id']
+        data = requests.post('{}startTransaction/{}/{}/{}'.format(self.url, zoneId, self.zoneName, txId)).json()
+        self.assertIs(data['result'], True)
+        patches = [
+          b'rr[qname]=slavedomain.example.&rr[qtype]=SOA&rr[content]=ns1.example.net. hostmaster.example.net. 43 3600 3601 3602 3603&rr[ttl]=1200',
+          b'rr[qname]=_xmpp-server._tcp.slavedomain.example.&rr[qtype]=SRV&rr[content]=0 0 5222 sipserver.example.com.&rr[ttl]=1800',
+          b'rr[qname]=slavedomain.example.&rr[qtype]=A&rr[content]=192.0.2.42&rr[ttl]=3600',
+          b'rr[qname]=slavedomain.example.&rr[qtype]=MX&rr[content]=10 mx1.example.net.&rr[ttl]=3600',
+          b'rr[qname]=slavedomain.example.&rr[qtype]=AAAA&rr[content]=2001:DB8::42:42&rr[ttl]=3600',
+        ]
+        for p in patches:
+            data = requests.patch('{}feedRecord/{}'.format(self.url, txId), data=p).json()
+            self.assertIs(data['result'], True)
+
+        data = requests.post('{}commitTransaction/{}'.format(self.url, txId)).json()
+        self.assertIs(data['result'], True)
+        data = requests.patch('{}setFresh/{}'.format(self.url, zoneId)).json()
+        self.assertIs(data['result'], True)
+
+        data = requests.get(self.url + 'lookup/slavedomain.example./ANY').json()
+        # 1 SOA, 1 MX, 1 A, 1 AAAA
+        self.assertEqual(len(data['result']), 4)
+
+        data = requests.get(self.url + 'lookup/_xmpp-server._tcp.slavedomain.example./ANY').json()
+        # 1 SRV
+        self.assertEqual(len(data['result']), 1)
